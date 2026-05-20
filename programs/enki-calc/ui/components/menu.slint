@@ -1,0 +1,103 @@
+export component MenuPopup inherits Rectangle {
+    background: #0f172ae5;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: #ffffff20;
+    
+    // Callbacks to trigger actions in parent app
+    callback mini_mode_clicked();
+    callback history_clicked();
+    callback glass_clicked();
+    callback steps_clicked();
+    callback solver_clicked();
+
+    VerticalLayout {
+        padding: 12px;
+        spacing: 8px;
+        
+        // 1. Mini Mode (Disabled)
+        Rectangle {
+            height: 40px;
+            background: transparent;
+            border-radius: 8px;
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                Text { text: "1. نافذة مصغرة (مغلق)"; color: #475569; vertical-alignment: center; font-size: 14px; }
+            }
+        }
+
+        // 2. Smart History (Active!)
+        TouchArea {
+            height: 40px;
+            clicked => { root.history_clicked(); }
+            Rectangle {
+                background: parent.has-hover ? #0284c730 : #0284c715;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #0284c740;
+                Text { text: "2. السجل الذكي (نشط) 📜"; color: #38bdf8; x: 12px; vertical-alignment: center; font-size: 14px; font-weight: 700; }
+            }
+        }
+
+        // 3. Glass Effects (Disabled)
+        Rectangle {
+            height: 40px;
+            background: transparent;
+            border-radius: 8px;
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                Text { text: "3. تأثيرات زجاجية (مغلق)"; color: #475569; vertical-alignment: center; font-size: 14px; }
+            }
+        }
+
+        // 6. Step-by-Step (Disabled)
+        Rectangle {
+            height: 40px;
+            background: transparent;
+            border-radius: 8px;
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 8px;
+                Text { text: "6. حل بالخطوات"; color: #334155; vertical-alignment: center; font-size: 14px; }
+                Rectangle { horizontal-stretch: 1; }
+                Rectangle {
+                    background: #33415530;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #33415550;
+                    width: 50px;
+                    height: 22px;
+                    vertical-stretch: 0;
+                    Text { text: "قريباً"; color: #64748b; font-size: 11px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                }
+            }
+        }
+
+        // 8. Equation Solver (Disabled)
+        Rectangle {
+            height: 40px;
+            background: transparent;
+            border-radius: 8px;
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 8px;
+                Text { text: "8. حل معادلات"; color: #334155; vertical-alignment: center; font-size: 14px; }
+                Rectangle { horizontal-stretch: 1; }
+                Rectangle {
+                    background: #33415530;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #33415550;
+                    width: 50px;
+                    height: 22px;
+                    vertical-stretch: 0;
+                    Text { text: "قريباً"; color: #64748b; font-size: 11px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                }
+            }
+        }
+    }
+}

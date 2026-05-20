@@ -1,0 +1,267 @@
+import { Sidebar } from "components/sidebar.slint";
+import { StatusBar } from "components/status_bar.slint";
+import { AppDetailModal } from "components/modal.slint";
+import { HomeView } from "views/home_view.slint";
+import { AppsView } from "views/apps_view.slint";
+import { UpdatesView } from "views/updates_view.slint";
+import { AddonsView } from "views/addons_view.slint";
+import { AppInfo, AddonInfo } from "data/types.slint";
+import { AppsData } from "data/apps_data.slint";
+import { LineEdit, Button, ScrollView } from "std-widgets.slint";
+import { DetailView } from "views/detail_view.slint";
+import { StoreColors } from "theme/colors.slint";
+import { StoreTypography } from "theme/typography.slint";
+import { StoreSpacing } from "theme/spacing.slint";
+
+export { AppInfo, AppsData, Sidebar, StatusBar, AppDetailModal, HomeView, AppsView, UpdatesView, AddonsView, AddonInfo, DetailView }
+
+export component AppWindow inherits Window {
+    title: "متجر زقورة للتطبيقات - Zaqura App Store";
+    width: 950px;
+    height: 650px;
+    background: StoreColors.background;
+    
+    // Theme & Model Properties
+    in-out property <bool> dark-mode: true;
+    in-out property <[AppInfo]> apps: AppsData.default_apps;
+    in-out property <[AddonInfo]> addons: [
+        {
+            name: "مانع الإعلانات الفائق (Sumer AdBlocker)",
+            description: "يمنع الإعلانات المزعجة والنوافذ المنبثقة لتصفح آمن وسريع جداً.",
+            version: "v1.2.0",
+            icon: "🛡️",
+            enabled: true,
+            category: "browser",
+        },
+        {
+            name: "المترجم الفوري الذكي (Al-Mutarjim)",
+            description: "ترجمة الصفحات والنصوص فورياً لعدة لغات بضغطة زر واحدة.",
+            version: "v2.0.1",
+            icon: "🌐",
+            enabled: false,
+            category: "browser",
+        },
+        {
+            name: "تأثيرات الواجهة الزجاجية (Glassmorphic Effects)",
+            description: "يضيف لمسات زجاجية شفافة وتأثيرات ضبابية خلابة لنظام التشغيل سومر.",
+            version: "v1.0.5",
+            icon: "✨",
+            enabled: true,
+            category: "system",
+        },
+        {
+            name: "مراقب سرعة الشبكة (Network Speed Monitor)",
+            description: "أداة ذكية مدمجة في شريط المهام لعرض سرعة التحميل والرفع حياً.",
+            version: "v1.1.0",
+            icon: "📊",
+            enabled: false,
+            category: "system",
+        },
+        {
+            name: "السمة الفرعونية الذهبية (Golden Pharaonic Theme)",
+            description: "سمة كاملة مستوحاة من الحضارة الفرعونية القديمة مع ألوان ذهبية ونقوش ملكية.",
+            version: "v3.0.0",
+            icon: "👑",
+            enabled: false,
+            category: "theme",
+        }
+    ];
+    
+    // Navigation state: 0 = Sumer OS, 1 = General Apps, 2 = Updates, 3 = Addons
+    in-out property <int> active-tab: 0;
+
+    // Filters and search
+    in-out property <string> search-query: "";
+    property <string> selected-category: "all";
+    
+    // Sidebar toggle state
+    in-out property <bool> show-sidebar: true;
+    in-out property <length> sidebar-width: root.show-sidebar ? 220px : 0px;
+    
+    // In-window full page detail view state
+    in-out property <bool> show-detail-view: false;
+    in-out property <AppInfo> selected-app;
+    in-out property <int> selected-app-idx;
+    
+    // Callbacks to Rust
+    callback launch-app(string); // app_id -> launches binary in host
+    callback install-app(int); // index
+    callback update-app(int); // index
+    callback update-all-apps(); // Update all apps at once!
+    callback toggle-addon(int); // index
+    callback tab-changed(int); // active tab changed
+    callback search-changed(string); // search text changed
+    
+    in-out property <string> status-msg: "أهلاً بك في متجر زقورة للتطبيقات 🏛️";
+
+    VerticalLayout {
+        // ==========================================
+        // 🌟 TOP BAR (GLOBAL)
+        // ==========================================
+        Rectangle {
+            height: 60px;
+            background: StoreColors.surface;
+            
+            HorizontalLayout {
+                padding-left: StoreSpacing.padding-lg;
+                padding-right: StoreSpacing.padding-xl;
+                alignment: space-between;
+                
+                HorizontalLayout {
+                    spacing: StoreSpacing.space-lg;
+                    alignment: start;
+                    
+                    // Sidebar Toggle Button
+                    Rectangle {
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 6px;
+                        background: ta-toggle.has-hover ? StoreColors.border : StoreColors.surface;
+                        border-width: 1px;
+                        border-color: StoreColors.border-hover;
+                        
+                        Text {
+                            text: "☰";
+                            font-size: StoreTypography.font-size-base;
+                            font-weight: StoreTypography.font-weight-extra-bold;
+                            color: StoreColors.text;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        
+                        ta-toggle := TouchArea {
+                            clicked => { root.show-sidebar = !root.show-sidebar; }
+                        }
+                    }
+                    
+                    // Brand Logo
+                    HorizontalLayout {
+                        spacing: StoreSpacing.space-sm;
+                        Text { text: "🏛️"; font-size: StoreTypography.font-size-xl; vertical-alignment: center; }
+                        Text { text: "زقــورة"; font-size: StoreTypography.font-size-lg; font-weight: StoreTypography.font-weight-extra-bold; color: StoreColors.text; vertical-alignment: center; }
+                    }
+                    
+                    // Separator dot
+                    Text { text: "•"; font-size: StoreTypography.font-size-base; color: StoreColors.text-muted; vertical-alignment: center; }
+                    
+                    // View Title
+                    Text {
+                        text: root.active-tab == 0 ? "برامج سومر OS الرسمية" : (root.active-tab == 1 ? "حقيبة البرمجيات العامة" : (root.active-tab == 2 ? "مركز التحديثات والترقيات" : "مركز الإضافات الحزمية"));
+                        font-size: StoreTypography.font-size-base;
+                        font-weight: StoreTypography.font-weight-bold;
+                        color: StoreColors.text;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Live search bar (Visible in Sumer Apps Tab 0 and General Apps Tab 1)
+                if root.active-tab == 0 || root.active-tab == 1 : LineEdit {
+                    placeholder-text: "بحث سريع...";
+                    width: 200px;
+                    height: 34px;
+                    edited(text) => {
+                        root.search-query = text;
+                        root.search-changed(text);
+                    }
+                }
+            }
+        }
+        
+        // Separator under Top Bar
+        Rectangle { height: 1px; background: StoreColors.border; }
+        
+        // ==========================================
+        // 📂 2. MAIN WORKSPACE (SIDEBAR + VIEWS)
+        // ==========================================
+        HorizontalLayout {
+            Sidebar {
+                width: root.sidebar-width;
+                visible: self.width > 0px;
+                
+                animate width { duration: 180ms; easing: ease-in-out; }
+                
+                active-tab <=> root.active-tab;
+                tab-changed(idx) => { root.tab-changed(idx); }
+            }
+            
+            // Vertical Separator
+            if root.show-sidebar : Rectangle { width: 1px; background: StoreColors.border; }
+            
+            VerticalLayout {
+                // Views container
+                Rectangle {
+                    background: StoreColors.background;
+                
+                if root.show-detail-view : DetailView {
+                    info: root.apps[root.selected-app-idx];
+                    index: root.selected-app-idx;
+                    close => { root.show-detail-view = false; }
+                    action_triggered(idx) => {
+                        if root.apps[root.selected-app-idx].status == "installed" {
+                            root.launch-app(root.apps[root.selected-app-idx].id);
+                        } else if root.apps[root.selected-app-idx].status == "update_available" {
+                            root.update-app(idx);
+                        } else {
+                            root.install-app(idx);
+                        }
+                    }
+                }
+                
+                if !root.show-detail-view : Rectangle {
+                    // Active View Swapper
+                    if root.active-tab == 0 : AppsView {
+                        apps: root.apps;
+                        parent_width: root.width;
+                        sidebar-width: root.sidebar-width;
+                        search-query: root.search-query;
+                        selected-category <=> root.selected-category;
+                        launch_app(id) => { root.launch-app(id); }
+                        install_app(idx) => { root.install-app(idx); }
+                        update_app(idx) => { root.update-app(idx); }
+                        show_detail(idx) => {
+                            root.selected-app-idx = idx;
+                            root.selected-app = root.apps[idx];
+                            root.show-detail-view = true;
+                        }
+                    }
+                    
+                    if root.active-tab == 1 : AppsView {
+                        apps: root.apps;
+                        parent_width: root.width;
+                        sidebar-width: root.sidebar-width;
+                        search-query: root.search-query;
+                        selected-category <=> root.selected-category;
+                        launch_app(id) => { root.launch-app(id); }
+                        install_app(idx) => { root.install-app(idx); }
+                        update_app(idx) => { root.update-app(idx); }
+                        show_detail(idx) => {
+                            root.selected-app-idx = idx;
+                            root.selected-app = root.apps[idx];
+                            root.show-detail-view = true;
+                        }
+                    }
+                    
+                    if root.active-tab == 2 : UpdatesView {
+                        apps: root.apps;
+                        update_app(idx) => { root.update-app(idx); }
+                        update_all_apps() => { root.update-all-apps(); }
+                    }
+                    
+                    if root.active-tab == 3 : AddonsView {
+                        addons <=> root.addons;
+                        toggle_addon(idx) => { root.toggle-addon(idx); }
+                    }
+                }
+            }
+            
+            // Separator under Workspace
+            Rectangle { height: 1px; background: StoreColors.border; }
+            
+            // 3. BOTTOM STATUS BAR
+            StatusBar {
+                status-msg: root.status-msg;
+            }
+        }
+    }
+}
+}

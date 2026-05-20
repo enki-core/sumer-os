@@ -1,0 +1,47 @@
+export component ShortcutsApp inherits Rectangle {
+    in property <bool> dark-mode: true;
+    
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+        alignment: center;
+        
+        Text {
+            text: "⌨️ الاختصارات";
+            font-size: 24px;
+            font-weight: 800;
+            color: root.dark-mode ? #f8fafc : #0f172a;
+            horizontal-alignment: center;
+        }
+        
+        Rectangle {
+            height: 2px;
+            background: root.dark-mode ? #ffffff10 : #00000010;
+            width: 80%;
+        }
+        
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: center;
+            
+            Rectangle {
+                width: 60px; height: 36px; border-radius: 6px;
+                background: root.dark-mode ? #334155 : #e2e8f0;
+                Text { text: "Esc"; color: root.dark-mode ? #f8fafc : #0f172a; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+            }
+            
+            Text {
+                text: "للخروج من وضع ملء الشاشة";
+                font-size: 16px;
+                color: root.dark-mode ? #cbd5e1 : #475569;
+                vertical-alignment: center;
+            }
+        }
+        
+        // You can add more shortcuts here later!
+    }
+}

@@ -1,0 +1,32 @@
+// Sumer OS — Barrel File (نقطة الدخول الوحيدة)
+
+import { AppIcon, Point } from "./core/models.slint";
+import { SumerTheme } from "./core/theme.slint";
+import { SumerDragDropMath } from "./core/drag-drop-manager.slint";
+import { SumerDesktopIcon } from "./components/desktop-icon.slint";
+import { SumerWindowFrame } from "./components/window-frame.slint";
+import { SumerStartMenu } from "./shell/start-menu.slint";
+import { SumerTaskbar } from "./shell/taskbar.slint";
+import { SumerSystemTray } from "./shell/system-tray.slint";
+import { SumerControlCenter } from "./shell/control-center.slint";
+import { SumerDesktopBackground } from "./desktop-layers/desktop-background.slint";
+import { SumerDesktopHeader } from "./desktop-layers/desktop-header.slint";
+import { SumerDesktopIconsLayer } from "./desktop-layers/desktop-icons-layer.slint";
+import { SumerDesktopWindowsLayer } from "./desktop-layers/desktop-windows-layer.slint";
+import { SumerFileManager } from "./apps/file-manager.slint";
+import { WallpapersApp } from "./apps/wallpapers-app.slint";
+import { NotesApp } from "./apps/notes-app.slint";
+import { ClockApp } from "./apps/clock-app.slint";
+import { WidgetsMenu } from "./apps/widgets-menu.slint";
+import { SumerDesktop } from "./shell/desktop.slint";
+
+export {
+    AppIcon, Point, SumerTheme, SumerDragDropMath,
+    SumerDesktopIcon, SumerWindowFrame,
+    SumerStartMenu, SumerTaskbar, SumerSystemTray, SumerControlCenter,
+    SumerDesktopBackground, SumerDesktopHeader,
+    SumerDesktopIconsLayer, SumerDesktopWindowsLayer,
+    SumerFileManager, WallpapersApp,
+    NotesApp, ClockApp, WidgetsMenu,
+    SumerDesktop
+}

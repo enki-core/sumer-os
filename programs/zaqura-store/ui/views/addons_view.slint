@@ -1,0 +1,114 @@
+import { Button, ScrollView } from "std-widgets.slint";
+import { AddonInfo } from "../data/types.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component AddonsView inherits ScrollView {
+    in-out property <[AddonInfo]> addons;
+
+    callback toggle_addon(int);
+
+    padding: StoreSpacing.padding-xl;
+    
+    VerticalLayout {
+        spacing: StoreSpacing.space-xl;
+        alignment: start;
+        
+        Text {
+            text: "🧩 مركز الإضافات والملحقات - Add-ons Center";
+            font-size: StoreTypography.font-size-base;
+            font-weight: StoreTypography.font-weight-bold;
+            color: StoreColors.text;
+        }
+        
+        Text {
+            text: "خصص تجربة استخدام نظام سومر OS المحمول وقم بتفعيل أو تعطيل الإضافات الذكية حياً بنقرة واحدة.";
+            font-size: StoreTypography.font-size-xs;
+            color: StoreColors.text-muted;
+        }
+        
+        // Separator
+        Rectangle { height: 1px; background: StoreColors.border; }
+        
+        // Addons List
+        VerticalLayout {
+            spacing: StoreSpacing.space-sm;
+            
+            for addon[idx] in root.addons : Rectangle {
+                height: 80px;
+                border-radius: 12px;
+                background: StoreColors.surface;
+                border-width: 1px;
+                border-color: addon.enabled ? StoreColors.brand : StoreColors.border;
+                
+                HorizontalLayout {
+                    padding: StoreSpacing.padding-md;
+                    spacing: StoreSpacing.space-lg;
+                    
+                    // Icon container
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 50px;
+                            height: 50px;
+                            border-radius: 10px;
+                            background: StoreColors.background;
+                            border-width: 1px;
+                            border-color: addon.enabled ? StoreColors.brand : StoreColors.border;
+                            
+                            Text {
+                                text: addon.icon;
+                                font-size: 24px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                    
+                    // Title & Description
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: addon.name;
+                                font-size: StoreTypography.font-size-xs;
+                                font-weight: StoreTypography.font-weight-bold;
+                                color: StoreColors.text;
+                            }
+                            
+                            Text {
+                                text: addon.version;
+                                font-size: StoreTypography.font-size-xs;
+                                color: StoreColors.text-muted;
+                                vertical-alignment: center;
+                            }
+                        }
+                        
+                        Text {
+                            text: addon.description;
+                            font-size: StoreTypography.font-size-xs;
+                            color: StoreColors.text-muted;
+                        }
+                    }
+                    
+                    // Stretch to fill remaining space
+                    Rectangle { horizontal-stretch: 1; }
+                    
+                    // Enable/Disable switch/button
+                    VerticalLayout {
+                        alignment: center;
+                        Button {
+                            text: addon.enabled ? "تعطيل 🔴" : "تفعيل 🟢";
+                            width: 80px;
+                            clicked => { root.toggle_addon(idx); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

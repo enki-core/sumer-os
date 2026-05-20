@@ -1,0 +1,31 @@
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component StatusBar inherits Rectangle {
+    in property <string> status-msg;
+    
+    height: 32px;
+    background: StoreColors.surface;
+    
+    HorizontalLayout {
+        padding-left: StoreSpacing.padding-xl;
+        padding-right: StoreSpacing.padding-xl;
+        alignment: space-between;
+        
+        Text {
+            text: root.status-msg;
+            color: StoreColors.success;
+            font-size: StoreTypography.font-size-xs;
+            vertical-alignment: center;
+            font-weight: StoreTypography.font-weight-bold;
+        }
+        
+        Text {
+            text: "حقيبة ألعاب وتطبيقات سومر OS جاهزة! 🏛️";
+            color: StoreColors.text-muted;
+            font-size: StoreTypography.font-size-xs;
+            vertical-alignment: center;
+        }
+    }
+}

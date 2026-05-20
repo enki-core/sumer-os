@@ -1,0 +1,73 @@
+import { TvColors } from "../theme/colors.slint";
+import { TvTypography } from "../theme/typography.slint";
+import { TvSpacing } from "../theme/spacing.slint";
+
+export component VolumeBar inherits Rectangle {
+    in property <int> system-volume: 80;
+    in property <bool> is-visible: false;
+    callback clicked;
+    
+    width: 450px;
+    height: 65px;
+    background: TvColors.panel-glass;
+    border-radius: 20px;
+    border-width: 1.5px;
+    border-color: TvColors.accent-glow;
+    
+    opacity: root.is-visible ? 1.0 : 0.0;
+    visible: self.opacity > 0.0;
+    
+    animate opacity {
+        duration: 250ms;
+        easing: ease-out;
+    }
+    
+    HorizontalLayout {
+        padding: TvSpacing.padding-lg;
+        spacing: TvSpacing.space-lg;
+        alignment: center;
+        
+        Text {
+            text: root.system-volume == 0 ? "🔇" : "🔊";
+            font-size: TvTypography.font-size-lg;
+            vertical-alignment: center;
+        }
+        
+        VerticalLayout {
+            alignment: center;
+            width: 280px;
+            
+            // Progress Track
+            Rectangle {
+                height: 8px;
+                background: TvColors.border-default;
+                border-radius: TvSpacing.radius-sm;
+                
+                // Active Fill
+                Rectangle {
+                    x: 0px;
+                    width: parent.width * Math.max(0, Math.min(100, root.system-volume)) / 100;
+                    height: 100%;
+                    background: @linear-gradient(90deg, TvColors.accent 0%, #00ffcc 100%);
+                    border-radius: TvSpacing.radius-sm;
+                }
+            }
+        }
+        
+        Text {
+            text: root.system-volume + "%";
+            font-family: TvTypography.font-family;
+            font-size: TvTypography.font-size-base;
+            font-weight: TvTypography.font-weight-bold;
+            color: TvColors.accent;
+            vertical-alignment: center;
+            width: 50px;
+        }
+    }
+    
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.clicked(); }
+    }
+}

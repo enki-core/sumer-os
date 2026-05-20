@@ -1,0 +1,525 @@
+import { Button, LineEdit, TextEdit, ScrollView } from "std-widgets.slint";
+
+export struct Note {
+    filename: string,
+    title: string,
+    content: string,
+    is_encrypted: bool,
+}
+
+export component AppWindow inherits Window {
+    title: "مفكرة ألواح - Alwah Notepad";
+    width: 900px;
+    height: 600px;
+    background: dark-mode ? #0b0f19 : #f1f5f9;
+    
+    // Theme and Model Properties
+    in property <bool> dark-mode: true;
+    in property <[Note]> notes: [];
+    in property <int> active-note-idx: -1;
+    in property <string> status-msg: "";
+    
+    // Stats properties (calculated in Rust)
+    in property <int> char-count: 0;
+    in property <int> word-count: 0;
+    
+    // Dynamic Responsive Sidebar Toggle (Auto-collapses on screens narrower than 650px)
+    in-out property <bool> show-sidebar: root.width > 650px;
+    
+    // Line numbers dynamic string
+    in property <string> line-numbers-str: "1";
+    
+    // Active note temporary fields
+    in-out property <string> current-title: "";
+    in-out property <string> current-content: "";
+    
+    // Encryption States
+    in property <bool> is-active-note-encrypted: false;
+    in property <bool> is-active-note-locked: false;
+    in property <string> encryption-error: "";
+    
+    // Callbacks to Rust
+    callback create-note();
+    callback delete-note(int);
+    callback save-note(int, string, string); // index, title, content
+    callback select-note(int); // Tell rust which note is selected
+    callback content-edited(string); // Notify rust to recalculate stats & auto-save
+    callback search-replace(string, string, string) -> string; // content, search, replace
+    callback encrypt-active-note(string); // password
+    callback decrypt-active-note-permanently();
+    callback unlock-active-note(string) -> bool; // password -> success
+    
+    // Search query for notes list
+    property <string> search-query: "";
+
+    // Search & Replace UI properties
+    property <bool> show-search-replace: false;
+    property <string> search-text: "";
+    property <string> replace-text: "";
+
+    // Dialog popups
+    property <bool> show-encrypt-dialog: false;
+    property <string> encrypt-dialog-pwd: "";
+
+    HorizontalLayout {
+        // ==========================================
+        // 📁 SIDEBAR (Cuneiform Notes/Tablets List)
+        // ==========================================
+        if show-sidebar : Rectangle {
+            // Adaptive sidebar width (shrinks slightly on smaller screens)
+            width: root.width > 800px ? 260px : 200px;
+            background: dark-mode ? #111827 : #ffffff;
+            
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+                
+                // Sidebar Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: root.width > 800px ? "📜 ألواح التدوين" : "📜 ألواح";
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: dark-mode ? #ffffff : #111827;
+                        vertical-alignment: center;
+                    }
+                    
+                    // Create New Note Button
+                    Button {
+                        text: "➕ جديد";
+                        clicked => {
+                            root.create-note();
+                        }
+                    }
+                }
+                
+                // Search Box
+                search-input := LineEdit {
+                    placeholder-text: "بحث...";
+                    height: 36px;
+                    edited => {
+                        root.search-query = self.text;
+                    }
+                }
+                
+                // Scrollable List of Notes
+                ScrollView {
+                    VerticalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        
+                        for note[idx] in root.notes : Rectangle {
+                            visible: root.search-query == "" || 
+                                     note.title == "" ||
+                                     note.title == "ملاحظة جديدة" ||
+                                     note.title == root.search-query; 
+                            
+                            height: 64px;
+                            border-radius: 6px;
+                            background: root.active-note-idx == idx 
+                                        ? (dark-mode ? #3b82f6 : #dbeafe) 
+                                        : (ta.has-hover ? (dark-mode ? #1f2937 : #f3f4f6) : transparent);
+                            border-width: 1px;
+                            border-color: root.active-note-idx == idx
+                                          ? #3b82f6
+                                          : (dark-mode ? #374151 : #e5e7eb);
+                            
+                            ta := TouchArea {
+                                clicked => {
+                                    root.select-note(idx);
+                                }
+                            }
+                            
+                            VerticalLayout {
+                                padding: 10px;
+                                spacing: 4px;
+                                alignment: center;
+                                
+                                Text {
+                                    text: (note.is_encrypted ? "🔒 " : "") + (note.title == "" ? "لوح فارغ" : note.title);
+                                    font-weight: 700;
+                                    color: root.active-note-idx == idx 
+                                           ? (dark-mode ? #ffffff : #1e40af)
+                                           : (dark-mode ? #e5e7eb : #374151);
+                                    font-size: 14px;
+                                    overflow: elide;
+                                }
+                                
+                                Text {
+                                    text: note.is_encrypted ? "[مشفر]" : (note.content == "" ? "فارغ..." : note.content);
+                                    color: root.active-note-idx == idx
+                                           ? (dark-mode ? #93c5fd : #2563eb)
+                                           : (dark-mode ? #9ca3af : #6b7280);
+                                    font-size: 12px;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Delete Active Note Panel (visible if a note is selected)
+                if root.active-note-idx >= 0 : Button {
+                    text: root.width > 800px ? "🗑️ حذف اللوح الحالي" : "🗑️ حذف";
+                    clicked => {
+                        root.delete-note(root.active-note-idx);
+                    }
+                }
+            }
+        }
+        
+        // Vertical Separator Line instead of single-sided border
+        if show-sidebar : Rectangle {
+            width: 1px;
+            background: dark-mode ? #1f2937 : #e5e7eb;
+        }
+        
+        // ==========================================
+        // ✍️ WORKSPACE (Toolbar, Editor & Status)
+        // ==========================================
+        VerticalLayout {
+            // 1. TOOLBAR with 100% Adaptive Elements!
+            Rectangle {
+                height: 56px;
+                background: dark-mode ? #111827 : #ffffff;
+                
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    spacing: root.width > 600px ? 10px : 6px;
+                    alignment: start;
+                    
+                    // Sidebar Toggle Button (Text shortens dynamically depending on window width)
+                    Button {
+                        text: root.width > 700px 
+                              ? (root.show-sidebar ? "📂 إخفاء القائمة" : "📂 عرض القائمة") 
+                              : "📂";
+                        clicked => {
+                            root.show-sidebar = !root.show-sidebar;
+                        }
+                    }
+                    
+                    // Note Title Input (Width changes dynamically based on width)
+                    title-input := LineEdit {
+                        placeholder-text: "العنوان...";
+                        text: root.current-title;
+                        width: root.width > 800px ? 180px : (root.width > 500px ? 120px : 80px);
+                        height: 36px;
+                        enabled: root.active-note-idx >= 0 && !root.is-active-note-locked;
+                        edited => {
+                            root.current-title = self.text;
+                        }
+                    }
+                    
+                    // Search & Replace Toggle Button (Adapts dynamically to icon or text)
+                    if root.active-note-idx >= 0 && !root.is-active-note-locked : Button {
+                        text: root.width > 750px ? "🔍 بحث واستبدال" : "🔍";
+                        clicked => {
+                            root.show-search-replace = !root.show-search-replace;
+                        }
+                    }
+                    
+                    // Save Button (Adapts dynamically to icon or text)
+                    if root.active-note-idx >= 0 && !root.is-active-note-locked : Button {
+                        text: root.width > 750px ? "💾 حفظ يدوي" : "💾";
+                        clicked => {
+                            root.save-note(root.active-note-idx, root.current-title, root.current-content);
+                        }
+                    }
+                    
+                    // Encryption Actions (Adapts dynamically to icon or text)
+                    if root.active-note-idx >= 0 : HorizontalLayout {
+                        spacing: 6px;
+                        if !root.is-active-note-encrypted : Button {
+                            text: root.width > 750px ? "🔒 تشفير اللوح" : "🔒";
+                            clicked => {
+                                root.show-encrypt-dialog = true;
+                            }
+                        }
+                        if root.is-active-note-encrypted && !root.is-active-note-locked : Button {
+                            text: root.width > 750px ? "🔓 إزالة التشفير" : "🔓";
+                            clicked => {
+                                root.decrypt-active-note-permanently();
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Horizontal Separator Line under Toolbar
+            Rectangle {
+                height: 1px;
+                background: dark-mode ? #1f2937 : #e5e7eb;
+            }
+            
+            // Search & Replace Collapsible Panel
+            if root.show-search-replace && root.active-note-idx >= 0 && !root.is-active-note-locked : Rectangle {
+                height: 48px;
+                background: dark-mode ? #1f2937 : #f3f4f6;
+                
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 12px;
+                    alignment: start;
+                    
+                    LineEdit {
+                        placeholder-text: "البحث...";
+                        width: root.width > 600px ? 150px : 80px;
+                        height: 30px;
+                        edited => { root.search-text = self.text; }
+                    }
+                    LineEdit {
+                        placeholder-text: "الاستبدال...";
+                        width: root.width > 600px ? 150px : 80px;
+                        height: 30px;
+                        edited => { root.replace-text = self.text; }
+                    }
+                    Button {
+                        text: root.width > 600px ? "🔄 استبدال الكل" : "🔄";
+                        clicked => {
+                            root.current-content = root.search-replace(root.current-content, root.search-text, root.replace-text);
+                            root.content-edited(root.current-content);
+                        }
+                    }
+                    Button {
+                        text: "❌";
+                        clicked => {
+                            root.show-search-replace = false;
+                        }
+                    }
+                }
+            }
+            
+            if root.show-search-replace && root.active-note-idx >= 0 && !root.is-active-note-locked : Rectangle {
+                height: 1px;
+                background: dark-mode ? #1f2937 : #e5e7eb;
+            }
+            
+            // 2. EDITOR SPACE
+            Rectangle {
+                background: dark-mode ? #0f172a : #f8fafc;
+                
+                // Case A: No note selected
+                if root.active-note-idx < 0 : VerticalLayout {
+                    alignment: center;
+                    spacing: 16px;
+                    
+                    Text {
+                        text: "📜 مفكرة ألواح";
+                        font-size: root.width > 500px ? 28px : 20px;
+                        font-weight: 800;
+                        color: dark-mode ? #4b5563 : #9ca3af;
+                        horizontal-alignment: center;
+                    }
+                    
+                    Text {
+                        text: "اختر لوحاً من القائمة الجانبية أو أنشئ لوحاً جديداً للبدء بالتدوين.";
+                        font-size: root.width > 500px ? 14px : 12px;
+                        color: dark-mode ? #6b7280 : #9ca3af;
+                        horizontal-alignment: center;
+                    }
+                }
+                
+                // Case B: Note is locked (Encrypted) - Adaptive Modal Width!
+                if root.active-note-idx >= 0 && root.is-active-note-locked : VerticalLayout {
+                    alignment: center;
+                    spacing: 20px;
+                    padding: 20px;
+                    
+                    Rectangle {
+                        // Dynamically shrinks on small screens so it never overflows!
+                        width: root.width > 460px ? 400px : root.width - 40px;
+                        height: 250px;
+                        background: dark-mode ? #111827 : #ffffff;
+                        border-radius: 8px;
+                        border-width: 1px;
+                        border-color: dark-mode ? #1f2937 : #e5e7eb;
+                        
+                        VerticalLayout {
+                            padding: 24px;
+                            spacing: 16px;
+                            alignment: center;
+                            
+                            Text {
+                                text: "🔒 هذا اللوح مشفر ومحمي";
+                                font-size: 18px;
+                                font-weight: 700;
+                                color: dark-mode ? #ffffff : #111827;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "الرجاء إدخال كلمة المرور لفك تشفير المحتوى:";
+                                font-size: 13px;
+                                color: dark-mode ? #9ca3af : #6b7280;
+                                horizontal-alignment: center;
+                            }
+                            
+                            pwd-input := LineEdit {
+                                placeholder-text: "كلمة المرور...";
+                                input-type: password;
+                                height: 36px;
+                                horizontal-alignment: center;
+                            }
+                            
+                            if root.encryption-error != "" : Text {
+                                text: root.encryption-error;
+                                color: #ef4444;
+                                font-size: 12px;
+                                horizontal-alignment: center;
+                            }
+                            
+                            Button {
+                                text: "🔓 فك قفل اللوح";
+                                height: 36px;
+                                clicked => {
+                                    if root.unlock-active-note(pwd-input.text) {
+                                        pwd-input.text = "";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Case C: Standard editor (Unlocked/Decrypted note) with beautiful MONOSPACE LINE NUMBERS Gutter!
+                if root.active-note-idx >= 0 && !root.is-active-note-locked : HorizontalLayout {
+                    padding: 4px;
+                    
+                    // A. LINE NUMBERS GUTTER (Takes fixed minimal width)
+                    Rectangle {
+                        width: 45px;
+                        background: dark-mode ? #1e293b : #e2e8f0;
+                        border-radius: 4px;
+                        
+                        VerticalLayout {
+                            padding-top: 13px;
+                            padding-bottom: 12px;
+                            alignment: start;
+                            
+                            Text {
+                                text: root.line-numbers-str;
+                                font-size: 14px;
+                                color: dark-mode ? #64748b : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: top;
+                            }
+                        }
+                    }
+                    
+                    // Thin Separator line between gutter and editor
+                    Rectangle {
+                        width: 1px;
+                        background: dark-mode ? #334155 : #cbd5e1;
+                    }
+                    
+                    // B. TEXT EDIT AREA (Fills 100% of all remaining screen space)
+                    editor-area := TextEdit {
+                        text: root.current-content;
+                        enabled: true;
+                        font-size: 14px;
+                        edited => {
+                            root.current-content = self.text;
+                            root.content-edited(self.text);
+                        }
+                    }
+                }
+                
+                // Case D: Encryption Setup Overlay - Adaptive modal width
+                if root.show-encrypt-dialog : Rectangle {
+                    background: #000000bb;
+                    
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: root.width > 420px ? 380px : root.width - 40px;
+                                height: 220px;
+                                background: dark-mode ? #111827 : #ffffff;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: dark-mode ? #374151 : #e5e7eb;
+                                
+                                VerticalLayout {
+                                    padding: 20px;
+                                    spacing: 14px;
+                                    alignment: center;
+                                    
+                                    Text {
+                                        text: "🔒 تشفير وحماية اللوح الحالي";
+                                        font-size: 16px;
+                                        font-weight: 700;
+                                        color: dark-mode ? #ffffff : #111827;
+                                    }
+                                    
+                                    encrypt-pwd := LineEdit {
+                                        placeholder-text: "أدخل كلمة مرور قوية...";
+                                        input-type: password;
+                                        height: 36px;
+                                    }
+                                    
+                                    HorizontalLayout {
+                                        spacing: 12px;
+                                        Button {
+                                            text: "🔒 تشفير";
+                                            clicked => {
+                                                if encrypt-pwd.text != "" {
+                                                    root.encrypt-active-note(encrypt-pwd.text);
+                                                    encrypt-pwd.text = "";
+                                                    root.show-encrypt-dialog = false;
+                                                }
+                                            }
+                                        }
+                                        Button {
+                                            text: "إلغاء";
+                                            clicked => {
+                                                encrypt-pwd.text = "";
+                                                root.show-encrypt-dialog = false;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Horizontal Separator Line above Status Bar
+            Rectangle {
+                height: 1px;
+                background: dark-mode ? #1f2937 : #e5e7eb;
+            }
+            
+            // 3. STATUS BAR
+            Rectangle {
+                height: 32px;
+                background: dark-mode ? #111827 : #f1f5f9;
+                
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    alignment: space-between;
+                    
+                    // Left Status Message (Save confirmation, etc.)
+                    Text {
+                        text: root.status-msg;
+                        color: #10b981;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                    
+                    // Right stats (Character and Word Counts)
+                    Text {
+                        text: "الحروف: " + root.char-count + " | الكلمات: " + root.word-count;
+                        color: dark-mode ? #9ca3af : #6b7280;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

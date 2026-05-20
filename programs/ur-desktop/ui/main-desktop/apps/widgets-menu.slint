@@ -1,0 +1,49 @@
+export component WidgetsMenu inherits Rectangle {
+    in property <bool> dark-mode: true;
+    callback notes-clicked;
+    callback clock-clicked;
+    
+    width: 150px;
+    height: 100px;
+    background: root.dark-mode ? #1e293be6 : #ffffffe6;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: root.dark-mode ? #334155 : #e2e8f0;
+    
+    VerticalLayout {
+        padding: 8px;
+        spacing: 4px;
+        
+        // Notes Button
+        Rectangle {
+            height: 40px;
+            border-radius: 6px;
+            background: ta-notes.has-hover ? (root.dark-mode ? #334155 : #f1f5f9) : transparent;
+            animate background { duration: 150ms; }
+            HorizontalLayout {
+                padding-left: 8px;
+                spacing: 8px;
+                alignment: start;
+                Text { text: "📝"; vertical-alignment: center; }
+                Text { text: "ملاحظات"; color: root.dark-mode ? #ffffff : #000000; vertical-alignment: center; }
+            }
+            ta-notes := TouchArea { clicked => { root.notes-clicked(); } }
+        }
+        
+        // Clock Button
+        Rectangle {
+            height: 40px;
+            border-radius: 6px;
+            background: ta-clock.has-hover ? (root.dark-mode ? #334155 : #f1f5f9) : transparent;
+            animate background { duration: 150ms; }
+            HorizontalLayout {
+                padding-left: 8px;
+                spacing: 8px;
+                alignment: start;
+                Text { text: "🕒"; vertical-alignment: center; }
+                Text { text: "ساعة"; color: root.dark-mode ? #ffffff : #000000; vertical-alignment: center; }
+            }
+            ta-clock := TouchArea { clicked => { root.clock-clicked(); } }
+        }
+    }
+}

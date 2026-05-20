@@ -1,0 +1,11 @@
+**/target/
+**/target-alpine/
+**/.cache/
+**/gui_rootfs/usr/lib/libLLVM*
+*.iso
+*.img
+*.cpio.gz
+bzImage
+build_tmp/
+.DS_Store
+**/*.log

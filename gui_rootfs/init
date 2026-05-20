@@ -1,0 +1,106 @@
+#!/bin/sh
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /run
+
+# Start device manager for libinput
+echo "[+] Starting udevd..." > /dev/ttyS0
+/sbin/udevd --daemon
+
+# Load Input and USB drivers (all host controllers)
+echo "[*] Loading input and USB modules..." > /dev/ttyS0
+/sbin/modprobe psmouse > /dev/ttyS0 2>&1
+/sbin/modprobe uhci-hcd > /dev/ttyS0 2>&1
+/sbin/modprobe ohci-pci > /dev/ttyS0 2>&1
+/sbin/modprobe ehci-pci > /dev/ttyS0 2>&1
+/sbin/modprobe xhci-pci > /dev/ttyS0 2>&1
+/sbin/modprobe usbhid > /dev/ttyS0 2>&1
+
+
+/sbin/udevadm trigger
+/sbin/udevadm settle
+
+echo "==========================================" > /dev/ttyS0
+echo "   SUMER OS - FRAMEBUFFER MODE ACTIVE     " > /dev/ttyS0
+echo "==========================================" > /dev/ttyS0
+
+# ==================================================
+# 💾 SUMER OS PERSISTENCE LAYER (OverlayFS)
+# ==================================================
+echo "[*] Checking for Persistence Drive (Label: SUMER-DATA)..." > /dev/ttyS0
+/sbin/modprobe ext4 > /dev/ttyS0 2>&1
+/sbin/modprobe overlay > /dev/ttyS0 2>&1
+
+# Some USB drives might take a second to register after settle
+sleep 2
+
+PERSIST_DEV="/dev/disk/by-label/SUMER-DATA"
+if [ -e "$PERSIST_DEV" ]; then
+    echo "[!] Persistence Drive Found! Mounting..." > /dev/ttyS0
+    mkdir -p /mnt/persist
+    if mount -t ext4 "$PERSIST_DEV" /mnt/persist; then
+        echo "[+] Persistence mounted successfully." > /dev/ttyS0
+        
+        # Overlay /root (Home Directory for GUI)
+        mkdir -p /mnt/persist/root_upper /mnt/persist/root_work
+        echo "[*] Activating OverlayFS for /root..." > /dev/ttyS0
+        mount -t overlay overlay -o lowerdir=/root,upperdir=/mnt/persist/root_upper,workdir=/mnt/persist/root_work /root
+        
+        # Overlay /etc (System Configurations)
+        mkdir -p /mnt/persist/etc_upper /mnt/persist/etc_work
+        echo "[*] Activating OverlayFS for /etc..." > /dev/ttyS0
+        mount -t overlay overlay -o lowerdir=/etc,upperdir=/mnt/persist/etc_upper,workdir=/mnt/persist/etc_work /etc
+        
+        echo "[!] Persistence Layer Active." > /dev/ttyS0
+    else
+        echo "[!] Failed to mount Persistence Drive." > /dev/ttyS0
+    fi
+else
+    echo "[*] No Persistence Drive found. Running in Live Mode." > /dev/ttyS0
+fi
+# ==================================================
+
+
+# Try to load display drivers
+echo "[*] Attempting to load graphics modules..." > /dev/ttyS0
+/sbin/modprobe bochs_drm > /dev/ttyS0 2>&1
+/sbin/modprobe bochs > /dev/ttyS0 2>&1
+/sbin/modprobe virtio-gpu > /dev/ttyS0 2>&1
+/sbin/modprobe virtio_gpu > /dev/ttyS0 2>&1
+
+if [ ! -e /dev/fb0 ]; then
+    echo "[!] fb0 not found, listing available DRM modules:" > /dev/ttyS0
+    find /lib/modules -name "*drm*" > /dev/ttyS0
+    find /lib/modules -name "*gpu*" > /dev/ttyS0
+fi
+
+echo "[*] Waiting for /dev/fb0..." > /dev/ttyS0
+for i in 1 2 3 4 5; do
+    if [ -e /dev/fb0 ]; then
+        echo "[!] Screen Found!" > /dev/ttyS0
+        break
+    fi
+    sleep 1
+done
+
+# Start D-Bus
+mkdir -p /run/dbus
+dbus-daemon --system --fork
+
+# Start seatd for KMS/DRM access
+echo "[+] Starting seatd..." > /dev/ttyS0
+seatd -g root &
+sleep 1
+export SEATD_SOCK=/run/seatd.sock
+
+# Launch UI
+export SLINT_BACKEND=linuxkms-femtovg
+export SLINT_FULLSCREEN=1
+echo "[+] Launching Sumer UI..." > /dev/ttyS0
+/usr/bin/sumer-ui >> /dev/ttyS0 2>&1 || {
+    echo "[!] UI Failed. Dropping to Recovery Shell." > /dev/ttyS0
+    sh
+}

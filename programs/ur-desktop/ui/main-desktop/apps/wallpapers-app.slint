@@ -1,0 +1,59 @@
+import { Wallpaper01, Wallpaper02, Wallpaper03, Wallpaper04, Wallpaper05, Wallpaper06, Wallpaper07, Wallpaper08, Wallpaper09, Wallpaper10, Wallpaper11, Wallpaper12, Wallpaper13, Wallpaper14, Wallpaper15, Wallpaper16, Wallpaper17, Wallpaper18, Wallpaper19, Wallpaper20 } from "../wallpapers/index.slint";
+
+export component WallpapersApp inherits Rectangle {
+    in property <bool> dark-mode;
+    callback close-clicked;
+    callback wallpaper-selected(int);
+    callback clear-wallpaper();
+    
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    
+    VerticalLayout {
+        padding: 16px;
+        spacing: 16px;
+        
+        Flickable {
+            viewport-height: 800px;
+            VerticalLayout {
+                spacing: 16px;
+                padding-bottom: 16px;
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper01 { width: 100%; height: 100%; is-preview: true; } ta0 := TouchArea { clicked => { root.wallpaper-selected(0); } } Rectangle { background: ta0.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper02 { width: 100%; height: 100%; is-preview: true; } ta1 := TouchArea { clicked => { root.wallpaper-selected(1); } } Rectangle { background: ta1.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper03 { width: 100%; height: 100%; is-preview: true; } ta2 := TouchArea { clicked => { root.wallpaper-selected(2); } } Rectangle { background: ta2.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper04 { width: 100%; height: 100%; is-preview: true; } ta3 := TouchArea { clicked => { root.wallpaper-selected(3); } } Rectangle { background: ta3.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper05 { width: 100%; height: 100%; is-preview: true; } ta4 := TouchArea { clicked => { root.wallpaper-selected(4); } } Rectangle { background: ta4.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper06 { width: 100%; height: 100%; is-preview: true; } ta5 := TouchArea { clicked => { root.wallpaper-selected(5); } } Rectangle { background: ta5.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper07 { width: 100%; height: 100%; is-preview: true; } ta6 := TouchArea { clicked => { root.wallpaper-selected(6); } } Rectangle { background: ta6.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper08 { width: 100%; height: 100%; is-preview: true; } ta7 := TouchArea { clicked => { root.wallpaper-selected(7); } } Rectangle { background: ta7.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper09 { width: 100%; height: 100%; is-preview: true; } ta8 := TouchArea { clicked => { root.wallpaper-selected(8); } } Rectangle { background: ta8.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper10 { width: 100%; height: 100%; is-preview: true; } ta9 := TouchArea { clicked => { root.wallpaper-selected(9); } } Rectangle { background: ta9.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper11 { width: 100%; height: 100%; is-preview: true; } ta10 := TouchArea { clicked => { root.wallpaper-selected(10); } } Rectangle { background: ta10.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper12 { width: 100%; height: 100%; is-preview: true; } ta11 := TouchArea { clicked => { root.wallpaper-selected(11); } } Rectangle { background: ta11.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper13 { width: 100%; height: 100%; is-preview: true; } ta12 := TouchArea { clicked => { root.wallpaper-selected(12); } } Rectangle { background: ta12.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper14 { width: 100%; height: 100%; is-preview: true; } ta13 := TouchArea { clicked => { root.wallpaper-selected(13); } } Rectangle { background: ta13.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper15 { width: 100%; height: 100%; is-preview: true; } ta14 := TouchArea { clicked => { root.wallpaper-selected(14); } } Rectangle { background: ta14.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper16 { width: 100%; height: 100%; is-preview: true; } ta15 := TouchArea { clicked => { root.wallpaper-selected(15); } } Rectangle { background: ta15.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper17 { width: 100%; height: 100%; is-preview: true; } ta16 := TouchArea { clicked => { root.wallpaper-selected(16); } } Rectangle { background: ta16.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper18 { width: 100%; height: 100%; is-preview: true; } ta17 := TouchArea { clicked => { root.wallpaper-selected(17); } } Rectangle { background: ta17.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper19 { width: 100%; height: 100%; is-preview: true; } ta18 := TouchArea { clicked => { root.wallpaper-selected(18); } } Rectangle { background: ta18.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; clip: true; Wallpaper20 { width: 100%; height: 100%; is-preview: true; } ta19 := TouchArea { clicked => { root.wallpaper-selected(19); } } Rectangle { background: ta19.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+
+                HorizontalLayout { spacing: 16px;
+                    Rectangle { width: 170px; height: 110px; border-radius: 8px; background: root.dark-mode ? #1F2937 : #F3F4F6; Text { text: "الافتراضي"; horizontal-alignment: center; vertical-alignment: center; color: root.dark-mode ? #fff : #000; } ta_def := TouchArea { clicked => { root.clear-wallpaper(); } } Rectangle { background: ta_def.has-hover ? #ffffff20 : transparent; animate background { duration: 150ms; } } }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,33 @@
+export component CalcDisplay inherits Rectangle {
+    in property <string> expression;
+    in property <string> result;
+    in property <bool> mini_mode: false;
+    
+    border-radius: 24px;
+    background: #ffffff08;
+    border-width: 1px;
+    border-color: #ffffff15;
+    
+    VerticalLayout {
+        padding: 20px;
+        alignment: end;
+        spacing: 8px;
+        
+        Text {
+            text: root.expression == "" ? " " : root.expression;
+            font-size: root.mini_mode ? 14px : 20px;
+            color: #94a3b8;
+            horizontal-alignment: right;
+            wrap: word-wrap;
+        }
+        
+        Text {
+            text: root.result;
+            font-size: root.mini_mode ? 28px : 44px;
+            font-weight: 700;
+            color: #ffffff;
+            horizontal-alignment: right;
+            overflow: elide;
+        }
+    }
+}

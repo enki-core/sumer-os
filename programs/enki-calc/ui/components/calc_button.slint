@@ -1,0 +1,31 @@
+export component CalcButton inherits Rectangle {
+    in property <string> text;
+    in property <color> text-color: white;
+    in property <color> base-color: #ffffff10;
+    in property <bool> is-action: false;
+    in property <bool> is-operator: false;
+    in property <length> font-size: root.is-operator ? 28px : 24px;
+    
+    callback clicked;
+    
+    border-radius: 20px;
+    background: ta.pressed ? base-color.darker(0.3) : ta.has-hover ? base-color.brighter(0.2) : base-color;
+    
+    border-width: 1px;
+    border-color: #ffffff20;
+    
+    animate background { duration: 150ms; }
+    
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+    }
+    
+    Text {
+        text: root.text;
+        font-size: root.font-size;
+        color: root.text-color;
+        font-weight: root.is-operator ? 700 : 500;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+    }
+}

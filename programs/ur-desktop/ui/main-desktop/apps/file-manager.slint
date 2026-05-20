@@ -1,0 +1,145 @@
+export component SumerFileManager inherits Rectangle {
+    in property <bool> dark-mode: true;
+    
+    property <string> current-path: "🏠 الرئيسية";
+    property <string> active-folder: "شفرات بابل";
+    property <string> file-preview: "اختر ملفاً لعرض محتواه السومري المسماري...";
+    
+    background: transparent;
+    
+    HorizontalLayout {
+        spacing: 12px;
+        
+        // Files Sidebar
+        Rectangle {
+            width: 140px;
+            height: 100%;
+            background: root.dark-mode ? #ffffff04 : #00000003;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: root.dark-mode ? #ffffff08 : #00000008;
+            
+            VerticalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                padding-top: 12px;
+                spacing: 12px;
+                alignment: start;
+                
+                Rectangle {
+                    height: 28px;
+                    border-radius: 6px;
+                    background: root.current-path == "🏠 الرئيسية" ? (root.dark-mode ? #38bdf830 : #0284c720) : transparent;
+                    Text { x: 8px; text: "🏠 الرئيسية"; font-size: 13px; font-weight: 800; color: root.dark-mode ? #38bdf8 : #0284c7; vertical-alignment: center; }
+                    TouchArea { clicked => { root.current-path = "🏠 الرئيسية"; root.file-preview = "اختر ملفاً لعرض محتواه السومري المسماري..."; } }
+                }
+                Rectangle {
+                    height: 28px;
+                    border-radius: 6px;
+                    background: root.current-path == "📁 الوثائق" ? (root.dark-mode ? #38bdf830 : #0284c720) : transparent;
+                    Text { x: 8px; text: "📁 الوثائق"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #94a3b8 : #475569; vertical-alignment: center; }
+                    TouchArea { clicked => { root.current-path = "📁 الوثائق"; root.file-preview = "وثائق شريعة حمورابي وسجلات الملك لوغال زاغيسي..."; } }
+                }
+                Rectangle {
+                    height: 28px;
+                    border-radius: 6px;
+                    background: root.current-path == "📥 التنزيلات" ? (root.dark-mode ? #38bdf830 : #0284c720) : transparent;
+                    Text { x: 8px; text: "📥 التنزيلات"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #94a3b8 : #475569; vertical-alignment: center; }
+                    TouchArea { clicked => { root.current-path = "📥 التنزيلات"; root.file-preview = "تم تنزيل 40 لوح طيني من مكتبة نينوى العظمى."; } }
+                }
+                Rectangle {
+                    height: 28px;
+                    border-radius: 6px;
+                    background: root.current-path == "🖼️ معرض الصور" ? (root.dark-mode ? #38bdf830 : #0284c720) : transparent;
+                    Text { x: 8px; text: "🖼️ معرض الصور"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #94a3b8 : #475569; vertical-alignment: center; }
+                    TouchArea { clicked => { root.current-path = "🖼️ معرض الصور"; root.file-preview = "صور بوابة عشتار والزقورة الكبرى في أور."; } }
+                }
+                Rectangle {
+                    height: 28px;
+                    border-radius: 6px;
+                    background: root.current-path == "💾 قرص النظام (C:)" ? (root.dark-mode ? #38bdf830 : #0284c720) : transparent;
+                    Text { x: 8px; text: "💾 قرص النظام (C:)"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #94a3b8 : #475569; vertical-alignment: center; }
+                    TouchArea { clicked => { root.current-path = "💾 قرص النظام (C:)"; root.file-preview = "سعة القرص: 1000 لوح طيني. المساحة الحرة: 450 لوح."; } }
+                }
+            }
+        }
+        
+        // Files Grid
+        VerticalLayout {
+            spacing: 16px;
+            alignment: start;
+            padding-top: 4px;
+            
+            Text {
+                text: "المسار الحالي: " + root.current-path;
+                font-size: 14px;
+                font-weight: 800;
+                color: root.dark-mode ? #e2e8f0 : #1e293b;
+            }
+            
+            HorizontalLayout {
+                spacing: 24px;
+                
+                // Folder 1
+                Rectangle {
+                    width: 90px;
+                    height: 80px;
+                    border-radius: 8px;
+                    background: root.active-folder == "شفرات بابل" ? (root.dark-mode ? #ffffff15 : #00000010) : transparent;
+                    VerticalLayout {
+                        spacing: 6px;
+                        alignment: center;
+                        Text { text: "📁"; font-size: 36px; horizontal-alignment: center; }
+                        Text { text: "شفرات بابل"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #f1f5f9 : #1e293b; horizontal-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.active-folder = "شفرات بابل"; root.file-preview = "[شفرة بابل 101]: قانون حمورابي المادة 1: إذا اتهم رجل رجلاً بحق وألقى عليه تهمة ولم يثبتها، يُعدم المتهم."; } }
+                }
+                // Folder 2
+                Rectangle {
+                    width: 90px;
+                    height: 80px;
+                    border-radius: 8px;
+                    background: root.active-folder == "نصوص مسمارية" ? (root.dark-mode ? #ffffff15 : #00000010) : transparent;
+                    VerticalLayout {
+                        spacing: 6px;
+                        alignment: center;
+                        Text { text: "📁"; font-size: 36px; horizontal-alignment: center; }
+                        Text { text: "نصوص مسمارية"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #f1f5f9 : #1e293b; horizontal-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.active-folder = "نصوص مسمارية"; root.file-preview = "[لوح مسماري]: ملحمة جلجامش، اللوح الحادي عشر: قصة الطوفان العظيم وبحث الإنسان عن الخلود."; } }
+                }
+                // Folder 3
+                Rectangle {
+                    width: 90px;
+                    height: 80px;
+                    border-radius: 8px;
+                    background: root.active-folder == "الأرشيف الفخاري" ? (root.dark-mode ? #ffffff15 : #00000010) : transparent;
+                    VerticalLayout {
+                        spacing: 6px;
+                        alignment: center;
+                        Text { text: "📁"; font-size: 36px; horizontal-alignment: center; }
+                        Text { text: "الأرشيف الفخاري"; font-size: 12px; font-weight: 700; color: root.dark-mode ? #f1f5f9 : #1e293b; horizontal-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.active-folder = "الأرشيف الفخاري"; root.file-preview = "[سجل فخاري]: جرد محاصيل الشعير والقمح الموردة لمعبد إينانا في مدينة أوروك."; } }
+                }
+            }
+            
+            // File Preview Box
+            Rectangle {
+                height: 80px;
+                border-radius: 8px;
+                background: root.dark-mode ? #ffffff08 : #00000005;
+                border-width: 1px;
+                border-color: root.dark-mode ? #ffffff15 : #00000010;
+                padding: 12px;
+                
+                Text {
+                    text: root.file-preview;
+                    font-size: 12px;
+                    color: root.dark-mode ? #38bdf8 : #0284c7;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+}

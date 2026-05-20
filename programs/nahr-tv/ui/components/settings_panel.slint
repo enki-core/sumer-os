@@ -1,0 +1,872 @@
+import { ScrollView } from "std-widgets.slint";
+import { TvColors } from "../theme/colors.slint";
+import { TvTypography } from "../theme/typography.slint";
+import { TvSpacing } from "../theme/spacing.slint";
+
+export component IosToggle inherits Rectangle {
+    in property <bool> checked: false;
+    in property <bool> is-focused: false;
+    in property <color> active-color: TvColors.accent;
+    
+    width: 50px;
+    height: 30px;
+    border-radius: 15px;
+    background: checked ? active-color : TvColors.settings-bg;
+    border-width: is-focused ? 2px : 0px;
+    border-color: TvColors.focus-border;
+    
+    animate background {
+        duration: 250ms;
+        easing: ease-in-out;
+    }
+    
+    Rectangle {
+        width: 26px;
+        height: 26px;
+        border-radius: 13px;
+        background: TvColors.text-primary;
+        x: checked ? parent.width - self.width - 2px : 2px;
+        y: 2px;
+        
+        drop-shadow-color: #00000040;
+        drop-shadow-blur: 4px;
+        drop-shadow-offset-y: 2px;
+        
+        animate x {
+            duration: 250ms;
+            easing: cubic-bezier(0.3, 0.8, 0.3, 1.0);
+        }
+    }
+}
+
+export component SettingsPanel inherits Rectangle {
+    in-out property <string> settings-page: "main";
+    in property <bool> show-settings: false;
+    in-out property <int> settings-focused-row: 0;
+    in-out property <int> subpage-focused-row: 0; // wifi-focused-row remapped here
+    
+    // Live system states synced with app
+    in-out property <int> system-volume: 80;
+    in-out property <bool> wifi-enabled: true;
+    in-out property <bool> airplane-mode: false;
+    in-out property <bool> bluetooth-enabled: true;
+    in-out property <bool> bluetooth-connecting: false;
+    in-out property <string> bluetooth-connection-status: "";
+    in-out property <int> system-brightness: 90;
+    in-out property <string> perf-mode: "Supernova 🔴";
+    in-out property <bool> camera-enabled: true;
+    in-out property <bool> mic-enabled: true;
+    in-out property <bool> location-enabled: true;
+    in-out property <int> screensaver-timeout: 30;
+    in-out property <int> screensaver-image-mode: -1;
+    in-out property <string> screensaver-sub-page: "main";
+    
+    callback close-requested;
+    callback volume-clicked;
+    callback brightness-clicked;
+    callback wifi-network-clicked(string);
+    callback bluetooth-device-clicked(string);
+    callback settings-page-changed(string);
+    
+    x: root.show-settings ? 0px : -320px;
+    y: 0px;
+    width: 320px;
+    height: 100%;
+    background: TvColors.panel-glass;
+    border-width: root.show-settings ? 1.5px : 0px;
+    border-color: TvColors.glass-border;
+    z: 10;
+    
+    animate x {
+        duration: 250ms;
+        easing: ease-in-out;
+    }
+    
+    animate border-width {
+        duration: 220ms;
+        easing: ease-out;
+    }
+    
+    VerticalLayout {
+        padding-left: TvSpacing.padding-xxl;
+        padding-right: TvSpacing.padding-xxl;
+        padding-top: TvSpacing.padding-giant;
+        padding-bottom: TvSpacing.padding-giant;
+        spacing: TvSpacing.space-xxl;
+        alignment: start;
+        
+        // Sidebar Header
+        HorizontalLayout {
+            spacing: TvSpacing.space-md;
+            alignment: start;
+            Text { text: "⚙️"; font-size: TvTypography.font-size-xl; vertical-alignment: center; }
+            Text {
+                text: "إعدادات النظام";
+                font-family: TvTypography.font-family;
+                font-size: TvTypography.font-size-lg;
+                font-weight: TvTypography.font-weight-bold;
+                color: TvColors.text-primary;
+                vertical-alignment: center;
+            }
+        }
+        
+        Rectangle {
+            height: 1.5px;
+            background: TvColors.border-default;
+        }
+        
+        // ==========================================
+        // MAIN SETTINGS LIST
+        // ==========================================
+        if (root.settings-page == "main") : VerticalLayout {
+            spacing: TvSpacing.space-md;
+            
+            // Row 0: Wi-Fi
+            wifi-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 0) || ta-wifi.has-hover ? TvColors.accent-glow : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 0) || ta-wifi.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 0) || ta-wifi.has-hover ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "🌐 الواي فاي"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: root.wifi-enabled ? "Sumer_5G 🟢" : "إيقاف 🔴"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-wifi := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 0;
+                        root.subpage-focused-row = 0;
+                        root.settings-page = "wifi";
+                        root.settings-page-changed("wifi");
+                    }
+                }
+            }
+            
+            // Row 1: Airplane Mode
+            airplane-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 1) || ta-airplane.has-hover ? TvColors.airplane-toggle-bg : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 1) || ta-airplane.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 1) || ta-airplane.has-hover ? TvColors.airplane-toggle : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "✈️ وضع الطيران"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Rectangle {
+                        width: 50px;
+                        IosToggle {
+                            y: (parent.height - self.height) / 2;
+                            checked: root.airplane-mode;
+                            active-color: TvColors.airplane-toggle;
+                            is-focused: root.show-settings && root.settings-focused-row == 1;
+                        }
+                    }
+                }
+                ta-airplane := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 1;
+                        root.airplane-mode = !root.airplane-mode;
+                        if (root.airplane-mode) { root.wifi-enabled = false; }
+                        root.settings-page-changed("main");
+                    }
+                }
+            }
+            
+            // Row 2: Bluetooth
+            bt-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 2) || ta-bt.has-hover ? TvColors.blue-toggle-bg : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 2) || ta-bt.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 2) || ta-bt.has-hover ? TvColors.blue-toggle : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "🔵 البلوتوث"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: root.bluetooth-enabled ? "نشط 🟢" : "إيقاف 🔴"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-bt := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 2;
+                        root.subpage-focused-row = 0;
+                        root.settings-page = "bluetooth";
+                        root.settings-page-changed("bluetooth");
+                    }
+                }
+            }
+            
+            // Row 3: Audio Volume
+            vol-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 3) || ta-vol.has-hover ? TvColors.accent-glow : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 3) || ta-vol.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 3) || ta-vol.has-hover ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "🔊 مستوى الصوت"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: root.system-volume + "%"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-vol := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 3;
+                        root.volume-clicked();
+                    }
+                }
+            }
+            
+            // Row 4: Screen Brightness
+            bright-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 4) || ta-bright.has-hover ? TvColors.airplane-toggle-bg : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 4) || ta-bright.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 4) || ta-bright.has-hover ? TvColors.airplane-toggle : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "☀️ سطوع الشاشة"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: root.system-brightness + "%"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-bright := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 4;
+                        root.brightness-clicked();
+                    }
+                }
+            }
+            
+            // Row 5: Performance Mode
+            perf-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 5) || ta-perf.has-hover ? TvColors.accent-glow : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 5) || ta-perf.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 5) || ta-perf.has-hover ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "⚡ وضع الأداء"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: root.perf-mode; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-perf := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 5;
+                        if (root.perf-mode == "Supernova 🔴") { root.perf-mode = "Eco 🟢"; }
+                        else if (root.perf-mode == "Eco 🟢") { root.perf-mode = "Balanced 🟡"; }
+                        else { root.perf-mode = "Supernova 🔴"; }
+                        root.settings-page-changed("main");
+                    }
+                }
+            }
+            
+            // Row 6: Hardware permissions
+            hw-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 6) || ta-hw.has-hover ? TvColors.accent-glow : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 6) || ta-hw.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 6) || ta-hw.has-hover ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "🔌 الأذونات والعتاد"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: "◀"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-hw := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 6;
+                        root.subpage-focused-row = 0;
+                        root.settings-page = "hardware";
+                        root.settings-page-changed("hardware");
+                    }
+                }
+            }
+            
+            // Row 7: Screensaver settings
+            ss-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 7) || ta-ss.has-hover ? TvColors.accent-glow : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 7) || ta-ss.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 7) || ta-ss.has-hover ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "🖥️ شاشة التوقف"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Text { text: "⚙️"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; vertical-alignment: center; }
+                }
+                ta-ss := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 7;
+                        root.subpage-focused-row = 0;
+                        root.settings-page = "screensaver";
+                        root.settings-page-changed("screensaver");
+                    }
+                }
+            }
+            
+            // Row 8: Close Sidebar
+            close-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: (root.show-settings && root.settings-focused-row == 8) || ta-close.has-hover ? TvColors.shutdown-bg.with-alpha(0.15) : TvColors.border-default;
+                border-width: (root.show-settings && root.settings-focused-row == 8) || ta-close.has-hover ? 2.5px : 1px;
+                border-color: (root.show-settings && root.settings-focused-row == 8) || ta-close.has-hover ? TvColors.shutdown-bg : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: center;
+                    Text { text: "❌ إغلاق القائمة"; font-family: TvTypography.font-family; font-weight: TvTypography.font-weight-bold; font-size: TvTypography.font-size-sm; color: TvColors.shutdown-bg; vertical-alignment: center; }
+                }
+                ta-close := TouchArea {
+                    clicked => {
+                        root.settings-focused-row = 8;
+                        root.close-requested();
+                    }
+                }
+            }
+        }
+        
+        // ==========================================
+        // SUBPAGE: WI-FI NETWORKS
+        // ==========================================
+        if (root.settings-page == "wifi") : VerticalLayout {
+            spacing: TvSpacing.space-md;
+            
+            // Back row
+            HorizontalLayout {
+                spacing: TvSpacing.space-sm;
+                alignment: start;
+                back-btn-wifi := Rectangle {
+                    width: 32px; height: 32px;
+                    border-radius: TvSpacing.radius-full;
+                    background: root.subpage-focused-row == -1 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == -1 ? 2px : 0px;
+                    border-color: TvColors.accent;
+                    Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { root.settings-page = "main"; root.settings-page-changed("main"); } }
+                }
+                Text { text: "الشبكات (Wi-Fi)"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+            }
+            
+            // Wi-Fi Toggle Row
+            wifi-toggle-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: root.subpage-focused-row == 0 ? TvColors.accent-glow : TvColors.border-default;
+                border-width: root.subpage-focused-row == 0 ? 2.5px : 1px;
+                border-color: root.subpage-focused-row == 0 ? TvColors.accent : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "تفعيل Wi-Fi"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Rectangle {
+                        width: 50px;
+                        IosToggle {
+                            y: (parent.height - self.height) / 2;
+                            checked: root.wifi-enabled;
+                            is-focused: root.subpage-focused-row == 0;
+                        }
+                    }
+                }
+                TouchArea { clicked => { root.wifi-enabled = !root.wifi-enabled; } }
+            }
+            
+            // Networks List
+            if (root.wifi-enabled) : VerticalLayout {
+                spacing: TvSpacing.space-sm;
+                
+                Text { text: "الشبكات القريبة المتاحة:"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; padding-bottom: TvSpacing.space-sm; }
+                
+                // Net 1
+                net1 := Rectangle {
+                    height: 50px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 1 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 1 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 1 ? TvColors.accent : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "Sumer Network 5G 📡"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "🔒"; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.wifi-network-clicked("Sumer Network 5G 📡"); } }
+                }
+                
+                // Net 2
+                net2 := Rectangle {
+                    height: 50px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 2 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 2 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 2 ? TvColors.accent : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "Al-Rafidain Net 🌐"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "🔒"; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.wifi-network-clicked("Al-Rafidain Net 🌐"); } }
+                }
+                
+                // Net 3
+                net3 := Rectangle {
+                    height: 50px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 3 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 3 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 3 ? TvColors.accent : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "Babylon Home 🏛️"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "🔓"; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.wifi-network-clicked("Babylon Home 🏛️"); } }
+                }
+            }
+        }
+        
+        // ==========================================
+        // SUBPAGE: BLUETOOTH DEVICES
+        // ==========================================
+        if (root.settings-page == "bluetooth") : VerticalLayout {
+            spacing: TvSpacing.space-md;
+            
+            // Back row
+            HorizontalLayout {
+                spacing: TvSpacing.space-sm;
+                alignment: start;
+                back-btn-bt := Rectangle {
+                    width: 32px; height: 32px;
+                    border-radius: TvSpacing.radius-full;
+                    background: root.subpage-focused-row == -1 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                    border-width: root.subpage-focused-row == -1 ? 2px : 0px;
+                    border-color: TvColors.blue-toggle;
+                    Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { root.settings-page = "main"; root.settings-page-changed("main"); } }
+                }
+                Text { text: "الأجهزة (Bluetooth)"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+            }
+            
+            // BT Toggle Row
+            bt-toggle-row := Rectangle {
+                height: 52px;
+                border-radius: TvSpacing.radius-md;
+                background: root.subpage-focused-row == 0 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                border-width: root.subpage-focused-row == 0 ? 2.5px : 1px;
+                border-color: root.subpage-focused-row == 0 ? TvColors.blue-toggle : TvColors.border-default;
+                
+                HorizontalLayout {
+                    padding-left: TvSpacing.padding-lg;
+                    padding-right: TvSpacing.padding-lg;
+                    alignment: space-between;
+                    Text { text: "تفعيل Bluetooth"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                    Rectangle {
+                        width: 50px;
+                        IosToggle {
+                            y: (parent.height - self.height) / 2;
+                            checked: root.bluetooth-enabled;
+                            active-color: TvColors.blue-toggle;
+                            is-focused: root.subpage-focused-row == 0;
+                        }
+                    }
+                }
+                TouchArea { clicked => { root.bluetooth-enabled = !root.bluetooth-enabled; } }
+            }
+            
+            // Devices List
+            if (root.bluetooth-enabled) : VerticalLayout {
+                spacing: TvSpacing.space-sm;
+                
+                Text { text: "الأجهزة المتاحة القريبة:"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.text-secondary; padding-bottom: TvSpacing.space-sm; }
+                
+                // Dev 1
+                dev1 := Rectangle {
+                    height: 48px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 1 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 1 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 1 ? TvColors.blue-toggle : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "🎧 Sumer Buds Pro"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "اقتران"; color: TvColors.blue-toggle; font-size: TvTypography.font-size-xs; font-weight: TvTypography.font-weight-bold; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.bluetooth-device-clicked("Sumer Buds Pro 🎧"); } }
+                }
+                
+                // Dev 2
+                dev2 := Rectangle {
+                    height: 48px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 2 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 2 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 2 ? TvColors.blue-toggle : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "📺 Smart TV"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "اقتران"; color: TvColors.blue-toggle; font-size: TvTypography.font-size-xs; font-weight: TvTypography.font-weight-bold; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.bluetooth-device-clicked("Smart TV 📺"); } }
+                }
+                
+                // Dev 3
+                dev3 := Rectangle {
+                    height: 48px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 3 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 3 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 3 ? TvColors.blue-toggle : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: " Magic Keyboard ⌨️"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "اقتران"; color: TvColors.blue-toggle; font-size: TvTypography.font-size-xs; font-weight: TvTypography.font-weight-bold; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.bluetooth-device-clicked("Magic Keyboard ⌨️"); } }
+                }
+                
+                // Dev 4
+                dev4 := Rectangle {
+                    height: 48px;
+                    border-radius: TvSpacing.radius-sm;
+                    background: root.subpage-focused-row == 4 ? TvColors.blue-toggle-bg : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 4 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 4 ? TvColors.blue-toggle : TvColors.border-default;
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        Text { text: "Watch Ultra ⌚"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        Text { text: "اقتران"; color: TvColors.blue-toggle; font-size: TvTypography.font-size-xs; font-weight: TvTypography.font-weight-bold; vertical-alignment: center; }
+                    }
+                    TouchArea { clicked => { root.bluetooth-device-clicked("Watch Ultra ⌚"); } }
+                }
+            }
+        }
+        
+        // ==========================================
+        // SUBPAGE: HARDWARE / PERMISSIONS
+        // ==========================================
+        if (root.settings-page == "hardware") : VerticalLayout {
+            spacing: TvSpacing.space-md;
+            
+            // Back row
+            HorizontalLayout {
+                spacing: TvSpacing.space-sm;
+                alignment: start;
+                back-btn-hw := Rectangle {
+                    width: 32px; height: 32px;
+                    border-radius: TvSpacing.radius-full;
+                    background: root.subpage-focused-row == -1 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == -1 ? 2px : 0px;
+                    border-color: TvColors.accent;
+                    Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { root.settings-page = "main"; root.settings-page-changed("main"); } }
+                }
+                Text { text: "الأذونات والعتاد"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+            }
+            
+            // Permission Items
+            VerticalLayout {
+                spacing: TvSpacing.space-sm;
+                
+                // Item 0: Camera
+                hw-cam := Rectangle {
+                    height: 52px;
+                    border-radius: TvSpacing.radius-md;
+                    background: root.subpage-focused-row == 0 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 0 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 0 ? TvColors.accent : TvColors.border-default;
+                    
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text { text: "📷"; font-size: TvTypography.font-size-base; vertical-alignment: center; }
+                            Text { text: "الوصول للكاميرا"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 50px;
+                            IosToggle {
+                                y: (parent.height - self.height) / 2;
+                                checked: root.camera-enabled;
+                                is-focused: root.subpage-focused-row == 0;
+                            }
+                        }
+                    }
+                    TouchArea { clicked => { root.camera-enabled = !root.camera-enabled; } }
+                }
+                
+                // Item 1: Mic
+                hw-mic := Rectangle {
+                    height: 52px;
+                    border-radius: TvSpacing.radius-md;
+                    background: root.subpage-focused-row == 1 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 1 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 1 ? TvColors.accent : TvColors.border-default;
+                    
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text { text: "🎤"; font-size: TvTypography.font-size-base; vertical-alignment: center; }
+                            Text { text: "الوصول للمايكروفون"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 50px;
+                            IosToggle {
+                                y: (parent.height - self.height) / 2;
+                                checked: root.mic-enabled;
+                                is-focused: root.subpage-focused-row == 1;
+                            }
+                        }
+                    }
+                    TouchArea { clicked => { root.mic-enabled = !root.mic-enabled; } }
+                }
+                
+                // Item 2: Location
+                hw-loc := Rectangle {
+                    height: 52px;
+                    border-radius: TvSpacing.radius-md;
+                    background: root.subpage-focused-row == 2 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 2 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 2 ? TvColors.accent : TvColors.border-default;
+                    
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text { text: "📍"; font-size: TvTypography.font-size-base; vertical-alignment: center; }
+                            Text { text: "الوصول للموقع"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        }
+                        Rectangle {
+                            width: 50px;
+                            IosToggle {
+                                y: (parent.height - self.height) / 2;
+                                checked: root.location-enabled;
+                                is-focused: root.subpage-focused-row == 2;
+                            }
+                        }
+                    }
+                    TouchArea { clicked => { root.location-enabled = !root.location-enabled; } }
+                }
+            }
+        }
+        
+        // ==========================================
+        // SUBPAGE: SCREENSAVER SETTINGS
+        // ==========================================
+        if (root.settings-page == "screensaver") : VerticalLayout {
+            spacing: TvSpacing.space-md;
+            
+            // Sub-page main selector list
+            if (root.screensaver-sub-page == "main") : VerticalLayout {
+                spacing: TvSpacing.space-md;
+                
+                // Back row
+                HorizontalLayout {
+                    spacing: TvSpacing.space-sm;
+                    alignment: start;
+                    back-btn-ss := Rectangle {
+                        width: 32px; height: 32px;
+                        border-radius: TvSpacing.radius-full;
+                        background: root.subpage-focused-row == -1 ? TvColors.accent-glow : TvColors.border-default;
+                        border-width: root.subpage-focused-row == -1 ? 2px : 0px;
+                        border-color: TvColors.accent;
+                        Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                        TouchArea { clicked => { root.settings-page = "main"; root.settings-page-changed("main"); } }
+                    }
+                    Text { text: "شاشة التوقف"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+                }
+                
+                // Time delay setting trigger
+                ss-time-row := Rectangle {
+                    height: 56px;
+                    border-radius: TvSpacing.radius-md;
+                    background: root.subpage-focused-row == 0 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 0 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 0 ? TvColors.accent : TvColors.border-default;
+                    
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text { text: "⏱️"; font-size: TvTypography.font-size-base; vertical-alignment: center; }
+                            Text { text: "وقت الانتظار"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text {
+                                text: root.screensaver-timeout == 5 ? "٥ ثوانٍ" :
+                                      root.screensaver-timeout == 10 ? "١٠ ثوانٍ" :
+                                      root.screensaver-timeout == 20 ? "٢٠ ثانية" :
+                                      root.screensaver-timeout == 30 ? "٣٠ ثانية" :
+                                      root.screensaver-timeout == 60 ? "دقيقة" :
+                                      root.screensaver-timeout == 1800 ? "نصف ساعة" :
+                                      root.screensaver-timeout == 3600 ? "ساعة" :
+                                      "أبداً";
+                                font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.accent; font-weight: TvTypography.font-weight-bold; vertical-alignment: center;
+                            }
+                            Text { text: "❯"; color: TvColors.text-secondary; font-size: TvTypography.font-size-xs; vertical-alignment: center; }
+                        }
+                    }
+                    TouchArea { clicked => { root.screensaver-sub-page = "timeout"; root.subpage-focused-row = 0; } }
+                }
+                
+                // Wallpaper selection trigger
+                ss-wall-row := Rectangle {
+                    height: 56px;
+                    border-radius: TvSpacing.radius-md;
+                    background: root.subpage-focused-row == 1 ? TvColors.accent-glow : TvColors.border-default;
+                    border-width: root.subpage-focused-row == 1 ? 2.5px : 1px;
+                    border-color: root.subpage-focused-row == 1 ? TvColors.accent : TvColors.border-default;
+                    
+                    HorizontalLayout {
+                        padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text { text: "🖼️"; font-size: TvTypography.font-size-base; vertical-alignment: center; }
+                            Text { text: "خلفية الشاشة"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            spacing: TvSpacing.space-sm;
+                            Text {
+                                text: root.screensaver-image-mode == -1 ? "شرائح 🔄" : "محددة 📌";
+                                font-family: TvTypography.font-family; font-size: TvTypography.font-size-xs; color: TvColors.blue-toggle; font-weight: TvTypography.font-weight-bold; vertical-alignment: center;
+                            }
+                            Text { text: "❯"; color: TvColors.text-secondary; font-size: TvTypography.font-size-xs; vertical-alignment: center; }
+                        }
+                    }
+                    TouchArea { clicked => { root.screensaver-sub-page = "wallpaper"; root.subpage-focused-row = 0; } }
+                }
+            }
+            
+            // Sub-page: TIMEOUTS SELECTOR
+            if (root.screensaver-sub-page == "timeout") : VerticalLayout {
+                spacing: TvSpacing.space-md;
+                
+                HorizontalLayout {
+                    spacing: TvSpacing.space-sm; alignment: start;
+                    back-btn-t := Rectangle {
+                        width: 32px; height: 32px;
+                        border-radius: TvSpacing.radius-full;
+                        background: root.subpage-focused-row == -1 ? TvColors.accent-glow : TvColors.border-default;
+                        border-width: root.subpage-focused-row == -1 ? 2px : 0px; border-color: TvColors.accent;
+                        Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                        TouchArea { clicked => { root.screensaver-sub-page = "main"; root.subpage-focused-row = 0; } }
+                    }
+                    Text { text: "وقت شاشة التوقف"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+                }
+                
+                ScrollView {
+                    height: 250px;
+                    VerticalLayout {
+                        spacing: TvSpacing.space-sm;
+                        
+                        // timeouts: 5s, 10s, 20s, 30s, 60s, -1 (never)
+                        for timeout[idx] in [5, 10, 20, 30, 60, -1] : Rectangle {
+                            height: 44px; border-radius: TvSpacing.radius-sm;
+                            background: root.subpage-focused-row == idx ? TvColors.accent-glow : TvColors.border-default;
+                            border-width: root.subpage-focused-row == idx ? 2px : 1px;
+                            border-color: root.subpage-focused-row == idx ? TvColors.accent : TvColors.border-default;
+                            HorizontalLayout {
+                                padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                                Text {
+                                    text: timeout == 5 ? "⏱️ ٥ ثوانٍ" :
+                                          timeout == 10 ? "⏱️ ١٠ ثوانٍ" :
+                                          timeout == 20 ? "⏱️ ٢٠ ثانية" :
+                                          timeout == 30 ? "⏱️ ٣٠ ثانية" :
+                                          timeout == 60 ? "⏱️ دقيقة واحدة" :
+                                          "⏱️ أبداً";
+                                    font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center;
+                                }
+                                if (root.screensaver-timeout == timeout) : Text { text: "🟢"; vertical-alignment: center; }
+                            }
+                            TouchArea {
+                                clicked => {
+                                    root.screensaver-timeout = timeout;
+                                    root.screensaver-sub-page = "main";
+                                    root.subpage-focused-row = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sub-page: WALLPAPERS SELECTOR
+            if (root.screensaver-sub-page == "wallpaper") : VerticalLayout {
+                spacing: TvSpacing.space-md;
+                
+                HorizontalLayout {
+                    spacing: TvSpacing.space-sm; alignment: start;
+                    back-btn-w := Rectangle {
+                        width: 32px; height: 32px;
+                        border-radius: TvSpacing.radius-full;
+                        background: root.subpage-focused-row == -1 ? TvColors.accent-glow : TvColors.border-default;
+                        border-width: root.subpage-focused-row == -1 ? 2px : 0px; border-color: TvColors.accent;
+                        Text { text: "←"; color: TvColors.text-primary; font-weight: 800; horizontal-alignment: center; vertical-alignment: center; }
+                        TouchArea { clicked => { root.screensaver-sub-page = "main"; root.subpage-focused-row = 1; } }
+                    }
+                    Text { text: "اختر الخلفية"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-md; font-weight: TvTypography.font-weight-bold; color: TvColors.text-primary; vertical-alignment: center; }
+                }
+                
+                ScrollView {
+                    height: 250px;
+                    VerticalLayout {
+                        spacing: TvSpacing.space-sm;
+                        
+                        // Item slideshow
+                        Rectangle {
+                            height: 44px; border-radius: TvSpacing.radius-sm;
+                            background: root.subpage-focused-row == 0 ? TvColors.accent-glow : TvColors.border-default;
+                            border-width: root.subpage-focused-row == 0 ? 2px : 1px;
+                            border-color: root.subpage-focused-row == 0 ? TvColors.accent : TvColors.border-default;
+                            HorizontalLayout {
+                                padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                                Text { text: "🔄 عرض الشرائح الكلي"; font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                                if (root.screensaver-image-mode == -1) : Text { text: "🟢"; vertical-alignment: center; }
+                            }
+                            TouchArea { clicked => { root.screensaver-image-mode = -1; root.screensaver-sub-page = "main"; root.subpage-focused-row = 1; } }
+                        }
+                        
+                        // wall 1 to 10
+                        for idx in 10 : Rectangle {
+                            height: 44px; border-radius: TvSpacing.radius-sm;
+                            background: root.subpage-focused-row == (idx + 1) ? TvColors.accent-glow : TvColors.border-default;
+                            border-width: root.subpage-focused-row == (idx + 1) ? 2px : 1px;
+                            border-color: root.subpage-focused-row == (idx + 1) ? TvColors.accent : TvColors.border-default;
+                            HorizontalLayout {
+                                padding-left: TvSpacing.padding-lg; padding-right: TvSpacing.padding-lg; alignment: space-between;
+                                Text { text: "🏙️ خلفية " + (idx + 1); font-family: TvTypography.font-family; font-size: TvTypography.font-size-sm; color: TvColors.text-primary; vertical-alignment: center; }
+                                if (root.screensaver-image-mode == idx) : Text { text: "🟢"; vertical-alignment: center; }
+                            }
+                            TouchArea { clicked => { root.screensaver-image-mode = idx; root.screensaver-sub-page = "main"; root.subpage-focused-row = 1; } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

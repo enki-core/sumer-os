@@ -1,0 +1,6 @@
+export component Wallpaper06 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: @linear-gradient(135deg, #fdf4ff 0%, #f0fdfa 100%);
+    Rectangle { width: is-preview ? 30px : 200px; height: is-preview ? 30px : 200px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; border-radius: is-preview ? 15px : 100px; background: #ffffff80; border-width: 1px; border-color: #e2e8f0; }
+    Text { text: "✧"; color: #94a3b8; font-size: is-preview ? 16px : 64px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2 - (is-preview ? 2px : 10px); }
+}

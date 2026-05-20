@@ -1,0 +1,250 @@
+import { AppIcon } from "../core/models.slint";
+
+export component SumerTaskbar inherits Rectangle {
+    in property <bool> dark-mode: true;
+    in property <bool> start-menu-open: false;
+    in property <[AppIcon]> icons;
+    in property <bool> show-dock-files: true;
+    in property <bool> show-dock-console: true;
+    in property <bool> show-dock-tv: true;
+    in property <bool> drag-over: false;
+    in property <int> active-drag-index: -1;
+    in property <int> target-index: -1;
+    
+    callback start-clicked;
+    callback item-clicked(string);
+    callback item-drag-started(int, length, length);
+    callback item-dragged(int, length, length); // index, mouse_x, mouse_y
+    callback item-dropped(int, length, length);
+    
+    height: 72px;
+    width: layout.preferred-width;
+    border-radius: 24px;
+    
+    // Glassmorphic Dock background with drag-over glow
+    background: root.drag-over ? (root.dark-mode ? #1e293b99 : #eff6ffb0) : (root.dark-mode ? #0f172a99 : #ffffffb0);
+    border-width: root.drag-over ? 2px : 1px;
+    border-color: root.drag-over ? #3b82f6 : (root.dark-mode ? #ffffff1a : #00000015);
+    
+    drop-shadow-color: root.drag-over ? #3b82f680 : (root.dark-mode ? #00000050 : #00000020);
+    drop-shadow-blur: root.drag-over ? 32px : 24px;
+    drop-shadow-offset-y: root.drag-over ? 12px : 8px;
+    
+    animate background, border-color, border-width, drop-shadow-color, drop-shadow-blur, drop-shadow-offset-y { duration: 150ms; easing: ease-out; }
+    
+    layout := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        alignment: center;
+        
+        // Start Menu Button (Fixed/Permanent)
+        Rectangle {
+            width: 64px;
+            height: 64px;
+            
+            Rectangle {
+                width: start-touch.has-hover ? 64px : 48px; 
+                height: start-touch.has-hover ? 64px : 48px; 
+                border-radius: start-touch.has-hover ? 16px : 12px;
+                background: start-touch.has-hover ? #7c3aed : #8b5cf6;
+                border-width: root.start-menu-open ? 2px : 0px;
+                border-color: #ffffff;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                accessible-role: button;
+                accessible-label: "قائمة ابدأ";
+                
+                animate width, height, border-radius, background, x, y { duration: 200ms; easing: ease-out-back; }
+                Text { 
+                    text: "🌌"; 
+                    font-size: start-touch.has-hover ? 32px : 24px; 
+                    horizontal-alignment: center; vertical-alignment: center; 
+                    animate font-size { duration: 200ms; easing: ease-out-back; }
+                }
+                start-touch := TouchArea { clicked => { root.start-clicked(); } }
+                
+                if (start-touch.has-hover) : Rectangle {
+                    y: -36px;
+                    x: (parent.width - self.width) / 2;
+                    width: start-tooltip.preferred-width + 16px;
+                    height: 26px;
+                    border-radius: 6px;
+                    background: root.dark-mode ? #0f172ae5 : #1e293be5;
+                    border-width: 1px;
+                    border-color: #ffffff20;
+                    drop-shadow-color: #00000050;
+                    drop-shadow-blur: 8px;
+                    drop-shadow-offset-y: 4px;
+                    
+                    start-tooltip := Text {
+                        text: "قائمة ابدأ";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+        
+        // Separator line
+        Rectangle {
+            width: 1px; height: 28px;
+            background: root.dark-mode ? #ffffff20 : #00000015;
+            y: (parent.height - self.height) / 2;
+        }
+        
+        // Dynamic Icons
+        for item[idx] in root.icons : Rectangle {
+            // Container width expands if it's visible OR if it's the target for the drag gap
+            width: ((idx == 0 && root.show-dock-files) || (idx == 1 && root.show-dock-console) || (idx == 2 && root.show-dock-tv) || (idx == 3) ? 64px : 0px) + 
+                   ((root.drag-over && root.target-index == idx) ? 64px : 0px); 
+            height: 64px; 
+            
+            animate width { duration: 200ms; easing: ease-out; }
+            
+            HorizontalLayout {
+                alignment: center;
+                spacing: 0px;
+                
+                // Ghost Placeholder (Appears if this is the target index during drag)
+                if (root.drag-over && root.target-index == idx) : Rectangle {
+                    width: 64px;
+                    height: 64px;
+                    
+                    Rectangle {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 12px;
+                        background: root.dark-mode ? #ffffff15 : #00000010;
+                        border-width: 2px;
+                        border-color: root.dark-mode ? #ffffff30 : #00000030;
+                        
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        
+                        Text {
+                            text: root.active-drag-index == 0 ? "📁" : root.active-drag-index == 1 ? "💻" : "📺";
+                            opacity: 0.5;
+                            font-size: 24px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                
+                // Actual Icon (Appears if visible in dock)
+                if ((idx == 0 && root.show-dock-files) || (idx == 1 && root.show-dock-console) || (idx == 2 && root.show-dock-tv) || (idx == 3)) : Rectangle {
+                    width: 64px;
+                    height: 64px;
+                    
+                    Rectangle {
+                        width: touch.has-hover && !touch.dragging ? 64px : 48px; 
+                        height: touch.has-hover && !touch.dragging ? 64px : 48px; 
+                        border-radius: touch.has-hover && !touch.dragging ? 16px : 12px;
+                        background: touch.dragging ? transparent : (touch.has-hover ? item.hover_bg_color : item.bg_color);
+                        
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        accessible-role: button;
+                        accessible-label: item.name;
+                        
+                        animate width, height, border-radius, background, x, y { duration: 200ms; easing: ease-out-back; }
+                        Text { 
+                            text: item.icon; 
+                            opacity: touch.dragging ? 0.0 : 1.0;
+                            font-size: touch.has-hover && !touch.dragging ? 32px : 24px; 
+                            horizontal-alignment: center; vertical-alignment: center; 
+                            animate font-size, opacity { duration: 200ms; easing: ease-out-back; }
+                        }
+                        
+                        if (touch.has-hover && !touch.dragging) : Rectangle {
+                            y: -36px;
+                            x: (parent.width - self.width) / 2;
+                            width: tooltip-text.preferred-width + 16px;
+                            height: 26px;
+                            border-radius: 6px;
+                            background: root.dark-mode ? #0f172ae5 : #1e293be5;
+                            border-width: 1px;
+                            border-color: #ffffff20;
+                            drop-shadow-color: #00000050;
+                            drop-shadow-blur: 8px;
+                            drop-shadow-offset-y: 4px;
+                            
+                            tooltip-text := Text {
+                                text: item.name;
+                                font-size: 11px;
+                                font-weight: 700;
+                                color: #ffffff;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                        
+                        touch := TouchArea {
+                            property <bool> dragging: false;
+                            
+                            clicked => { 
+                                if (!self.dragging) { root.item-clicked(item.id); } 
+                            }
+                            
+                            pointer-event(event) => {
+                                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                                    self.dragging = false;
+                                }
+                                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                                    if (self.dragging) {
+                                        root.item-dropped(idx, self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                                        self.dragging = false;
+                                    }
+                                }
+                            }
+                            
+                            moved => {
+                                if (self.pressed) {
+                                    if (!self.dragging && (self.pressed-x - self.mouse-x > 10px || self.pressed-x - self.mouse-x < -10px || self.pressed-y - self.mouse-y > 10px || self.pressed-y - self.mouse-y < -10px)) {
+                                        self.dragging = true;
+                                        root.item-drag-started(idx, self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                                    }
+                                    if (self.dragging) {
+                                        root.item-dragged(idx, self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Ghost Placeholder at the end (for index 4)
+        if (root.drag-over && root.target-index == 4) : Rectangle {
+            width: 64px;
+            height: 64px;
+            
+            animate width { duration: 200ms; easing: ease-out; }
+            
+            Rectangle {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                background: root.dark-mode ? #ffffff15 : #00000010;
+                border-width: 2px;
+                border-color: root.dark-mode ? #ffffff30 : #00000030;
+                
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                
+                Text {
+                    text: root.active-drag-index == 0 ? "📁" : root.active-drag-index == 1 ? "💻" : "📺";
+                    opacity: 0.5;
+                    font-size: 24px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,61 @@
+export component SumerSystemTray inherits Rectangle {
+    in-out property <string> current-time: "12:00 PM";
+    in-out property <string> battery-status: "🔋 98%";
+    in-out property <string> network-status: "📶";
+    in property <bool> dark-mode: true;
+    in property <bool> control-center-open: false;
+    callback control-center-clicked;
+
+    width: 210px;
+    height: 42px;
+    border-radius: 21px;
+    
+    // Dynamic Island / Floating Pill styling
+    background: root.control-center-open ? (root.dark-mode ? #38bdf830 : #0284c725) : 
+                (tray-touch.has-hover ? (root.dark-mode ? #ffffff15 : #00000010) :
+                (root.dark-mode ? #0f172ae5 : #f8fafce5));
+    
+    border-width: 1px;
+    border-color: root.control-center-open ? (root.dark-mode ? #38bdf8a0 : #0284c7a0) : 
+                  (root.dark-mode ? #ffffff1a : #00000015);
+    
+    drop-shadow-color: root.dark-mode ? #00000050 : #00000020;
+    drop-shadow-blur: 20px;
+    drop-shadow-offset-y: 8px;
+
+    animate background, border-color { duration: 150ms; }
+
+    tray-touch := TouchArea {
+        clicked => { root.control-center-clicked(); }
+    }
+
+    HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        spacing: 16px;
+        alignment: center;
+        
+        Text {
+            text: root.battery-status;
+            font-size: 14px;
+            font-weight: 700;
+            color: root.dark-mode ? #94a3b8 : #475569;
+            vertical-alignment: center;
+        }
+        
+        Text {
+            text: root.network-status;
+            font-size: 15px;
+            color: root.dark-mode ? #94a3b8 : #475569;
+            vertical-alignment: center;
+        }
+        
+        Text {
+            text: root.current-time;
+            font-size: 16px;
+            font-weight: 800;
+            color: root.dark-mode ? #f8fafc : #0f172a;
+            vertical-alignment: center;
+        }
+    }
+}

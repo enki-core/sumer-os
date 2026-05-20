@@ -1,0 +1,223 @@
+import { TvColors } from "../theme/colors.slint";
+import { TvTypography } from "../theme/typography.slint";
+import { TvSpacing } from "../theme/spacing.slint";
+
+export component TopBar {
+    in-out property <string> active-tab: "home";
+    in property <int> focused-col: -1; // 0=Back, 1=Home, 2=Store, 3=Files, 4=Console, 5=Settings
+    in property <bool> row-focused: false;
+    in property <string> current-time: "12:00 PM";
+    
+    // Status indicators
+    in property <bool> wifi-enabled: true;
+    in property <bool> bluetooth-enabled: true;
+    
+    callback tab-changed(string);
+    callback back-clicked();
+    callback settings-clicked();
+    
+    HorizontalLayout {
+        padding-top: TvSpacing.padding-sm;
+        padding-bottom: TvSpacing.padding-sm;
+        spacing: TvSpacing.space-xl;
+        alignment: space-between;
+        
+        // Left Side: Back Button
+        back-btn := Rectangle {
+            width: 90px;
+            height: 44px;
+            border-radius: TvSpacing.radius-full;
+            background: (root.row-focused && root.focused-col == 0) || ta-back.has-hover ? 
+                TvColors.hover-tab : TvColors.transparent;
+            
+            animate background { duration: 150ms; }
+            
+            ta-back := TouchArea { clicked => { root.back-clicked(); } }
+            
+            HorizontalLayout {
+                spacing: TvSpacing.space-sm;
+                alignment: center;
+                Text {
+                    text: "◀";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-base;
+                    color: (root.row-focused && root.focused-col == 0) || ta-back.has-hover ? 
+                        TvColors.accent : TvColors.text-secondary;
+                    vertical-alignment: center;
+                    
+                    animate color { duration: 150ms; }
+                }
+                Text {
+                    text: "رجوع";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-sm;
+                    font-weight: TvTypography.font-weight-semibold;
+                    color: (root.row-focused && root.focused-col == 0) || ta-back.has-hover ? 
+                        TvColors.text-primary : TvColors.text-secondary;
+                    vertical-alignment: center;
+                    
+                    animate color { duration: 150ms; }
+                }
+            }
+        }
+        
+        // Center: Navigation Tabs (Focused 1 to 4)
+        HorizontalLayout {
+            spacing: TvSpacing.space-xl;
+            alignment: center;
+            
+            // Tab 1: Home
+            tab-home := Rectangle {
+                height: 44px;
+                border-radius: TvSpacing.radius-full;
+                background: (root.row-focused && root.focused-col == 1) || ta-home.has-hover || root.active-tab == "home" ? 
+                    TvColors.hover-tab : TvColors.transparent;
+                
+                animate background { duration: 150ms; }
+                
+                ta-home := TouchArea { clicked => { root.active-tab = "home"; root.tab-changed("home"); } }
+                
+                padding-left: TvSpacing.padding-xl;
+                padding-right: TvSpacing.padding-xl;
+                
+                Text {
+                    text: "الرئيسية";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-base;
+                    font-weight: root.active-tab == "home" ? TvTypography.font-weight-bold : TvTypography.font-weight-medium;
+                    color: root.active-tab == "home" ? TvColors.accent : TvColors.text-secondary;
+                    vertical-alignment: center;
+                }
+            }
+            
+            // Tab 2: App Store
+            tab-store := Rectangle {
+                height: 44px;
+                border-radius: TvSpacing.radius-full;
+                background: (root.row-focused && root.focused-col == 2) || ta-store.has-hover || root.active-tab == "store" ? 
+                    TvColors.hover-tab : TvColors.transparent;
+                
+                animate background { duration: 150ms; }
+                
+                ta-store := TouchArea { clicked => { root.active-tab = "store"; root.tab-changed("store"); } }
+                
+                padding-left: TvSpacing.padding-xl;
+                padding-right: TvSpacing.padding-xl;
+                
+                Text {
+                    text: "متجر التطبيقات";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-base;
+                    font-weight: root.active-tab == "store" ? TvTypography.font-weight-bold : TvTypography.font-weight-medium;
+                    color: root.active-tab == "store" ? TvColors.accent : TvColors.text-secondary;
+                    vertical-alignment: center;
+                }
+            }
+            
+            // Tab 3: Files
+            tab-files := Rectangle {
+                height: 44px;
+                border-radius: TvSpacing.radius-full;
+                background: (root.row-focused && root.focused-col == 3) || ta-files.has-hover || root.active-tab == "files" ? 
+                    TvColors.hover-tab : TvColors.transparent;
+                
+                animate background { duration: 150ms; }
+                
+                ta-files := TouchArea { clicked => { root.active-tab = "files"; root.tab-changed("files"); } }
+                
+                padding-left: TvSpacing.padding-xl;
+                padding-right: TvSpacing.padding-xl;
+                
+                Text {
+                    text: "الملفات";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-base;
+                    font-weight: root.active-tab == "files" ? TvTypography.font-weight-bold : TvTypography.font-weight-medium;
+                    color: root.active-tab == "files" ? TvColors.accent : TvColors.text-secondary;
+                    vertical-alignment: center;
+                }
+            }
+            
+            // Tab 4: Console
+            tab-console := Rectangle {
+                height: 44px;
+                border-radius: TvSpacing.radius-full;
+                background: (root.row-focused && root.focused-col == 4) || ta-console.has-hover || root.active-tab == "console" ? 
+                    TvColors.hover-tab : TvColors.transparent;
+                
+                animate background { duration: 150ms; }
+                
+                ta-console := TouchArea { clicked => { root.active-tab = "console"; root.tab-changed("console"); } }
+                
+                padding-left: TvSpacing.padding-xl;
+                padding-right: TvSpacing.padding-xl;
+                
+                Text {
+                    text: "الطرفية";
+                    font-family: TvTypography.font-family;
+                    font-size: TvTypography.font-size-base;
+                    font-weight: root.active-tab == "console" ? TvTypography.font-weight-bold : TvTypography.font-weight-medium;
+                    color: root.active-tab == "console" ? TvColors.accent : TvColors.text-secondary;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        
+        // Right Side: Status Indicators, Clock & Settings Gear Button
+        HorizontalLayout {
+            spacing: TvSpacing.space-xl;
+            alignment: end;
+            y: (parent.height - self.height) / 2;
+            
+            // Status Icons
+            HorizontalLayout {
+                spacing: TvSpacing.space-sm;
+                alignment: center;
+                
+                if (root.wifi-enabled) : Text {
+                    text: "📡";
+                    font-size: TvTypography.font-size-base;
+                    vertical-alignment: center;
+                }
+                
+                if (root.bluetooth-enabled) : Text {
+                    text: "🔵";
+                    font-size: TvTypography.font-size-base;
+                    vertical-alignment: center;
+                }
+            }
+            
+            // Digital Clock Text
+            Text {
+                text: root.current-time;
+                font-family: TvTypography.font-family;
+                font-size: TvTypography.font-size-md;
+                font-weight: TvTypography.font-weight-bold;
+                color: TvColors.text-primary;
+                vertical-alignment: center;
+            }
+            
+            // Settings Gear Button (Focused col == 5)
+            gear-btn := Rectangle {
+                width: 44px;
+                height: 44px;
+                border-radius: TvSpacing.radius-full;
+                background: (root.row-focused && root.focused-col == 5) || ta-gear.has-hover ? 
+                    TvColors.accent-glow : TvColors.transparent;
+                border-width: (root.row-focused && root.focused-col == 5) || ta-gear.has-hover ? 2px : 0px;
+                border-color: TvColors.accent;
+                
+                animate background, border-width { duration: 150ms; }
+                
+                ta-gear := TouchArea { clicked => { root.settings-clicked(); } }
+                
+                Text {
+                    text: "⚙️";
+                    font-size: TvTypography.font-size-lg;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

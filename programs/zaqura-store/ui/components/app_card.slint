@@ -1,0 +1,125 @@
+import { Button } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component AppCard inherits Rectangle {
+    in property <AppInfo> info;
+    in property <int> index;
+    
+    // Callbacks to notify parent of actions
+    callback clicked();
+    callback action_triggered(int); // index -> trigger install/launch
+    
+    height: 120px;
+    border-radius: 10px;
+    background: #1e293b;
+    border-width: 1px;
+    border-color: ta.has-hover ? info.accent_color : StoreColors.border;
+    
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+    }
+    
+    HorizontalLayout {
+        padding: StoreSpacing.padding-md;
+        spacing: StoreSpacing.space-md;
+        
+        // Large Glowing Icon Box
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 60px;
+                height: 60px;
+                border-radius: 12px;
+                background: StoreColors.background;
+                border-width: 2px;
+                border-color: info.accent_color;
+                
+                Text {
+                    text: info.icon;
+                    font-size: 24px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        
+        // Details info
+        VerticalLayout {
+            alignment: center;
+            spacing: StoreSpacing.space-xs;
+            
+            HorizontalLayout {
+                spacing: StoreSpacing.space-sm;
+                Text {
+                    text: info.name;
+                    font-size: StoreTypography.font-size-sm;
+                    font-weight: StoreTypography.font-weight-bold;
+                    color: StoreColors.text;
+                    overflow: elide;
+                    horizontal-stretch: 1;
+                }
+                
+                // Status pill
+                Rectangle {
+                    width: 55px;
+                    height: 16px;
+                    border-radius: 8px;
+                    background: info.status == "installed" ? #065f46 : (info.status == "update_available" ? #7f1d1d : #78350f);
+                    
+                    Text {
+                        text: info.status == "installed" ? "مثبت" : (info.status == "update_available" ? "تحديث" : "متوفر");
+                        color: StoreColors.text;
+                        font-size: StoreTypography.font-size-xs;
+                        font-weight: StoreTypography.font-weight-bold;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            
+            Text {
+                text: info.description;
+                font-size: StoreTypography.font-size-xs;
+                color: StoreColors.text-muted;
+                overflow: elide;
+            }
+            
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "الإصدار: " + info.version;
+                    font-size: StoreTypography.font-size-xs;
+                    color: StoreColors.text-muted;
+                    vertical-alignment: center;
+                }
+                
+                // Premium Custom Button
+                Rectangle {
+                    width: 75px;
+                    height: 26px;
+                    border-radius: 6px;
+                    background: info.status == "installed" ? StoreColors.success : (info.status == "update_available" ? StoreColors.warning : info.accent_color);
+                    
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 4px;
+                        Text {
+                            text: info.status == "installed" ? "🚀 تشغيل" : (info.status == "update_available" ? "🔄 تحديث" : "📥 تثبيت");
+                            font-size: StoreTypography.font-size-xs;
+                            font-weight: StoreTypography.font-weight-bold;
+                            color: StoreColors.text;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    TouchArea {
+                        clicked => { root.action_triggered(root.index); }
+                    }
+                }
+            }
+        }
+    }
+}

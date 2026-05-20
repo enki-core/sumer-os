@@ -1,0 +1,8 @@
+export component Wallpaper01 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: @linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    Rectangle { width: is-preview ? 100px : 800px; height: is-preview ? 100px : 800px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2 + (is-preview ? 10px : 100px); background: @linear-gradient(0deg, #c2410c33 0%, transparent 50%); border-radius: is-preview ? 50px : 400px; }
+    Rectangle { width: is-preview ? 50px : 400px; height: is-preview ? 50px : 400px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2 - (is-preview ? 5px : 50px); border-radius: is-preview ? 25px : 200px; border-width: 1px; border-color: #fbbf2440; }
+    Text { text: "Sumer OS"; color: #fbbf24; font-size: is-preview ? 14px : 84px; font-weight: 900; letter-spacing: is-preview ? 1px : 8px; horizontal-alignment: center; y: parent.height/2 - (is-preview ? 15px : 120px); x: (parent.width - self.width)/2; }
+    Text { text: "نظام تشغيل سومر"; color: #fcd34d; font-size: is-preview ? 8px : 32px; font-weight: 700; horizontal-alignment: center; y: parent.height/2; x: (parent.width - self.width)/2; }
+}

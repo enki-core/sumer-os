@@ -1,0 +1,7 @@
+export component Wallpaper03 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: @linear-gradient(135deg, #78350f 0%, #451a03 100%);
+    Rectangle { width: is-preview ? 40px : 300px; height: is-preview ? 40px : 300px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; background: @radial-gradient(circle, #f59e0b80 0%, transparent 70%); }
+    Text { text: "حضارة وابتكار"; color: #fef3c7; font-size: is-preview ? 12px : 48px; font-weight: 700; horizontal-alignment: center; y: parent.height/2 - (is-preview ? 30px : 200px); x: (parent.width - self.width)/2; }
+    Text { text: "Sumer OS // Iraq"; color: #fde68a; font-size: is-preview ? 6px : 24px; letter-spacing: is-preview ? 1px : 6px; horizontal-alignment: center; y: parent.height/2 + (is-preview ? 20px : 150px); x: (parent.width - self.width)/2; }
+}

@@ -1,0 +1,110 @@
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component Sidebar inherits Rectangle {
+    in-out property <int> active-tab: 0;
+    
+    // Callback to notify active tab change
+    callback tab-changed(int);
+    
+    width: 220px;
+    background: StoreColors.surface;
+    
+    VerticalLayout {
+        padding: StoreSpacing.padding-lg;
+        spacing: StoreSpacing.space-lg;
+        
+        // Sidebar Menu Options
+        VerticalLayout {
+            spacing: StoreSpacing.space-sm;
+            alignment: start;
+            
+            // Tab 0: Sumer OS Programs
+            tab0 := Rectangle {
+                height: 44px;
+                border-radius: 8px;
+                background: root.active-tab == 0 ? StoreColors.brand : (ta0.has-hover ? StoreColors.border : transparent);
+                ta0 := TouchArea {
+                    clicked => {
+                        root.active-tab = 0;
+                        root.tab-changed(0);
+                    }
+                }
+                HorizontalLayout {
+                    padding: StoreSpacing.padding-md;
+                    spacing: StoreSpacing.space-md;
+                    Text { text: "🏛️  برامج سومر"; font-size: StoreTypography.font-size-sm; font-weight: StoreTypography.font-weight-bold; color: StoreColors.text; }
+                }
+            }
+            
+            // Tab 1: General Programs
+            tab1 := Rectangle {
+                height: 44px;
+                border-radius: 8px;
+                background: root.active-tab == 1 ? StoreColors.brand : (ta1.has-hover ? StoreColors.border : transparent);
+                ta1 := TouchArea {
+                    clicked => {
+                        root.active-tab = 1;
+                        root.tab-changed(1);
+                    }
+                }
+                HorizontalLayout {
+                    padding: StoreSpacing.padding-md;
+                    spacing: StoreSpacing.space-md;
+                    Text { text: "📦  برامج عامة"; font-size: StoreTypography.font-size-sm; font-weight: StoreTypography.font-weight-bold; color: StoreColors.text; }
+                }
+            }
+            
+            // Tab 2: Updates Center
+            tab2 := Rectangle {
+                height: 44px;
+                border-radius: 8px;
+                background: root.active-tab == 2 ? StoreColors.brand : (ta2.has-hover ? StoreColors.border : transparent);
+                ta2 := TouchArea {
+                    clicked => {
+                        root.active-tab = 2;
+                        root.tab-changed(2);
+                    }
+                }
+                HorizontalLayout {
+                    padding: StoreSpacing.padding-md;
+                    spacing: StoreSpacing.space-md;
+                    alignment: space-between;
+                    Text { text: "🔄  التحديثات"; font-size: StoreTypography.font-size-sm; font-weight: StoreTypography.font-weight-bold; color: StoreColors.text; vertical-alignment: center; }
+                    
+                    // Glowing update count indicator
+                    Rectangle {
+                        width: 22px;
+                        height: 18px;
+                        border-radius: 9px;
+                        background: StoreColors.danger;
+                        Text { text: "1"; font-size: StoreTypography.font-size-xs; font-weight: StoreTypography.font-weight-extra-bold; color: StoreColors.text; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                }
+            }
+            
+            // Tab 3: Add-ons
+            tab3 := Rectangle {
+                height: 44px;
+                border-radius: 8px;
+                background: root.active-tab == 3 ? StoreColors.brand : (ta3.has-hover ? StoreColors.border : transparent);
+                ta3 := TouchArea {
+                    clicked => {
+                        root.active-tab = 3;
+                        root.tab-changed(3);
+                    }
+                }
+                HorizontalLayout {
+                    padding: StoreSpacing.padding-md;
+                    spacing: StoreSpacing.space-md;
+                    Text { text: "🧩  الاضافات"; font-size: StoreTypography.font-size-sm; font-weight: StoreTypography.font-weight-bold; color: StoreColors.text; }
+                }
+            }
+        }
+        
+        // Footer details
+        Rectangle { vertical-stretch: 1; }
+        Text { text: "نظام سومر OS الأمني"; font-size: StoreTypography.font-size-xs; color: StoreColors.text-muted; horizontal-alignment: center; }
+    }
+}

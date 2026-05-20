@@ -1,0 +1,88 @@
+import { AppCard } from "./app_card.slint";
+import { TvColors } from "../theme/colors.slint";
+import { TvTypography } from "../theme/typography.slint";
+import { TvSpacing } from "../theme/spacing.slint";
+
+export struct AppItem {
+    text: string,
+    category-text: string,
+    category-color: color,
+    text-color: color,
+    card-background: brush,
+    action-id: string,
+}
+
+export component AppGrid {
+    in property <[AppItem]> apps;
+    in property <int> focused-index: -1;
+    in property <string> title: "التطبيقات";
+    in property <bool> active: false;
+    in property <bool> is-sliding: false;
+    
+    callback app-clicked(string);
+    
+    VerticalLayout {
+        spacing: TvSpacing.space-md;
+        alignment: start;
+        
+        Text {
+            text: root.title;
+            font-family: TvTypography.font-family;
+            font-size: TvTypography.font-size-md;
+            font-weight: TvTypography.font-weight-bold;
+            color: TvColors.text-primary;
+        }
+        
+        // Non-sliding standard system tools row (typically 6 items or fewer)
+        if (!root.is-sliding) : HorizontalLayout {
+            spacing: parent.width * 0.015;
+            
+            for app[index] in root.apps : AppCard {
+                text: app.text;
+                category-text: app.category-text;
+                category-color: app.category-color;
+                text-color: app.text-color;
+                card-background: app.card-background;
+                is-focused: root.active && root.focused-index == index;
+                height-ratio: app.category-text == "" ? 0.45 : 0.50;
+                
+                clicked => { root.app-clicked(app.action-id); }
+            }
+        }
+        
+        // Sliding carousel row (typically used for media cards or longer grids)
+        if (root.is-sliding) : Rectangle {
+            height: parent.width * 0.155;
+            clip: true;
+            
+            HorizontalLayout {
+                width: parent.width * 2.0;
+                spacing: parent.width * 0.015;
+                alignment: start;
+                
+                // Cinematic panning math - slides when focus goes beyond index 2
+                x: (root.active && root.focused-index > 2) ? 
+                    -((root.focused-index - 2) * (parent.width / 5)) : 
+                    0px;
+                
+                animate x {
+                    duration: 350ms;
+                    easing: cubic-bezier(0.2, 0.8, 0.2, 1.0); // Extremely smooth kinetic panning
+                }
+                
+                for app[index] in root.apps : AppCard {
+                    width: (parent.width / 2.0) * 0.18; // Evenly sized cards
+                    text: app.text;
+                    category-text: app.category-text;
+                    category-color: app.category-color;
+                    text-color: app.text-color;
+                    card-background: app.card-background;
+                    is-focused: root.active && root.focused-index == index;
+                    height-ratio: 0.50;
+                    
+                    clicked => { root.app-clicked(app.action-id); }
+                }
+            }
+        }
+    }
+}

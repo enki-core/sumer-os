@@ -1,0 +1,5 @@
+export component Wallpaper17 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #000000;
+    for i in 20 : Rectangle { width: 1px; height: is-preview ? 20px : 150px; x: i * (parent.width/20); y: parent.height * 0.1 * (i - (i/3)*3); background: @linear-gradient(180deg, transparent 0%, #22c55e 100%); }
+}

@@ -1,0 +1,7 @@
+export component Wallpaper13 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #ffffff;
+    for i in 10 : Rectangle { width: parent.width; height: 1px; y: i * (parent.height/10); background: #f1f5f9; }
+    for i in 20 : Rectangle { width: 1px; height: parent.height; x: i * (parent.width/20); background: #f1f5f9; }
+    Rectangle { width: is-preview ? 20px : 100px; height: is-preview ? 20px : 100px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; background: #000000; }
+}

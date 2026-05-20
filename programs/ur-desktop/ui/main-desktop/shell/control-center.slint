@@ -1,0 +1,236 @@
+export component SumerControlCenter inherits Rectangle {
+    in property <bool> dark-mode: true;
+    
+    // Connectivity states
+    in-out property <bool> wifi-on: true;
+    in-out property <bool> bt-on: true;
+    in-out property <bool> airplane-on: false;
+    
+    // Sliders state
+    in-out property <float> brightness: 0.8;
+    in-out property <float> volume: 0.65;
+    
+    callback toggle-dark-mode;
+    callback brightness-changed(float);
+    callback volume-changed(float);
+    callback wifi-toggled(bool);
+    callback bluetooth-toggled(bool);
+    callback airplane-toggled(bool);
+    
+    // Media Player state & callbacks
+    in-out property <bool> media-playing: true;
+    callback media-prev;
+    callback media-play-pause;
+    callback media-next;
+    
+    width: 340px;
+    height: 420px;
+    border-radius: 24px;
+    
+    // Ultra Premium Glassmorphism
+    background: root.dark-mode ? #0f172ae5 : #f8fafce5;
+    border-width: 1px;
+    border-color: root.dark-mode ? #ffffff1a : #00000015;
+    
+    drop-shadow-color: root.dark-mode ? #00000090 : #00000030;
+    drop-shadow-blur: 40px;
+    drop-shadow-offset-y: 12px;
+    
+    VerticalLayout {
+        padding: 20px;
+        spacing: 20px;
+        
+        // 1. Connectivity Grid
+        HorizontalLayout {
+            spacing: 12px;
+            height: 90px;
+            
+            // Wi-Fi
+            Rectangle {
+                border-radius: 16px;
+                background: root.wifi-on ? (root.dark-mode ? #38bdf8 : #0284c7) : (root.dark-mode ? #ffffff10 : #0000000a);
+                animate background { duration: 200ms; }
+                VerticalLayout {
+                    alignment: center; spacing: 8px;
+                    Text { text: "📶"; font-size: 24px; horizontal-alignment: center; }
+                    Text { 
+                        text: "واي فاي"; 
+                        font-size: 13px; font-weight: 700; 
+                        color: root.wifi-on ? #ffffff : (root.dark-mode ? #94a3b8 : #475569);
+                        horizontal-alignment: center; 
+                    }
+                }
+                TouchArea { 
+                    clicked => { 
+                        if (root.airplane-on) { root.airplane-on = false; root.airplane-toggled(false); }
+                        root.wifi-on = !root.wifi-on; root.wifi-toggled(root.wifi-on); 
+                    } 
+                }
+            }
+            
+            // Bluetooth
+            Rectangle {
+                border-radius: 16px;
+                background: root.bt-on ? (root.dark-mode ? #8b5cf6 : #6d28d9) : (root.dark-mode ? #ffffff10 : #0000000a);
+                animate background { duration: 200ms; }
+                VerticalLayout {
+                    alignment: center; spacing: 8px;
+                    Text { text: "🎧"; font-size: 24px; horizontal-alignment: center; }
+                    Text { 
+                        text: "بلوتوث"; 
+                        font-size: 13px; font-weight: 700; 
+                        color: root.bt-on ? #ffffff : (root.dark-mode ? #94a3b8 : #475569);
+                        horizontal-alignment: center; 
+                    }
+                }
+                TouchArea { 
+                    clicked => { 
+                        if (root.airplane-on) { root.airplane-on = false; root.airplane-toggled(false); }
+                        root.bt-on = !root.bt-on; root.bluetooth-toggled(root.bt-on); 
+                    } 
+                }
+            }
+            
+            // Airplane Mode
+            Rectangle {
+                border-radius: 16px;
+                background: root.airplane-on ? #f97316 : (root.dark-mode ? #ffffff10 : #0000000a);
+                animate background { duration: 200ms; }
+                VerticalLayout {
+                    alignment: center; spacing: 8px;
+                    Text { text: "✈️"; font-size: 24px; horizontal-alignment: center; }
+                    Text { 
+                        text: "وضع الطيران"; 
+                        font-size: 13px; font-weight: 700; 
+                        color: root.airplane-on ? #ffffff : (root.dark-mode ? #94a3b8 : #475569);
+                        horizontal-alignment: center; 
+                    }
+                }
+                TouchArea { 
+                    clicked => { 
+                        root.airplane-on = !root.airplane-on; 
+                        if (root.airplane-on) {
+                            root.wifi-on = false; root.wifi-toggled(false);
+                            root.bt-on = false; root.bluetooth-toggled(false);
+                        }
+                        root.airplane-toggled(root.airplane-on); 
+                    } 
+                }
+            }
+        }
+        
+        // 2. Sliders
+        VerticalLayout {
+            spacing: 16px;
+            
+            // Brightness Slider
+            HorizontalLayout {
+                spacing: 12px;
+                Text { text: "☀️"; font-size: 20px; vertical-alignment: center; }
+                Rectangle {
+                    height: 24px; border-radius: 12px;
+                    background: root.dark-mode ? #ffffff10 : #0000000a;
+                    clip: true;
+                    // Filled part
+                    Rectangle {
+                        x: 0; width: parent.width * root.brightness;
+                        background: root.dark-mode ? #e2e8f0 : #475569;
+                    }
+                    TouchArea {
+                        pointer-event(event) => {
+                            if (self.pressed) {
+                                root.brightness = Math.max(0.0, Math.min(1.0, (Math.max(0px, Math.min(parent.width, self.mouse-x)) / 1px) / (parent.width / 1px)));
+                                root.brightness-changed(root.brightness);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Volume Slider
+            HorizontalLayout {
+                spacing: 12px;
+                Text { text: "🔊"; font-size: 20px; vertical-alignment: center; }
+                Rectangle {
+                    height: 24px; border-radius: 12px;
+                    background: root.dark-mode ? #ffffff10 : #0000000a;
+                    clip: true;
+                    // Filled part
+                    Rectangle {
+                        x: 0; width: parent.width * root.volume;
+                        background: root.dark-mode ? #38bdf8 : #0ea5e9; // Blue for volume
+                    }
+                    TouchArea {
+                        pointer-event(event) => {
+                            if (self.pressed) {
+                                root.volume = Math.max(0.0, Math.min(1.0, (Math.max(0px, Math.min(parent.width, self.mouse-x)) / 1px) / (parent.width / 1px)));
+                                root.volume-changed(root.volume);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 3. Media & Toggles
+        HorizontalLayout {
+            spacing: 12px;
+            height: 100px;
+            
+            // Mini Media Player
+            Rectangle {
+                width: 180px;
+                border-radius: 16px;
+                background: root.dark-mode ? #ffffff10 : #0000000a;
+                HorizontalLayout {
+                    padding: 16px; spacing: 12px;
+                    Text { text: "🎵"; font-size: 32px; vertical-alignment: center; }
+                    VerticalLayout {
+                        alignment: center; spacing: 4px;
+                        Text { text: "تهويدة سومرية"; font-size: 13px; font-weight: 800; color: root.dark-mode ? #f8fafc : #0f172a; overflow: elide; }
+                        Text { text: "ألحان عتيقة"; font-size: 11px; color: root.dark-mode ? #94a3b8 : #475569; overflow: elide; }
+                        HorizontalLayout {
+                            spacing: 12px; padding-top: 4px;
+                            Rectangle {
+                                width: 24px; height: 24px; border-radius: 12px;
+                                background: prev-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                                Text { text: "⏮"; font-size: 14px; color: root.dark-mode ? #e2e8f0 : #1e293b; horizontal-alignment: center; vertical-alignment: center; }
+                                prev-touch := TouchArea { clicked => { root.media-prev(); } }
+                            }
+                            Rectangle {
+                                width: 24px; height: 24px; border-radius: 12px;
+                                background: play-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                                Text { text: root.media-playing ? "⏸" : "▶️"; font-size: 14px; color: root.dark-mode ? #e2e8f0 : #1e293b; horizontal-alignment: center; vertical-alignment: center; }
+                                play-touch := TouchArea { clicked => { root.media-playing = !root.media-playing; root.media-play-pause(); } }
+                            }
+                            Rectangle {
+                                width: 24px; height: 24px; border-radius: 12px;
+                                background: next-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                                Text { text: "⏭"; font-size: 14px; color: root.dark-mode ? #e2e8f0 : #1e293b; horizontal-alignment: center; vertical-alignment: center; }
+                                next-touch := TouchArea { clicked => { root.media-next(); } }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Dark Mode Toggle
+            Rectangle {
+                border-radius: 16px;
+                background: root.dark-mode ? #1e293b : #f1f5f9;
+                border-width: 1px; border-color: root.dark-mode ? #ffffff1a : #00000015;
+                VerticalLayout {
+                    alignment: center; spacing: 8px;
+                    Text { text: root.dark-mode ? "🌙" : "☀️"; font-size: 32px; horizontal-alignment: center; }
+                    Text { 
+                        text: root.dark-mode ? "الوضع الداكن" : "الوضع الفاتح"; 
+                        font-size: 12px; font-weight: 800; 
+                        color: root.dark-mode ? #e2e8f0 : #1e293b;
+                        horizontal-alignment: center; 
+                    }
+                }
+                TouchArea { clicked => { root.toggle-dark-mode(); } }
+            }
+        }
+    }
+}

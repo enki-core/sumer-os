@@ -1,0 +1,5 @@
+FROM rust:alpine
+RUN apk add --no-cache musl-dev build-base fontconfig-dev libxkbcommon-dev wayland-dev mesa-dev eudev-dev
+WORKDIR /volume
+COPY . .
+RUN cargo build --release

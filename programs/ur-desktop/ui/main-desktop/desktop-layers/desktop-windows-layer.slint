@@ -1,0 +1,216 @@
+import { SumerWindowFrame } from "../components/window-frame.slint";
+import { SumerFileManager } from "../apps/file-manager.slint";
+import { WallpapersApp } from "../apps/wallpapers-app.slint";
+import { NotesApp } from "../apps/notes-app.slint";
+import { ClockApp } from "../apps/clock-app.slint";
+import { ShortcutsApp } from "../apps/shortcuts-app.slint";
+
+export component SumerDesktopWindowsLayer inherits Rectangle {
+    in property <bool> dark-mode: true;
+    in property <bool> files-window-open: false;
+    in property <bool> console-window-open: false;
+    in property <bool> wallpapers-window-open: false;
+    in property <bool> notes-window-open: false;
+    in property <bool> clock-window-open: false;
+    in property <bool> shortcuts-window-open: false;
+    
+    // 0 = None, 1 = Files, 2 = Console, 3 = Wallpapers, 4 = Notes, 5 = Clock, 6 = Shortcuts
+    property <int> active-window: 0;
+    
+    property <bool> files-fullscreen: false;
+    property <bool> console-fullscreen: false;
+    property <bool> wallpapers-fullscreen: false;
+    property <bool> notes-fullscreen: false;
+    property <bool> clock-fullscreen: false;
+    property <bool> shortcuts-fullscreen: false;
+    
+    in-out property <bool> has-fullscreen-window: 
+        (root.files-window-open && root.files-fullscreen) ||
+        (root.console-window-open && root.console-fullscreen) ||
+        (root.wallpapers-window-open && root.wallpapers-fullscreen) ||
+        (root.notes-window-open && root.notes-fullscreen) ||
+        (root.clock-window-open && root.clock-fullscreen) ||
+        (root.shortcuts-window-open && root.shortcuts-fullscreen);
+    
+    property <length> files-x: (root.width - 620px) / 2;
+    property <length> files-y: (root.height - 400px) / 2 - 20px;
+    property <length> files-w: 620px;
+    property <length> files-h: 400px;
+    property <bool> files-max: false;
+    property <bool> files-min: false;
+
+    property <length> console-x: (root.width - 620px) / 2 + 40px;
+    property <length> console-y: (root.height - 400px) / 2 + 20px;
+    property <length> console-w: 620px;
+    property <length> console-h: 400px;
+    property <bool> console-max: false;
+    property <bool> console-min: false;
+
+    property <length> wallpapers-x: (root.width - 800px) / 2;
+    property <length> wallpapers-y: (root.height - 600px) / 2;
+    property <length> wallpapers-w: 800px;
+    property <length> wallpapers-h: 600px;
+    property <bool> wallpapers-max: false;
+    property <bool> wallpapers-min: false;
+
+    property <length> notes-x: (root.width - 300px) / 2;
+    property <length> notes-y: (root.height - 300px) / 2;
+    property <length> notes-w: 300px;
+    property <length> notes-h: 300px;
+    property <bool> notes-max: false;
+    property <bool> notes-min: false;
+
+    property <length> clock-x: (root.width - 250px) / 2;
+    property <length> clock-y: (root.height - 200px) / 2;
+    property <length> clock-w: 250px;
+    property <length> clock-h: 200px;
+    property <bool> clock-max: false;
+    property <bool> clock-min: false;
+    
+    property <length> shortcuts-x: (root.width - 400px) / 2;
+    property <length> shortcuts-y: (root.height - 300px) / 2;
+    property <length> shortcuts-w: 400px;
+    property <length> shortcuts-h: 300px;
+    property <bool> shortcuts-max: false;
+    property <bool> shortcuts-min: false;
+    
+    callback close-files;
+    callback close-console;
+    callback close-wallpapers;
+    callback close-notes;
+    callback close-clock;
+    callback close-shortcuts;
+    callback wallpaper-selected(int);
+    callback clear-wallpaper;
+    callback execute-console-command(string) -> string;
+    
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    
+    // 1. Background layer (inactive windows)
+    if (root.files-window-open && root.active-window != 1) : SumerWindowFrame {
+        title: "الأرشيف السومري - مدير الملفات"; icon: "📁"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.files-x; pos-y <=> root.files-y;
+        window-width <=> root.files-w; window-height <=> root.files-h;
+        is-maximized <=> root.files-max; is-minimized <=> root.files-min;
+        is-fullscreen <=> root.files-fullscreen;
+        window-focused => { root.active-window = 1; }
+        close-clicked => { root.close-files(); }
+        SumerFileManager { dark-mode: root.dark-mode; }
+    }
+    
+
+
+    if (root.wallpapers-window-open && root.active-window != 3) : SumerWindowFrame {
+        title: "الخلفيات البرمجية"; icon: "🎨"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.wallpapers-x; pos-y <=> root.wallpapers-y;
+        window-width <=> root.wallpapers-w; window-height <=> root.wallpapers-h;
+        is-maximized <=> root.wallpapers-max; is-minimized <=> root.wallpapers-min;
+        is-fullscreen <=> root.wallpapers-fullscreen;
+        window-focused => { root.active-window = 3; }
+        close-clicked => { root.close-wallpapers(); }
+        WallpapersApp { dark-mode: root.dark-mode; close-clicked => { root.close-wallpapers(); } wallpaper-selected(idx) => { root.wallpaper-selected(idx); } clear-wallpaper => { root.clear-wallpaper(); } }
+    }
+
+    if (root.notes-window-open && root.active-window != 4) : SumerWindowFrame {
+        title: "ملاحظات"; icon: "📝"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.notes-x; pos-y <=> root.notes-y;
+        window-width <=> root.notes-w; window-height <=> root.notes-h;
+        is-maximized <=> root.notes-max; is-minimized <=> root.notes-min;
+        is-fullscreen <=> root.notes-fullscreen;
+        window-focused => { root.active-window = 4; }
+        close-clicked => { root.close-notes(); }
+        NotesApp { dark-mode: root.dark-mode; }
+    }
+
+    if (root.clock-window-open && root.active-window != 5) : SumerWindowFrame {
+        title: "ساعة"; icon: "🕒"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.clock-x; pos-y <=> root.clock-y;
+        window-width <=> root.clock-w; window-height <=> root.clock-h;
+        is-maximized <=> root.clock-max; is-minimized <=> root.clock-min;
+        is-fullscreen <=> root.clock-fullscreen;
+        window-focused => { root.active-window = 5; }
+        close-clicked => { root.close-clock(); }
+        ClockApp { dark-mode: root.dark-mode; }
+    }
+
+    if (root.shortcuts-window-open && root.active-window != 6) : SumerWindowFrame {
+        title: "الاختصارات"; icon: "⌨️"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.shortcuts-x; pos-y <=> root.shortcuts-y;
+        window-width <=> root.shortcuts-w; window-height <=> root.shortcuts-h;
+        is-maximized <=> root.shortcuts-max; is-minimized <=> root.shortcuts-min;
+        is-fullscreen <=> root.shortcuts-fullscreen;
+        window-focused => { root.active-window = 6; }
+        close-clicked => { root.close-shortcuts(); }
+        ShortcutsApp { dark-mode: root.dark-mode; }
+    }
+
+    // 2. Foreground layer (active window)
+    if (root.files-window-open && root.active-window == 1) : SumerWindowFrame {
+        title: "الأرشيف السومري - مدير الملفات"; icon: "📁"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.files-x; pos-y <=> root.files-y;
+        window-width <=> root.files-w; window-height <=> root.files-h;
+        is-maximized <=> root.files-max; is-minimized <=> root.files-min;
+        is-fullscreen <=> root.files-fullscreen;
+        window-focused => { root.active-window = 1; }
+        close-clicked => { root.close-files(); }
+        SumerFileManager { dark-mode: root.dark-mode; }
+    }
+    
+
+
+    if (root.wallpapers-window-open && root.active-window == 3) : SumerWindowFrame {
+        title: "الخلفيات البرمجية"; icon: "🎨"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.wallpapers-x; pos-y <=> root.wallpapers-y;
+        window-width <=> root.wallpapers-w; window-height <=> root.wallpapers-h;
+        is-maximized <=> root.wallpapers-max; is-minimized <=> root.wallpapers-min;
+        is-fullscreen <=> root.wallpapers-fullscreen;
+        window-focused => { root.active-window = 3; }
+        close-clicked => { root.close-wallpapers(); }
+        WallpapersApp { dark-mode: root.dark-mode; close-clicked => { root.close-wallpapers(); } wallpaper-selected(idx) => { root.wallpaper-selected(idx); } clear-wallpaper => { root.clear-wallpaper(); } }
+    }
+
+    if (root.notes-window-open && root.active-window == 4) : SumerWindowFrame {
+        title: "ملاحظات"; icon: "📝"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.notes-x; pos-y <=> root.notes-y;
+        window-width <=> root.notes-w; window-height <=> root.notes-h;
+        is-maximized <=> root.notes-max; is-minimized <=> root.notes-min;
+        is-fullscreen <=> root.notes-fullscreen;
+        window-focused => { root.active-window = 4; }
+        close-clicked => { root.close-notes(); }
+        NotesApp { dark-mode: root.dark-mode; }
+    }
+
+    if (root.clock-window-open && root.active-window == 5) : SumerWindowFrame {
+        title: "ساعة"; icon: "🕒"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.clock-x; pos-y <=> root.clock-y;
+        window-width <=> root.clock-w; window-height <=> root.clock-h;
+        is-maximized <=> root.clock-max; is-minimized <=> root.clock-min;
+        is-fullscreen <=> root.clock-fullscreen;
+        window-focused => { root.active-window = 5; }
+        close-clicked => { root.close-clock(); }
+        ClockApp { dark-mode: root.dark-mode; }
+    }
+
+    if (root.shortcuts-window-open && root.active-window == 6) : SumerWindowFrame {
+        title: "الاختصارات"; icon: "⌨️"; dark-mode: root.dark-mode;
+        screen-width: root.width; screen-height: root.height;
+        pos-x <=> root.shortcuts-x; pos-y <=> root.shortcuts-y;
+        window-width <=> root.shortcuts-w; window-height <=> root.shortcuts-h;
+        is-maximized <=> root.shortcuts-max; is-minimized <=> root.shortcuts-min;
+        is-fullscreen <=> root.shortcuts-fullscreen;
+        window-focused => { root.active-window = 6; }
+        close-clicked => { root.close-shortcuts(); }
+        ShortcutsApp { dark-mode: root.dark-mode; }
+    }
+}

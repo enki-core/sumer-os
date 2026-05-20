@@ -1,0 +1,6 @@
+export component Wallpaper08 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #022c22;
+    Rectangle { width: is-preview ? 40px : 200px; height: is-preview ? 40px : 200px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; border-width: 1px; border-color: #10b981; }
+    Rectangle { width: is-preview ? 36px : 180px; height: is-preview ? 36px : 180px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; background: #10b98120; }
+}

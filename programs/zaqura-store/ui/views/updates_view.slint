@@ -1,0 +1,55 @@
+import { ScrollView, Button } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { AppCard } from "../components/app_card.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component UpdatesView inherits VerticalLayout {
+    in property <[AppInfo]> apps;
+    
+    // Callbacks
+    callback update_app(int);
+    callback update_all_apps();
+    
+    spacing: StoreSpacing.space-lg;
+    padding: StoreSpacing.padding-lg;
+    
+    HorizontalLayout {
+        alignment: space-between;
+        
+        Text { 
+            text: "التحديثات المتوفرة لنظام سومر OS والبرامج:"; 
+            font-size: StoreTypography.font-size-sm; 
+            font-weight: StoreTypography.font-weight-bold; 
+            color: StoreColors.text; 
+            vertical-alignment: center;
+        }
+        
+        Button {
+            text: "🔄 تحديث وتنزيل كل الحزم";
+            clicked => { root.update_all_apps(); }
+        }
+    }
+    
+    ScrollView {
+        VerticalLayout {
+            spacing: StoreSpacing.space-sm;
+            alignment: start;
+            
+            for app[idx] in root.apps : Rectangle {
+                visible: app.status == "update_available" || app.status == "updating";
+                height: self.visible ? 120px : 0px;
+                
+                AppCard {
+                    width: 100%;
+                    info: app;
+                    index: idx;
+                    action_triggered(i) => {
+                        root.update_app(i);
+                    }
+                }
+            }
+        }
+    }
+}

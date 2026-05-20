@@ -1,0 +1,5 @@
+export component Wallpaper09 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: @radial-gradient(circle, #4c1d95 0%, #0f172a 100%);
+    for i in 10 : Rectangle { width: 2px; height: 2px; x: parent.width * 0.1 * i; y: parent.height * 0.3 + (i * (is-preview ? 2px : 20px)); border-radius: 1px; background: #ffffff; opacity: 0.5; }
+}

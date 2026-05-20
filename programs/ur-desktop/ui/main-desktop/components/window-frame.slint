@@ -1,0 +1,287 @@
+export component SumerWindowFrame inherits Rectangle {
+    in property <string> title;
+    in property <string> icon: "📁";
+    in property <bool> is-visible: false;
+    in property <bool> dark-mode: true;
+    
+    in property <length> screen-width;
+    in property <length> screen-height;
+    
+    in-out property <length> pos-x: 100px;
+    in-out property <length> pos-y: 100px;
+    x: root.pos-x;
+    y: root.pos-y;
+    
+    in-out property <length> window-width: 620px;
+    in-out property <length> window-height: 400px;
+    width: root.window-width;
+    height: root.is-minimized ? 42px : root.window-height;
+    clip: true;
+    
+    in-out property <bool> is-maximized: false;
+    in-out property <bool> is-minimized: false;
+    property <length> pre-max-x: 100px;
+    property <length> pre-max-y: 100px;
+    property <length> pre-max-w: 620px;
+    property <length> pre-max-h: 400px;
+    
+    in-out property <bool> is-fullscreen: false;
+    property <bool> show-fullscreen-warning: false;
+    property <float> warning-opacity: root.show-fullscreen-warning ? 0.0 : 1.0;
+    
+    callback close-clicked;
+    callback window-focused;
+    callback toggle-maximize;
+    
+    border-radius: (root.is-maximized || root.is-fullscreen) ? 0px : 16px;
+    
+    // Premium glassmorphic window styling
+    background: root.is-fullscreen ? #000000 : (root.dark-mode ? #0f172ae5 : #f8fafcf2);
+    border-width: (root.is-maximized || root.is-fullscreen) ? 0px : 1px;
+    border-color: root.dark-mode ? #ffffff1a : #00000015;
+    
+    // Soft neon ambient shadow
+    drop-shadow-color: root.is-maximized || root.is-minimized || root.is-fullscreen ? transparent : (root.dark-mode ? #00000080 : #00000020);
+    drop-shadow-blur: 32px;
+    drop-shadow-offset-y: 8px;
+    
+    animate pos-x, pos-y, window-width, window-height, height, border-radius {
+        duration: 350ms;
+        easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    
+    animate warning-opacity { duration: 2000ms; }
+    
+    toggle-maximize => {
+        if (root.is-fullscreen) { return; } // Can't maximize from fullscreen
+        if (root.is-maximized) {
+            root.is-maximized = false;
+            root.pos-x = root.pre-max-x;
+            root.pos-y = root.pre-max-y;
+            root.window-width = root.pre-max-w;
+            root.window-height = root.pre-max-h;
+        } else {
+            root.pre-max-x = root.pos-x;
+            root.pre-max-y = root.pos-y;
+            root.pre-max-w = root.window-width;
+            root.pre-max-h = root.window-height;
+            root.is-maximized = true;
+            root.pos-x = 0px;
+            root.pos-y = 0px;
+            root.window-width = root.screen-width;
+            root.window-height = root.screen-height;
+        }
+    }
+    
+    // Background touch area to bring window to front
+    // TouchArea {
+    //     width: 100%; height: 100%;
+    //     clicked => { root.window-focused(); }
+    // }
+    
+    Rectangle {
+        VerticalLayout {
+            spacing: 0px;
+            
+            // 1. Window Title Bar
+        Rectangle {
+            height: root.is-fullscreen ? 0px : 42px;
+            visible: !root.is-fullscreen;
+            background: root.dark-mode ? #ffffff05 : #00000005;
+            border-top-left-radius: (root.is-maximized || root.is-fullscreen) ? 0px : 16px;
+            border-top-right-radius: (root.is-maximized || root.is-fullscreen) ? 0px : 16px;
+            
+            // Dragging TouchArea
+            TouchArea {
+                width: 100%; height: 100%;
+                // clicked => {
+                //     root.window-focused();
+                //     if (root.is-minimized) { root.is-minimized = false; }
+                // }
+                moved => {
+                    if (self.pressed && !root.is-maximized && !root.is-fullscreen) {
+                        root.pos-x += self.mouse-x - self.pressed-x;
+                        root.pos-y += self.mouse-y - self.pressed-y;
+                    }
+                }
+                double-clicked => {
+                    if (root.is-minimized) { root.is-minimized = false; }
+                    else { root.toggle-maximize(); }
+                }
+            }
+            
+            // Bottom separator
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: root.dark-mode ? #ffffff0c : #0000000c;
+                visible: !root.is-fullscreen;
+            }
+            
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                alignment: space-between;
+                
+                // Title and Icon
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Text {
+                        text: root.icon;
+                        font-size: 18px;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: root.title;
+                        font-size: 14px;
+                        font-weight: 800;
+                        color: root.dark-mode ? #e2e8f0 : #1e293b;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Window Control Buttons (Fullscreen, Minimize, Maximize, Close)
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: end;
+
+                    // Fullscreen
+                    Rectangle {
+                        width: 38px; height: 30px; border-radius: 6px;
+                        background: fs-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                        animate background { duration: 150ms; }
+                        Text {
+                            text: "⛶";
+                            font-size: 16px;
+                            font-weight: 800;
+                            color: root.dark-mode ? #e2e8f0 : #1e293b;
+                            horizontal-alignment: center; vertical-alignment: center;
+                        }
+                        fs-touch := TouchArea {
+                            clicked => { 
+                                root.window-focused(); 
+                                root.pre-max-x = root.pos-x;
+                                root.pre-max-y = root.pos-y;
+                                root.pre-max-w = root.window-width;
+                                root.pre-max-h = root.window-height;
+                                root.is-fullscreen = true;
+                                root.pos-x = 0px;
+                                root.pos-y = 0px;
+                                root.window-width = root.screen-width;
+                                root.window-height = root.screen-height;
+                                root.show-fullscreen-warning = true;
+                                fs-focus.focus();
+                            }
+                        }
+                    }
+                    
+                    // Minimize
+                    Rectangle {
+                        width: 38px; height: 30px; border-radius: 6px;
+                        background: min-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                        animate background { duration: 150ms; }
+                        Text {
+                            text: "—";
+                            font-size: 14px;
+                            font-weight: 800;
+                            color: root.dark-mode ? #e2e8f0 : #1e293b;
+                            horizontal-alignment: center; vertical-alignment: center;
+                        }
+                        min-touch := TouchArea {
+                            clicked => { 
+                                root.window-focused(); 
+                                root.is-minimized = true;
+                            }
+                        }
+                    }
+                    
+                    // Maximize / Restore
+                    Rectangle {
+                        width: 38px; height: 30px; border-radius: 6px;
+                        background: max-touch.has-hover ? (root.dark-mode ? #ffffff20 : #00000015) : transparent;
+                        animate background { duration: 150ms; }
+                        Text {
+                            text: root.is-maximized ? "❐" : "□";
+                            font-size: 16px;
+                            font-weight: 800;
+                            color: root.dark-mode ? #e2e8f0 : #1e293b;
+                            horizontal-alignment: center; vertical-alignment: center;
+                        }
+                        max-touch := TouchArea {
+                            clicked => {
+                                root.window-focused();
+                                root.toggle-maximize();
+                            }
+                        }
+                    }
+                    
+                    // Close
+                    Rectangle {
+                        width: 38px; height: 30px; border-radius: 6px;
+                        background: close-touch.has-hover ? #ef4444 : transparent;
+                        animate background { duration: 150ms; }
+                        Text {
+                            text: "✕";
+                            font-size: 16px;
+                            font-weight: 800;
+                            color: close-touch.has-hover ? #ffffff : (root.dark-mode ? #e2e8f0 : #1e293b);
+                            horizontal-alignment: center; vertical-alignment: center;
+                        }
+                        close-touch := TouchArea {
+                            clicked => {
+                                root.close-clicked();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 2. Client Area (Content Slot)
+        Rectangle {
+            background: transparent;
+            padding: 16px;
+            clip: true; // Prevent content from leaking during resize
+            
+            @children
+        }
+    }
+    }
+    
+    // Fullscreen Key Listener
+    fs-focus := FocusScope {
+        key-pressed(event) => {
+            if (event.text == Key.Escape && root.is-fullscreen) {
+                root.is-fullscreen = false;
+                root.pos-x = root.pre-max-x;
+                root.pos-y = root.pre-max-y;
+                root.window-width = root.pre-max-w;
+                root.window-height = root.pre-max-h;
+                return accept;
+            }
+            return reject;
+        }
+    }
+    
+    // Fullscreen Warning Banner
+    if (root.show-fullscreen-warning && root.is-fullscreen) : Rectangle {
+        opacity: root.warning-opacity;
+        y: 40px;
+        x: (root.width - 320px) / 2;
+        width: 320px;
+        height: 40px;
+        background: #0f172ae5;
+        border-radius: 20px;
+        border-width: 1px;
+        border-color: #38bdf8a0;
+        
+        Text {
+            text: "اضغط Esc للخروج من ملء الشاشة";
+            color: #f8fafc;
+            font-size: 14px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

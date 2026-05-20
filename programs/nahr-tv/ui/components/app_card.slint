@@ -1,0 +1,76 @@
+import { TvColors } from "../theme/colors.slint";
+import { TvTypography } from "../theme/typography.slint";
+import { TvSpacing } from "../theme/spacing.slint";
+
+export component AppCard inherits Rectangle {
+    in property <string> text;
+    in property <string> category-text: "";
+    in property <color> category-color: TvColors.text-secondary;
+    in property <color> text-color: TvColors.text-primary;
+    in property <brush> card-background: TvColors.settings-bg;
+    in property <bool> is-focused: false;
+    
+    in property <length> unfocused-border-width: 1px;
+    in property <color> unfocused-border-color: TvColors.border-default;
+    in property <float> height-ratio: 0.45;
+    
+    callback clicked;
+    
+    touch-area := TouchArea { clicked => { root.clicked(); } }
+    
+    // Kinetic focus expansion: focused/hovered card occupies more weight in horizontal layout
+    horizontal-stretch: (is-focused || touch-area.has-hover) ? 1.35 : 1.0;
+    
+    // Responsive height ratio relative to width
+    height: self.width * height-ratio;
+    background: root.card-background;
+    border-radius: TvSpacing.radius-lg;
+    border-width: (is-focused || touch-area.has-hover) ? 3.5px : root.unfocused-border-width;
+    border-color: (is-focused || touch-area.has-hover) ? TvColors.focus-border : root.unfocused-border-color;
+    
+    // High-end ambient drop shadow based on category accent or accent glow
+    drop-shadow-color: (is-focused || touch-area.has-hover) ? 
+        (category-text == "" ? TvColors.accent-glow : category-color.with-alpha(0.6)) : 
+        TvColors.transparent;
+    drop-shadow-blur: 25px;
+    drop-shadow-offset-y: 12px;
+    
+    animate height, border-color, border-width, drop-shadow-color {
+        duration: 200ms;
+        easing: cubic-bezier(0.2, 0.8, 0.2, 1.0); // Smooth fluid curve
+    }
+    
+    // Mode A: Simple Centered Text (for system tool apps)
+    if (category-text == "") : Text {
+        text: root.text;
+        font-family: TvTypography.font-family;
+        font-size: TvTypography.font-size-base;
+        font-weight: TvTypography.font-weight-bold;
+        color: root.text-color;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    
+    // Mode B: Bottom category + Title (for horizontal media apps)
+    if (category-text != "") : VerticalLayout {
+        padding: TvSpacing.padding-lg;
+        spacing: TvSpacing.space-xs;
+        alignment: end;
+        
+        Text {
+            text: root.category-text;
+            font-family: TvTypography.font-family;
+            font-size: TvTypography.font-size-xs;
+            font-weight: TvTypography.font-weight-bold;
+            color: root.category-color;
+        }
+        
+        Text {
+            text: root.text;
+            font-family: TvTypography.font-family;
+            font-size: TvTypography.font-size-sm;
+            font-weight: TvTypography.font-weight-bold;
+            color: root.text-color;
+        }
+    }
+}

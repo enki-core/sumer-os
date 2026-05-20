@@ -1,0 +1,99 @@
+export component SumerDesktopIcon inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <bool> is-focused: false;
+    in property <bool> dark-mode: true;
+    in property <bool> is-dragged: false;
+    in property <bool> hide-for-proxy: false;
+    in property <color> bg-color: #38bdf8;
+    in property <color> hover-bg-color: #0284c7;
+    property <bool> is-dragging-motion: false;
+    
+    callback clicked;
+    callback drag-started;
+    callback drag-ended;
+    callback dragged-by(length, length);
+    
+    width: 90px;
+    height: 100px;
+    border-radius: 12px;
+    
+    opacity: root.hide-for-proxy ? 0.0 : 1.0;
+    
+    // Smooth hover/selection/drag overlay using model colors
+    background: root.is-dragged ? root.hover-bg-color :
+                (touch-area.has-hover ? root.bg-color : transparent);
+        
+    border-width: 1.5px;
+    border-color: root.is-dragged ? root.hover-bg-color : root.bg-color;
+                  
+    // Beautiful glow shadow when dragging
+    drop-shadow-color: root.is-dragged ? root.hover-bg-color : #00000000;
+    drop-shadow-blur: root.is-dragged ? 24px : 0px;
+    drop-shadow-offset-y: root.is-dragged ? 12px : 0px;
+    
+    animate background, border-color, drop-shadow-color, drop-shadow-blur, drop-shadow-offset-y {
+        duration: 150ms;
+        easing: ease-out;
+    }
+    
+    touch-area := TouchArea {
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down) {
+                root.is-dragging-motion = false;
+                root.drag-started();
+            }
+            if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                root.drag-ended();
+                if (!root.is-dragging-motion) {
+                    root.clicked();
+                }
+                root.is-dragging-motion = false;
+            }
+        }
+        
+        moved => {
+            if (self.pressed) {
+                if (Math.abs((self.mouse-x - self.pressed-x) / 1px) > 4 || Math.abs((self.mouse-y - self.pressed-y) / 1px) > 4) {
+                    root.is-dragging-motion = true;
+                }
+                root.dragged-by(self.mouse-x - self.pressed-x, self.mouse-y - self.pressed-y);
+            }
+        }
+    }
+    
+    VerticalLayout {
+        alignment: center;
+        spacing: 8px;
+        
+        // Large Icon Area
+        Rectangle {
+            width: 54px;
+            height: 54px;
+            border-radius: 10px;
+            // Glowing blue background on hover
+            background: (touch-area.has-hover || root.is-dragged) ? (root.dark-mode ? #38bdf820 : #0284c715) : transparent;
+            x: (parent.width - self.width) / 2;
+            
+            animate background { duration: 150ms; }
+            
+            Text {
+                text: root.icon;
+                font-size: 32px;
+                color: root.dark-mode ? #38bdf8 : #0284c7; // Tinting the icons!
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+        
+        // Icon text
+        Text {
+            text: root.text;
+            font-size: 13px;
+            font-weight: 800; // Increased weight for readability
+            color: root.dark-mode ? #38bdf8 : #0284c7; // Vibrant sky blue!
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

@@ -1,0 +1,112 @@
+export component SumerConsoleWindow inherits Rectangle {
+    in property <bool> dark-mode: true;
+    
+    // كولباك تنفيذ الأوامر مع الباك-أند
+    callback execute-command(string) -> string;
+    
+    // سيرة الأوامر والترحيب بالنظام السومري
+    property <string> command-history: "Tigris Shell v1.0.0 - Kernel: Sumerian-Kernel-x86_64\n[+] تهيئة الاتصال بنظام دجلة الفرعي... ناجح 🟢\n[+] تم تحميل مكتبات الألواح الطينية... جاهز\n\nأكتب help أو مساعدة لعرض الأوامر المتوفرة.";
+    
+    background: transparent;
+    
+    // الحاوية الأساسية للتيرمنال بتصميم زجاجي عصري (Glassmorphism)
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: root.dark-mode ? #050b14fa : #0f172ae6;
+        border-radius: 16px;
+        border-width: 1.5px;
+        border-color: root.dark-mode ? #38bdf825 : #0284c720;
+        clip: true;
+        
+        // تظليل داخلي ناعم لإعطاء عمق بصري
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            background: @linear-gradient(135deg, #0c152430 0%, #03071290 100%);
+            border-radius: 16px;
+        }
+
+        VerticalLayout {
+            padding-left: 18px;
+            padding-right: 18px;
+            padding-top: 18px;
+            padding-bottom: 18px;
+            spacing: 12px;
+            
+            // 1. منطقة عرض النصوص والمخرجات (سلسة وقابلة للتمرير)
+            Flickable {
+                height: parent.height - 46px;
+                viewport-height: history-text.preferred-height;
+                interactive: true;
+                
+                history-text := Text {
+                    text: root.command-history;
+                    font-size: 13px;
+                    font-family: "monospace";
+                    color: root.dark-mode ? #34d399 : #10b981; // اللون الأخضر الفسفوري الكلاسيكي المريح للعين
+                    wrap: word-wrap;
+                    
+                    // تحسين خط التيرمنال ليظهر بلمعان ناعم
+                    animate color { duration: 150ms; }
+                }
+            }
+            
+            // خط فاصل رفيع وناعم يفصل المدخلات عن المخرجات
+            Rectangle {
+                height: 1px;
+                background: root.dark-mode ? #ffffff08 : #00000008;
+            }
+            
+            // 2. منطقة إدخال الأوامر (السطر النشط)
+            HorizontalLayout {
+                height: 28px;
+                spacing: 10px;
+                alignment: start;
+                
+                // برومبت الإدخال بتصميم متوهج وألوان سيان خلابة
+                Text {
+                    text: "tigris ❯";
+                    font-size: 13px;
+                    font-family: "monospace";
+                    color: #38bdf8;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                }
+                
+                // حقل إدخال الأوامر الفعلي
+                cmd-input := TextInput {
+                    text: "";
+                    font-size: 13px;
+                    font-family: "monospace";
+                    color: #f1f5f9;
+                    vertical-alignment: center;
+                    single-line: true;
+                    
+                    // التركيز عند فتح التيرمنال
+                    init => { self.focus(); }
+                    
+                    accepted => {
+                        if (self.text == "clear" || self.text == "مسح") {
+                            root.command-history = "";
+                        } else {
+                            // استدعاء مفسر الأوامر بلغة Rust وتحديث التيرمنال
+                            root.command-history = root.command-history + "\n\ntigris ❯ " + self.text + "\n" + root.execute-command(self.text);
+                        }
+                        self.text = "";
+                    }
+                }
+            }
+        }
+        
+        // ميزة بريميوم فائقة: النقر في أي مكان داخل التيرمنال يعيد التركيز (Focus) تلقائياً لحقل إدخال الأوامر!
+        TouchArea {
+            width: 100%;
+            height: 100%;
+            z: -1; // بالخلف لكي لا يعيق تفاعل النصوص
+            clicked => {
+                cmd-input.focus();
+            }
+        }
+    }
+}

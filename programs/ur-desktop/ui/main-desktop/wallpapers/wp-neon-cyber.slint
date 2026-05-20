@@ -1,0 +1,8 @@
+export component Wallpaper04 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #000000;
+    for i in 20 : Rectangle { width: parent.width; height: 1px; y: i * (parent.height/20); background: #06b6d415; }
+    for i in 30 : Rectangle { width: 1px; height: parent.height; x: i * (parent.width/30); background: #06b6d415; }
+    Rectangle { width: is-preview ? 50px : 300px; height: is-preview ? 50px : 300px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; border-width: is-preview ? 1px : 4px; border-color: #06b6d4; border-radius: is-preview ? 8px : 64px; }
+    Text { text: "SUMER"; color: #ffffff; font-size: is-preview ? 10px : 42px; font-weight: 900; letter-spacing: is-preview ? 2px : 12px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; }
+}

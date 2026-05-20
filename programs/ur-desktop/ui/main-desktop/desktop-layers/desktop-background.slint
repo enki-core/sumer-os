@@ -1,0 +1,52 @@
+import { Wallpaper01, Wallpaper02, Wallpaper03, Wallpaper04, Wallpaper05, Wallpaper06, Wallpaper07, Wallpaper08, Wallpaper09, Wallpaper10, Wallpaper11, Wallpaper12, Wallpaper13, Wallpaper14, Wallpaper15, Wallpaper16, Wallpaper17, Wallpaper18, Wallpaper19, Wallpaper20 } from "../wallpapers/index.slint";
+
+export component SumerDesktopBackground inherits Rectangle {
+    in property <bool> dark-mode: true;
+    in property <int> active-glow-index: 0;
+    in property <int> wallpaper-index: -1;
+    callback clicked;
+    width: 100%; height: 100%;
+    background: root.dark-mode ? @linear-gradient(135deg, #070b12 0%, #010306 100%) : @linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    if (root.wallpaper-index == 0) : Wallpaper01 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 1) : Wallpaper02 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 2) : Wallpaper03 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 3) : Wallpaper04 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 4) : Wallpaper05 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 5) : Wallpaper06 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 6) : Wallpaper07 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 7) : Wallpaper08 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 8) : Wallpaper09 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 9) : Wallpaper10 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 10) : Wallpaper11 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 11) : Wallpaper12 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 12) : Wallpaper13 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 13) : Wallpaper14 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 14) : Wallpaper15 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 15) : Wallpaper16 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 16) : Wallpaper17 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 17) : Wallpaper18 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 18) : Wallpaper19 { width: 100%; height: 100%; }
+    if (root.wallpaper-index == 19) : Wallpaper20 { width: 100%; height: 100%; }
+    // Breathtaking organic radial glow that shifts dynamically with active focus
+    Rectangle {
+        width: 800px;
+        height: 800px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        background: root.active-glow-index == 0 ? (root.dark-mode ? @radial-gradient(circle, #00b4d80a 0%, #00b4d800 70%) : @radial-gradient(circle, #00b4d806 0%, #00b4d800 70%)) :
+                    root.active-glow-index == 1 ? (root.dark-mode ? @radial-gradient(circle, #10b9810a 0%, #10b98100 70%) : @radial-gradient(circle, #10b98106 0%, #10b98100 70%)) :
+                    (root.dark-mode ? @radial-gradient(circle, #a855f70a 0%, #a855f700 70%) : @radial-gradient(circle, #a855f706 0%, #a855f700 70%));
+        
+        animate background {
+            duration: 350ms;
+            easing: ease-out;
+        }
+    }
+    
+    // Transparent Background Layer (covers entire desktop)
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.clicked(); }
+    }
+}

@@ -1,0 +1,280 @@
+import { AppIcon } from "../core/models.slint";
+
+export component SumerStartMenu inherits Rectangle {
+    in property <bool> dark-mode: true;
+    in property <[AppIcon]> app-models;
+    
+    callback files-clicked;
+    callback console-clicked;
+    callback tv-clicked;
+    callback settings-clicked;
+    callback shutdown-clicked;
+    
+    // Shutdown confirmation state
+    property <bool> confirm-shutdown: false;
+    
+    width: 320px;
+    height: 420px;
+    border-radius: 20px;
+    
+    // Glassmorphic panel design
+    background: root.dark-mode ? #0f172ae8 : #f8fafcf2;
+    border-width: 1px;
+    border-color: root.dark-mode ? #ffffff1b : #00000015;
+    
+    // Deep neon backdrop shadow
+    drop-shadow-color: root.dark-mode ? #000000a0 : #00000030;
+    drop-shadow-blur: 40px;
+    drop-shadow-offset-y: 12px;
+    
+    VerticalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 24px;
+        padding-bottom: 20px;
+        spacing: 20px;
+        
+        // 1. User Profile Header
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+            
+            // Avatar
+            Rectangle {
+                width: 44px;
+                height: 44px;
+                border-radius: 22px;
+                background: root.dark-mode ? #ffffff15 : #00000010;
+                border-width: 1px;
+                border-color: root.dark-mode ? #ffffff2a : #00000020;
+                
+                Text {
+                    text: "👑";
+                    font-size: 24px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            
+            // User info
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+                
+                Text {
+                    text: "حمورابي الكبير";
+                    font-size: 15px;
+                    font-weight: 800;
+                    color: root.dark-mode ? #f8fafc : #0f172a;
+                }
+                Text {
+                    text: "مدير النظام (مطور)";
+                    font-size: 11px;
+                    color: root.dark-mode ? #38bdf8 : #0284c7; // Accent color
+                }
+            }
+        }
+        
+        // 2. Apps and Shortcuts Header
+        Text {
+            text: "التطبيقات المثبتة";
+            font-size: 13px;
+            font-weight: 800;
+            color: root.dark-mode ? #94a3b8 : #475569;
+        }
+        
+        // 3. Grid of Menu Apps
+        VerticalLayout {
+            spacing: 8px;
+            
+            // Row 1: Files & Terminal
+            HorizontalLayout {
+                spacing: 8px;
+                
+                // Item 1: Files
+                Rectangle {
+                    width: (parent.width - 48px) / 2;
+                    height: 52px;
+                    border-radius: 10px;
+                    background: touch1.has-hover ? (root.dark-mode ? #ffffff15 : #00000010) : (root.dark-mode ? #ffffff04 : #00000003);
+                    border-width: 1px;
+                    border-color: touch1.has-hover ? (root.dark-mode ? #ffffff25 : #00000020) : (root.dark-mode ? #ffffff08 : #00000008);
+                    animate background, border-color { duration: 150ms; }
+                    
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        spacing: 8px;
+                        alignment: start;
+                        
+                        Text {
+                            text: "📁";
+                            font-size: 18px;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: root.app-models[0].name;
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: root.dark-mode ? #ffffff : #0f172a;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    touch1 := TouchArea {
+                        clicked => { root.files-clicked(); }
+                    }
+                }
+                
+                // Item 2: Terminal
+                Rectangle {
+                    width: (parent.width - 48px) / 2;
+                    height: 52px;
+                    border-radius: 10px;
+                    background: touch2.has-hover ? (root.dark-mode ? #ffffff15 : #00000010) : (root.dark-mode ? #ffffff04 : #00000003);
+                    border-width: 1px;
+                    border-color: touch2.has-hover ? (root.dark-mode ? #ffffff25 : #00000020) : (root.dark-mode ? #ffffff08 : #00000008);
+                    animate background, border-color { duration: 150ms; }
+                    
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        spacing: 8px;
+                        alignment: start;
+                        
+                        Text {
+                            text: "💻";
+                            font-size: 18px;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: root.app-models[1].name;
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: root.dark-mode ? #ffffff : #0f172a;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    touch2 := TouchArea {
+                        clicked => { root.console-clicked(); }
+                    }
+                }
+            }
+            
+            // Row 2: Android TV & Settings
+            HorizontalLayout {
+                spacing: 8px;
+                
+                // Item 3: Android TV
+                Rectangle {
+                    width: (parent.width - 48px) / 2;
+                    height: 52px;
+                    border-radius: 10px;
+                    background: touch3.has-hover ? (root.dark-mode ? #ffffff15 : #00000010) : (root.dark-mode ? #ffffff04 : #00000003);
+                    border-width: 1px;
+                    border-color: touch3.has-hover ? (root.dark-mode ? #ffffff25 : #00000020) : (root.dark-mode ? #ffffff08 : #00000008);
+                    animate background, border-color { duration: 150ms; }
+                    
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        spacing: 8px;
+                        alignment: start;
+                        
+                        Text {
+                            text: "📺";
+                            font-size: 18px;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: root.app-models[2].name;
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: root.dark-mode ? #ffffff : #0f172a;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    touch3 := TouchArea {
+                        clicked => { root.tv-clicked(); }
+                    }
+                }
+                
+                // Item 4: Settings
+                Rectangle {
+                    width: (parent.width - 48px) / 2;
+                    height: 52px;
+                    border-radius: 10px;
+                    background: touch4.has-hover ? (root.dark-mode ? #ffffff15 : #00000010) : (root.dark-mode ? #ffffff04 : #00000003);
+                    border-width: 1px;
+                    border-color: touch4.has-hover ? (root.dark-mode ? #ffffff25 : #00000020) : (root.dark-mode ? #ffffff08 : #00000008);
+                    animate background, border-color { duration: 150ms; }
+                    
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        spacing: 8px;
+                        alignment: start;
+                        
+                        Text {
+                            text: "⚙️";
+                            font-size: 18px;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "الإعدادات";
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: root.dark-mode ? #ffffff : #0f172a;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    touch4 := TouchArea {
+                        clicked => { root.settings-clicked(); }
+                    }
+                }
+            }
+        }
+        
+        // Push power bar to bottom
+        Rectangle { background: transparent; }
+        
+        // 4. Power Bar / Shutdown
+        Rectangle {
+            height: 44px;
+            border-radius: 10px;
+            background: root.confirm-shutdown ? (root.dark-mode ? #ef444440 : #ef444420) : (root.dark-mode ? #ef444415 : #ef44440c);
+            border-width: 1px;
+            border-color: root.confirm-shutdown ? #ef4444 : (root.dark-mode ? #ef444440 : #ef444430);
+            animate background, border-color { duration: 150ms; }
+            
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                alignment: space-between;
+                
+                Text {
+                    text: root.confirm-shutdown ? "تأكيد إيقاف التشغيل؟" : "إيقاف تشغيل النظام";
+                    font-size: 12px;
+                    font-weight: 800;
+                    color: root.confirm-shutdown ? #ffffff : #ef4444;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: root.confirm-shutdown ? "⚠️" : "🛑";
+                    font-size: 16px;
+                    vertical-alignment: center;
+                }
+            }
+            
+            TouchArea {
+                clicked => { 
+                    if (!root.confirm-shutdown) {
+                        root.confirm-shutdown = true;
+                    } else {
+                        root.shutdown-clicked();
+                        root.confirm-shutdown = false;
+                    }
+                }
+            }
+        }
+    }
+}

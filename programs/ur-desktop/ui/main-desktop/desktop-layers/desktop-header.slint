@@ -1,0 +1,28 @@
+export component SumerDesktopHeader inherits Rectangle {
+    in property <bool> dark-mode: true;
+    
+    x: 24px;
+    y: 16px;
+    z: 100;
+    height: 40px;
+    width: 240px;
+    background: transparent;
+    
+    HorizontalLayout {
+        spacing: 8px;
+        alignment: start;
+        
+        Text {
+            text: "🌌";
+            font-size: 20px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: "نظام سومر المحمول";
+            font-size: 15px;
+            font-weight: 900;
+            color: root.dark-mode ? #ffffff90 : #0f172a90;
+            vertical-alignment: center;
+        }
+    }
+}

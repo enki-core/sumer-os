@@ -1,0 +1,6 @@
+export component Wallpaper20 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #172554;
+    Rectangle { width: is-preview ? 30px : 200px; height: is-preview ? 30px : 200px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; border-width: is-preview ? 1px : 4px; border-color: #fbbf24; }
+    Rectangle { width: is-preview ? 20px : 140px; height: is-preview ? 20px : 140px; x: (parent.width - self.width)/2; y: (parent.height - self.height)/2; border-width: is-preview ? 1px : 4px; border-color: #f59e0b; }
+}

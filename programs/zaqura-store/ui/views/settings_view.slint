@@ -1,0 +1,62 @@
+import { Button, LineEdit, ScrollView } from "std-widgets.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component SettingsView inherits ScrollView {
+    in-out property <bool> dark-mode;
+    
+    padding: StoreSpacing.padding-xl;
+    
+    VerticalLayout {
+        spacing: StoreSpacing.space-xl;
+        alignment: start;
+        
+        Text { 
+            text: "⚙️ إعدادات المتجر العامة"; 
+            font-size: StoreTypography.font-size-base; 
+            font-weight: StoreTypography.font-weight-bold; 
+            color: StoreColors.text; 
+        }
+        
+        VerticalLayout {
+            spacing: StoreSpacing.space-sm;
+            Text { 
+                text: "🔗 رابط مستودع حزم البرمجيات (Sumer OS Repositories):"; 
+                font-size: StoreTypography.font-size-xs; 
+                color: StoreColors.text-muted; 
+            }
+            LineEdit {
+                text: "https://repo.sumer-os.org/packages/main";
+                height: 36px;
+            }
+        }
+        
+        HorizontalLayout {
+            alignment: space-between;
+            Text { 
+                text: "🌓 تفعيل السمة الداكنة العميقة (Deep Dark Mode):"; 
+                font-size: StoreTypography.font-size-xs; 
+                color: StoreColors.text-muted; 
+                vertical-alignment: center;
+            }
+            Button {
+                text: root.dark-mode ? "تعطيل ☀️" : "تفعيل 🌙";
+                clicked => { root.dark-mode = !root.dark-mode; }
+            }
+        }
+        
+        HorizontalLayout {
+            alignment: space-between;
+            Text { 
+                text: "🛠️ وضع المطور والمحاكاة (Developer Sandbox Mode):"; 
+                font-size: StoreTypography.font-size-xs; 
+                color: StoreColors.text-muted; 
+                vertical-alignment: center;
+            }
+            Button {
+                text: "نشط 🟢";
+            }
+        }
+    }
+}

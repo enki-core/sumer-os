@@ -1,0 +1,257 @@
+import { Button, ScrollView } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component DetailView inherits Rectangle {
+    in property <AppInfo> info;
+    in property <int> index;
+    
+    // Callbacks to communicate actions
+    callback close();
+    callback action_triggered(int); // index
+    
+    background: StoreColors.background;
+    
+    VerticalLayout {
+        padding: StoreSpacing.padding-xxl;
+        spacing: StoreSpacing.space-xl;
+        
+        // 1. Back button & Title Bar
+        HorizontalLayout {
+            alignment: space-between;
+            
+            // Premium back button with left arrow icon
+            Rectangle {
+                width: 140px;
+                height: 36px;
+                border-radius: 8px;
+                background: #1e293b;
+                border-width: 1px;
+                border-color: StoreColors.border;
+                
+                TouchArea {
+                    clicked => { root.close(); }
+                    
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: StoreSpacing.space-sm;
+                        Text {
+                            text: "◀  رجوع للمتجر";
+                            font-size: StoreTypography.font-size-xs;
+                            font-weight: StoreTypography.font-weight-bold;
+                            color: StoreColors.text-muted;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+            
+            Text {
+                text: "تفاصيل التطبيق كاملة";
+                font-size: StoreTypography.font-size-xs;
+                font-weight: StoreTypography.font-weight-bold;
+                color: StoreColors.text-muted;
+                vertical-alignment: center;
+            }
+        }
+        
+        // Hero Divider
+        Rectangle { height: 1px; background: StoreColors.border; }
+        
+        // Scrollable content area
+        ScrollView {
+            VerticalLayout {
+                spacing: StoreSpacing.space-xxl;
+                
+                // 2. Giant Glassmorphic Hero Section
+                Rectangle {
+                    border-radius: 16px;
+                    background: StoreColors.surface;
+                    border-width: 1px;
+                    border-color: StoreColors.border;
+                    
+                    VerticalLayout {
+                        padding: StoreSpacing.padding-xxl;
+                        spacing: StoreSpacing.space-xl;
+                        
+                        HorizontalLayout {
+                            spacing: StoreSpacing.space-xxl;
+                            
+                            // Glowing Giant App Icon
+                            Rectangle {
+                                width: 96px;
+                                height: 96px;
+                                border-radius: 20px;
+                                background: StoreColors.background;
+                                border-width: 2.5px;
+                                border-color: info.accent_color;
+                                
+                                Text {
+                                    text: info.icon;
+                                    font-size: 44px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            
+                            // App Identity Text
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: StoreSpacing.space-sm;
+                                
+                                HorizontalLayout {
+                                    spacing: StoreSpacing.space-md;
+                                    Text {
+                                        text: info.name;
+                                        font-size: StoreTypography.font-size-xl;
+                                        font-weight: StoreTypography.font-weight-extra-bold;
+                                        color: StoreColors.text;
+                                    }
+                                    
+                                    // Category Badge
+                                    Rectangle {
+                                        width: 80px;
+                                        height: 24px;
+                                        border-radius: 12px;
+                                        background: info.category == "system" ? #1e1b4b : (info.category == "browser" ? #064e3b : #581c87);
+                                        border-width: 1px;
+                                        border-color: info.category == "system" ? #4f46e5 : (info.category == "browser" ? #059669 : #9333ea);
+                                        
+                                        Text {
+                                            text: info.category == "system" ? "نظام" : (info.category == "browser" ? "متصفح" : "خارجي");
+                                            font-size: StoreTypography.font-size-xs;
+                                            font-weight: StoreTypography.font-weight-bold;
+                                            color: StoreColors.text;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                                
+                                Text {
+                                    text: "المطور والناشر: " + info.author + " | الإصدار الحالي: " + info.version;
+                                    font-size: StoreTypography.font-size-xs;
+                                    color: StoreColors.text-muted;
+                                }
+                                
+                                Text {
+                                    text: info.description;
+                                    font-size: StoreTypography.font-size-sm;
+                                    color: StoreColors.text;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 3. Grid for Description & Quick Action Box
+                HorizontalLayout {
+                    spacing: StoreSpacing.space-xl;
+                    
+                    // Left Column: Detailed description (60% width)
+                    Rectangle {
+                        border-radius: 16px;
+                        background: StoreColors.surface;
+                        border-width: 1px;
+                        border-color: StoreColors.border;
+                        
+                        VerticalLayout {
+                            padding: StoreSpacing.padding-xl;
+                            spacing: StoreSpacing.space-md;
+                            
+                            Text {
+                                text: "وصف تفصيلي للبرمجية";
+                                font-size: StoreTypography.font-size-sm;
+                                font-weight: StoreTypography.font-weight-bold;
+                                color: StoreColors.text;
+                            }
+                            
+                            Rectangle { height: 1px; background: StoreColors.border; }
+                            
+                            Text {
+                                text: info.long_description;
+                                font-size: StoreTypography.font-size-sm;
+                                color: StoreColors.text-muted;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                    
+                    // Right Column: Action Box & Specs (40% width)
+                    Rectangle {
+                        width: 280px;
+                        border-radius: 16px;
+                        background: StoreColors.surface;
+                        border-width: 1px;
+                        border-color: StoreColors.border;
+                        
+                        VerticalLayout {
+                            padding: StoreSpacing.padding-xl;
+                            spacing: StoreSpacing.space-lg;
+                            
+                            Text {
+                                text: "إدارة التطبيق والأفعال";
+                                font-size: StoreTypography.font-size-sm;
+                                font-weight: StoreTypography.font-weight-bold;
+                                color: StoreColors.text;
+                            }
+                            
+                            Rectangle { height: 1px; background: StoreColors.border; }
+                            
+                            // Premium Action Button
+                            Rectangle {
+                                height: 48px;
+                                border-radius: 10px;
+                                background: info.status == "installed" ? StoreColors.success : (info.status == "update_available" ? StoreColors.warning : info.accent_color);
+                                
+                                TouchArea {
+                                    clicked => { root.action_triggered(root.index); }
+                                    
+                                    Text {
+                                        text: info.status == "installed" ? "🚀 تشغيل الآن" : (info.status == "update_available" ? "🔄 ترقية التحديث" : "📥 تثبيت وتنزيل");
+                                        font-size: StoreTypography.font-size-sm;
+                                        font-weight: StoreTypography.font-weight-bold;
+                                        color: StoreColors.text;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                            
+                            // Status indicator
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: StoreSpacing.space-xs;
+                                Text {
+                                    text: info.status == "installed" ? "● مثبت وجاهز للتشغيل" : (info.status == "update_available" ? "● يتوفر تحديث جديد!" : "● غير مثبت حالياً");
+                                    font-size: StoreTypography.font-size-xs;
+                                    font-weight: StoreTypography.font-weight-bold;
+                                    color: info.status == "installed" ? StoreColors.success : (info.status == "update_available" ? StoreColors.warning : StoreColors.text-muted);
+                                }
+                            }
+                            
+                            Rectangle { height: 1px; background: StoreColors.border; }
+                            
+                            // Technical specs
+                            VerticalLayout {
+                                spacing: StoreSpacing.space-sm;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "معمارية التشغيل"; font-size: StoreTypography.font-size-xs; color: StoreColors.text-muted; }
+                                    Text { text: "x86_64 / Alpine Linux"; font-size: StoreTypography.font-size-xs; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; }
+                                }
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "الترخيص"; font-size: StoreTypography.font-size-xs; color: StoreColors.text-muted; }
+                                    Text { text: "مفتوح المصدر (MIT)"; font-size: StoreTypography.font-size-xs; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

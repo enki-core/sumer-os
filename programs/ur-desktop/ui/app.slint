@@ -1,0 +1,276 @@
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { SumerDesktop, AppIcon } from "./main-desktop/index.slint";
+
+export component MainWindow inherits Window {
+    preferred-width: 1024px; // Responsive default widescreen resolution
+    preferred-height: 600px;
+    background: root.dark-mode ? #020617 : #f1f5f9;
+    default-font-size: 16px;
+    
+    // Main state manager to route between home screen and Android TV Screen
+    in-out property <string> current-view: "home";
+    
+    // Global premium system volume properties
+    in-out property <bool> show-volume-bar: false;
+    in-out property <int> system-volume: 80;
+    
+    // Settings and Password Screen Visibility
+    in-out property <bool> show-settings: false;
+    in-out property <bool> show-password-screen: false;
+    
+    // Global premium system brightness properties
+    in-out property <bool> show-brightness-bar: false;
+    
+    // Global live settings properties
+    in-out property <bool> wifi-enabled: true;
+    in-out property <bool> airplane-mode: false;
+    in-out property <bool> bluetooth-enabled: true;
+    in-out property <bool> bluetooth-connecting: false;
+    in-out property <string> bluetooth-connection-status: "";
+    in-out property <int> system-brightness: 90;
+    in-out property <string> perf-mode: "Supernova 🔴";
+    in-out property <bool> dark-mode: true;
+    in-out property <bool> camera-enabled: true;
+    in-out property <bool> mic-enabled: true;
+    in-out property <bool> location-enabled: true;
+    in-out property <int> screensaver-timeout: 30;
+    in-out property <bool> screensaver-active: false;
+    in-out property <int> screensaver-index: 0;
+    in-out property <int> idle-seconds: 0;
+    in-out property <int> screensaver-image-mode: -1;
+    in-out property <string> screensaver-sub-page: "main";
+    
+    callback reset-idle-timer;
+    reset-idle-timer => {
+        root.idle-seconds = 0;
+        if (root.screensaver-active) {
+            root.screensaver-active = false;
+        }
+    }
+    
+    in property <string> current-time: "12:00 PM";
+    
+    in property <string> battery-status: "🔋 98%";
+    in property <string> network-status: "📶";
+    
+    // Global connection simulation states
+    in-out property <bool> wifi-connecting: false;
+    in-out property <string> wifi-connection-status: "";
+    callback connect-to-wifi(string, string);
+    callback bluetooth-device-clicked(string);
+    callback app-clicked(string);
+    callback execute-command(string) -> string;
+    callback play-navigation-sound();
+    
+    callback trigger-volume-timer();
+    callback trigger-brightness-timer();
+    
+    // Drag and Drop Models exposed to Rust
+    in-out property <[AppIcon]> dock-icons: [
+        { id: "files", name: "مدير الملفات", icon: "📁", bg_color: #3b82f6, hover_bg_color: #2563eb },
+        { id: "console", name: "شيل دجلة", icon: "💻", bg_color: #10b981, hover_bg_color: #059669 },
+        { id: "tv", name: "أندرويد تي في", icon: "📺", bg_color: #f97316, hover_bg_color: #ea580c },
+        { id: "wallpapers", name: "الخلفيات", icon: "🎨", bg_color: #8b5cf6, hover_bg_color: #7c3aed }
+    ];
+    in-out property <AppIcon> dragged-icon;
+    in-out property <bool> is-dragging-icon: false;
+    in-out property <length> drag-x;
+    in-out property <length> drag-y;
+    
+    in-out property <bool> show-desktop-files: true;
+    in-out property <bool> show-desktop-console: false;
+    in-out property <bool> show-desktop-tv: false;
+    
+    in-out property <bool> show-dock-files: false;
+    in-out property <bool> show-dock-console: true;
+    in-out property <bool> show-dock-tv: true;
+    
+    in-out property <length> desktop-icon0-x: 24px;
+    in-out property <length> desktop-icon0-y: 80px;
+    in-out property <length> desktop-icon1-x: 24px;
+    in-out property <length> desktop-icon1-y: 200px;
+    in-out property <length> desktop-icon2-x: 24px;
+    in-out property <length> desktop-icon2-y: 320px;
+    
+    callback icon-drag-started(int, length, length);
+    icon-drag-started(idx, gmx, gmy) => {
+        root.is-dragging-icon = true;
+        root.dragged-icon = root.dock-icons[idx];
+        root.drag-x = gmx;
+        root.drag-y = gmy;
+    }
+    
+    callback icon-drag-moved(int, length, length);
+    icon-drag-moved(idx, gmx, gmy) => {
+        root.drag-x = gmx;
+        root.drag-y = gmy;
+    }
+    
+    callback icon-drag-ended(int, length, length);
+    icon-drag-ended(idx, gmx, gmy) => {
+        root.is-dragging-icon = false;
+        if (gmy < root.height - 150px) { // Dragged upwards out of the dock onto the desktop!
+            if (idx == 0) {
+                root.show-dock-files = false;
+                root.show-desktop-files = true;
+                root.desktop-icon0-x = gmx - 45px;
+                root.desktop-icon0-y = gmy - 50px;
+            } else if (idx == 1) {
+                root.show-dock-console = false;
+                root.show-desktop-console = true;
+                root.desktop-icon1-x = gmx - 45px;
+                root.desktop-icon1-y = gmy - 50px;
+            } else if (idx == 2) {
+                root.show-dock-tv = false;
+                root.show-desktop-tv = true;
+                root.desktop-icon2-x = gmx - 45px;
+                root.desktop-icon2-y = gmy - 50px;
+            }
+        } else {
+            // Dropped on dock! Handle reordering purely in Slint for live preview!
+            if (idx == 0) {
+                if ((gmx - root.width / 2) >= 0px && (gmx - root.width / 2) < 76px) {
+                    root.dock-icons = [root.dock-icons[1], root.dock-icons[0], root.dock-icons[2], root.dock-icons[3]];
+                } else if ((gmx - root.width / 2) >= 76px) {
+                    root.dock-icons = [root.dock-icons[1], root.dock-icons[2], root.dock-icons[0], root.dock-icons[3]];
+                }
+            } else if (idx == 1) {
+                if ((gmx - root.width / 2) < -76px) {
+                    root.dock-icons = [root.dock-icons[1], root.dock-icons[0], root.dock-icons[2], root.dock-icons[3]];
+                } else if ((gmx - root.width / 2) >= 76px) {
+                    root.dock-icons = [root.dock-icons[0], root.dock-icons[2], root.dock-icons[1], root.dock-icons[3]];
+                }
+            } else if (idx == 2) {
+                if ((gmx - root.width / 2) < -76px) {
+                    root.dock-icons = [root.dock-icons[2], root.dock-icons[0], root.dock-icons[1], root.dock-icons[3]];
+                } else if ((gmx - root.width / 2) >= 0px && (gmx - root.width / 2) < 76px) {
+                    root.dock-icons = [root.dock-icons[0], root.dock-icons[2], root.dock-icons[1], root.dock-icons[3]];
+                }
+            }
+        }
+    }
+    
+    callback desktop-icon-dropped-in-dock(string);
+    desktop-icon-dropped-in-dock(id) => {
+        if (id == "files") {
+            root.show-desktop-files = false;
+            root.show-dock-files = true;
+        } else if (id == "console") {
+            root.show-desktop-console = false;
+            root.show-dock-console = true;
+        } else if (id == "tv") {
+            root.show-desktop-tv = false;
+            root.show-dock-tv = true;
+        }
+    }
+    
+    // Global background mouse activity tracker (placed at the back to track background movements without blocking grid/button clicks)
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        pointer-event(event) => {
+            root.reset-idle-timer();
+        }
+    }
+
+    // ==========================================
+    // VIEW 1: Premium Futuristic OS Dashboard (current-view == "home")
+    // ==========================================
+    if current-view == "home" : SumerDesktop {
+        dark-mode: root.dark-mode;
+        current-time: root.current-time;
+        battery-status: root.battery-status;
+        network-status: root.network-status;
+        wifi-on <=> root.wifi-enabled;
+        bt-on <=> root.bluetooth-enabled;
+        airplane-on <=> root.airplane-mode;
+        brightness: root.system-brightness / 100.0;
+        volume: root.system-volume / 100.0;
+        brightness-changed(val) => { root.system-brightness = Math.round(val * 100.0); }
+        volume-changed(val) => { root.system-volume = Math.round(val * 100.0); }
+        wifi-toggled(val) => { root.wifi-enabled = val; }
+        bluetooth-toggled(val) => { root.bluetooth-enabled = val; }
+        airplane-toggled(val) => { root.airplane-mode = val; }
+        
+        launch-tv => {
+            root.app-clicked("android-tv");
+        }
+        app-clicked(name) => {
+            root.app-clicked(name);
+        }
+        
+        dock-icons <=> root.dock-icons;
+        dragged-icon <=> root.dragged-icon;
+        is-dragging-icon <=> root.is-dragging-icon;
+        drag-x <=> root.drag-x;
+        drag-y <=> root.drag-y;
+        
+        show-desktop-files <=> root.show-desktop-files;
+        show-desktop-console <=> root.show-desktop-console;
+        show-desktop-tv <=> root.show-desktop-tv;
+        show-dock-files <=> root.show-dock-files;
+        show-dock-console <=> root.show-dock-console;
+        show-dock-tv <=> root.show-dock-tv;
+        desktop-icon0-x <=> root.desktop-icon0-x;
+        desktop-icon0-y <=> root.desktop-icon0-y;
+        desktop-icon1-x <=> root.desktop-icon1-x;
+        desktop-icon1-y <=> root.desktop-icon1-y;
+        desktop-icon2-x <=> root.desktop-icon2-x;
+        desktop-icon2-y <=> root.desktop-icon2-y;
+        desktop-icon-dropped-in-dock(id) => { root.desktop-icon-dropped-in-dock(id); }
+        
+        icon-drag-started(idx, mx, my) => { root.icon-drag-started(idx, mx, my); }
+        icon-drag-moved(idx, mx, my) => { root.icon-drag-moved(idx, mx, my); }
+        icon-drag-ended(idx, mx, my) => { root.icon-drag-ended(idx, mx, my); }
+        execute-console-command(cmd) => { root.execute-command(cmd) }
+    }
+    
+
+    
+    
+    
+    // ==========================================
+    // VIEW 3: Immersive Premium Screensaver Overlay
+    // ==========================================
+    if (root.screensaver-active) : Rectangle {
+        width: 100%;
+        height: 100%;
+        background: @linear-gradient(135deg, #020617 0%, #0b1329 50%, #1e1b4b 100%);
+        
+        // Dark translucent gradient overlay for maximum readability
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            background: @linear-gradient(180deg, #00000020 0%, #00000080 100%);
+        }
+        
+        // Beautiful center aligned clock & date in screensaver
+        VerticalLayout {
+            alignment: center;
+            spacing: 12px;
+            
+            Text {
+                text: root.current-time;
+                font-size: 80px;
+                font-weight: 900;
+                color: #ffffff;
+                horizontal-alignment: center;
+            }
+            
+            Text {
+                text: "اضغط على أي مفتاح للاستمرار 🔑";
+                font-size: 20px;
+                font-weight: 700;
+                color: #ffffff90;
+                horizontal-alignment: center;
+            }
+        }
+        
+        // Dismiss screensaver on any mouse click or touch!
+        TouchArea {
+            clicked => {
+                root.reset-idle-timer();
+            }
+        }
+    }
+}

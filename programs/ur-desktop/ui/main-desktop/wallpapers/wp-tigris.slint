@@ -1,0 +1,7 @@
+export component Wallpaper02 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: @linear-gradient(180deg, #083344 0%, #064e3b 100%);
+    Rectangle { width: parent.width * 1.5; height: is-preview ? 40px : 300px; y: parent.height/2 - (is-preview ? 5px : 50px); x: -parent.width * 0.25; background: @linear-gradient(90deg, transparent 0%, #0ea5e940 50%, transparent 100%); }
+    Text { text: "Tigris Shell"; color: #38bdf8; font-size: is-preview ? 12px : 72px; font-weight: 800; letter-spacing: is-preview ? 1px : 4px; horizontal-alignment: center; y: parent.height/2 - (is-preview ? 15px : 100px); x: (parent.width - self.width)/2 - (is-preview ? 20px : 150px); }
+    Text { text: "شيل دجلة"; color: #7dd3fc; font-size: is-preview ? 14px : 84px; font-weight: 800; horizontal-alignment: center; y: parent.height/2 - (is-preview ? 5px : 20px); x: (parent.width - self.width)/2 + (is-preview ? 20px : 150px); }
+}

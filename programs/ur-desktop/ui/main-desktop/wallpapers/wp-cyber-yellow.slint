@@ -1,0 +1,6 @@
+export component Wallpaper14 inherits Rectangle {
+    in property <bool> is-preview: false;
+    background: #eab308;
+    for i in 5 : Rectangle { width: parent.width; height: is-preview ? 5px : 40px; y: i * (is-preview ? 20px : 150px); background: #1f2937; }
+    Text { text: "WARNING"; color: #1f2937; font-size: is-preview ? 10px : 48px; font-weight: 900; x: is-preview ? 5px : 40px; y: is-preview ? 5px : 40px; }
+}

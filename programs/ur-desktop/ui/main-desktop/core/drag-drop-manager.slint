@@ -1,0 +1,56 @@
+import { Point } from "./models.slint";
+
+export global SumerDragDropMath {
+    public pure function snap-to-grid-x(current-x: length, max-width: length) -> length {
+        Math.max(24px, Math.min(max-width - 114px, Math.round((current-x - 24px) / 120px) * 120px + 24px))
+    }
+    
+    public pure function snap-to-grid-y(current-y: length, max-height: length) -> length {
+        Math.max(40px, Math.min(max-height - 180px, Math.round((current-y - 40px) / 140px) * 140px + 40px))
+    }
+    
+    public pure function bound-drag-x(current-x: length, dx: length, max-width: length) -> length {
+        Math.max(24px, Math.min(max-width - 114px, current-x + dx))
+    }
+    
+    public pure function bound-drag-y(current-y: length, dy: length, max-height: length) -> length {
+        Math.max(40px, Math.min(max-height - 50px, current-y + dy))
+    }
+
+    public pure function calculate-evasion(evader-x: length, evader-y: length, other-x: length, other-y: length, last-dx: length, last-dy: length, w-max: length, h-max: length) -> Point {
+        if (Math.abs(last-dx / 1px) > Math.abs(last-dy / 1px)) {
+            if (last-dx > 0px) {
+                if (evader-x + 120px <= w-max && !(other-x == evader-x + 120px && other-y == evader-y)) { { x: evader-x + 120px, y: evader-y } }
+                else if (evader-x + 240px <= w-max && !(other-x == evader-x + 240px && other-y == evader-y)) { { x: evader-x + 240px, y: evader-y } }
+                else if (evader-x - 120px >= 24px && !(other-x == evader-x - 120px && other-y == evader-y)) { { x: evader-x - 120px, y: evader-y } }
+                else if (evader-y + 140px <= h-max && !(other-x == evader-x && other-y == evader-y + 140px)) { { x: evader-x, y: evader-y + 140px } }
+                else if (evader-y - 140px >= 40px && !(other-x == evader-x && other-y == evader-y - 140px)) { { x: evader-x, y: evader-y - 140px } }
+                else { { x: evader-x, y: evader-y } }
+            } else {
+                if (evader-x - 120px >= 24px && !(other-x == evader-x - 120px && other-y == evader-y)) { { x: evader-x - 120px, y: evader-y } }
+                else if (evader-x - 240px >= 24px && !(other-x == evader-x - 240px && other-y == evader-y)) { { x: evader-x - 240px, y: evader-y } }
+                else if (evader-x + 120px <= w-max && !(other-x == evader-x + 120px && other-y == evader-y)) { { x: evader-x + 120px, y: evader-y } }
+                else if (evader-y + 140px <= h-max && !(other-x == evader-x && other-y == evader-y + 140px)) { { x: evader-x, y: evader-y + 140px } }
+                else if (evader-y - 140px >= 40px && !(other-x == evader-x && other-y == evader-y - 140px)) { { x: evader-x, y: evader-y - 140px } }
+                else { { x: evader-x, y: evader-y } }
+            }
+        } else {
+            if (last-dy > 0px) {
+                if (evader-y + 140px <= h-max && !(other-x == evader-x && other-y == evader-y + 140px)) { { x: evader-x, y: evader-y + 140px } }
+                else if (evader-y + 280px <= h-max && !(other-x == evader-x && other-y == evader-y + 280px)) { { x: evader-x, y: evader-y + 280px } }
+                else if (evader-y - 140px >= 40px && !(other-x == evader-x && other-y == evader-y - 140px)) { { x: evader-x, y: evader-y - 140px } }
+                else if (evader-x + 120px <= w-max && !(other-x == evader-x + 120px && other-y == evader-y)) { { x: evader-x + 120px, y: evader-y } }
+                else if (evader-x - 120px >= 24px && !(other-x == evader-x - 120px && other-y == evader-y)) { { x: evader-x - 120px, y: evader-y } }
+                else { { x: evader-x, y: evader-y } }
+            } else {
+                if (evader-y - 140px >= 40px && !(other-x == evader-x && other-y == evader-y - 140px)) { { x: evader-x, y: evader-y - 140px } }
+                else if (evader-y - 280px >= 40px && !(other-x == evader-x && other-y == evader-y - 280px)) { { x: evader-x, y: evader-y - 280px } }
+                else if (evader-y + 140px <= h-max && !(other-x == evader-x && other-y == evader-y + 140px)) { { x: evader-x, y: evader-y + 140px } }
+                else if (evader-x + 120px <= w-max && !(other-x == evader-x + 120px && other-y == evader-y)) { { x: evader-x + 120px, y: evader-y } }
+                else if (evader-x - 120px >= 24px && !(other-x == evader-x - 120px && other-y == evader-y)) { { x: evader-x - 120px, y: evader-y } }
+                else { { x: evader-x, y: evader-y } }
+            }
+        }
+    }
+}
+

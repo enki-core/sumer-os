@@ -1,0 +1,114 @@
+import { Button, ScrollView } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component AppDetailModal inherits Rectangle {
+    in property <AppInfo> info;
+    in property <int> index;
+    in property <length> parent_width;
+    
+    // Callbacks to communicate actions
+    callback close();
+    callback action_triggered(int); // index
+    
+    background: #000000bb;
+    
+    VerticalLayout {
+        alignment: center;
+        
+        HorizontalLayout {
+            alignment: center;
+            
+            Rectangle {
+                width: parent_width > 600px ? 500px : parent_width - 40px;
+                height: 380px;
+                background: #1e293b;
+                border-radius: 12px;
+                border-width: 2px;
+                border-color: info.accent_color;
+                
+                VerticalLayout {
+                    padding: StoreSpacing.padding-xxl;
+                    spacing: StoreSpacing.space-lg;
+                    
+                    // App Detail Header
+                    HorizontalLayout {
+                        spacing: StoreSpacing.space-lg;
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 64px;
+                                height: 64px;
+                                border-radius: 12px;
+                                background: StoreColors.background;
+                                border-width: 2px;
+                                border-color: info.accent_color;
+                                
+                                Text {
+                                    text: info.icon;
+                                    font-size: 28px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: StoreSpacing.space-xs;
+                            Text {
+                                text: info.name;
+                                font-size: StoreTypography.font-size-sm;
+                                font-weight: StoreTypography.font-weight-bold;
+                                color: StoreColors.text;
+                            }
+                            Text {
+                                text: "المطور: " + info.author + " | الإصدار: " + info.version;
+                                font-size: StoreTypography.font-size-xs;
+                                color: StoreColors.text-muted;
+                            }
+                        }
+                    }
+                    
+                    // Separation
+                    Rectangle { height: 1px; background: StoreColors.border; }
+                    
+                    // Long Description Text
+                    ScrollView {
+                        height: 140px;
+                        Text {
+                            text: info.long_description;
+                            font-size: StoreTypography.font-size-xs;
+                            color: StoreColors.text-muted;
+                            wrap: word-wrap;
+                        }
+                    }
+                    
+                    // Separation
+                    Rectangle { height: 1px; background: StoreColors.border; }
+                    
+                    // Bottom Actions inside Modal
+                    HorizontalLayout {
+                        alignment: space-between;
+                        
+                        Button {
+                            text: "❌ إغلاق النافذة";
+                            clicked => { root.close(); }
+                        }
+                        
+                        Button {
+                            text: info.status == "installed" ? "🚀 تشغيل التطبيق حياً" : (info.status == "update_available" ? "🔄 ترقية التحديث الآن" : "📥 تثبيت وتنزيل التطبيق");
+                            clicked => {
+                                root.action_triggered(root.index);
+                                root.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

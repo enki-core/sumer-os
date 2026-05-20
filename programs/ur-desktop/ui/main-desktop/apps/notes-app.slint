@@ -1,0 +1,15 @@
+export component NotesApp inherits Rectangle {
+    in property <bool> dark-mode: true;
+    background: root.dark-mode ? #1e293b : #ffffff;
+    border-radius: 8px;
+    
+    VerticalLayout {
+        padding: 16px;
+        spacing: 12px;
+        Text { text: "ملاحظات سومر"; font-size: 18px; font-weight: 700; color: root.dark-mode ? #ffffff : #000000; }
+        Rectangle { height: 1px; background: root.dark-mode ? #334155 : #e2e8f0; }
+        Text { text: "• الفكرة هي الأساس."; color: root.dark-mode ? #cbd5e1 : #475569; }
+        Text { text: "• التطوير مستمر."; color: root.dark-mode ? #cbd5e1 : #475569; }
+        Rectangle { background: transparent; } // Spacer
+    }
+}

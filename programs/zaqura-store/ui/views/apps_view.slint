@@ -1,0 +1,100 @@
+import { ScrollView } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { AppCard } from "../components/app_card.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component AppsView inherits VerticalLayout {
+    in property <[AppInfo]> apps;
+    in property <length> parent_width;
+    in property <length> sidebar-width;
+    in property <string> search-query;
+    in-out property <string> selected-category: "all";
+    
+    // Callbacks to communicate events
+    callback launch_app(string);
+    callback install_app(int);
+    callback update_app(int);
+    callback show_detail(int);
+    
+    spacing: StoreSpacing.space-lg;
+    
+    // Filter Categories Row
+    HorizontalLayout {
+        spacing: StoreSpacing.space-md;
+        alignment: start;
+        
+        cat-all := Rectangle {
+            width: 60px; height: 28px; border-radius: 14px;
+            background: root.selected-category == "all" ? StoreColors.brand : StoreColors.border;
+            TouchArea { clicked => { root.selected-category = "all"; } }
+            Text { text: "الكل"; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; font-size: StoreTypography.font-size-xs; horizontal-alignment: center; vertical-alignment: center; }
+        }
+        
+        cat-sys := Rectangle {
+            width: 90px; height: 28px; border-radius: 14px;
+            background: root.selected-category == "system" ? StoreColors.success : StoreColors.border;
+            TouchArea { clicked => { root.selected-category = "system"; } }
+            Text { text: "أدوات النظام"; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; font-size: StoreTypography.font-size-xs; horizontal-alignment: center; vertical-alignment: center; }
+        }
+        
+        cat-med := Rectangle {
+            width: 75px; height: 28px; border-radius: 14px;
+            background: root.selected-category == "media" ? StoreColors.danger : StoreColors.border;
+            TouchArea { clicked => { root.selected-category = "media"; } }
+            Text { text: "الوسائط"; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; font-size: StoreTypography.font-size-xs; horizontal-alignment: center; vertical-alignment: center; }
+        }
+        
+        cat-net := Rectangle {
+            width: 75px; height: 28px; border-radius: 14px;
+            background: root.selected-category == "internet" ? StoreColors.warning : StoreColors.border;
+            TouchArea { clicked => { root.selected-category = "internet"; } }
+            Text { text: "الإنترنت"; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; font-size: StoreTypography.font-size-xs; horizontal-alignment: center; vertical-alignment: center; }
+        }
+        
+        cat-ext := Rectangle {
+            width: 120px; height: 28px; border-radius: 14px;
+            background: root.selected-category == "external" ? #8b5cf6 : StoreColors.border;
+            TouchArea { clicked => { root.selected-category = "external"; } }
+            Text { text: "برامج سطح المكتب"; color: StoreColors.text; font-weight: StoreTypography.font-weight-bold; font-size: StoreTypography.font-size-xs; horizontal-alignment: center; vertical-alignment: center; }
+        }
+    }
+    
+    // Apps Grid
+    ScrollView {
+        VerticalLayout {
+            spacing: StoreSpacing.space-sm;
+            alignment: start;
+            
+            for row_idx in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] : HorizontalLayout {
+                spacing: StoreSpacing.space-sm;
+                
+                for col_idx in [0, 1] : Rectangle {
+                    property <int> app_idx: row_idx * 2 + col_idx;
+                    
+                    visible: app-idx < root.apps.length && 
+                             (root.selected-category == "all" || root.apps[app-idx].category == root.selected-category);
+                    
+                    width: (root.parent_width - root.sidebar-width - 40px) / 2;
+                    
+                    AppCard {
+                        width: 100%;
+                        info: root.apps[app-idx];
+                        index: app-idx;
+                        clicked => { root.show_detail(app-idx); }
+                        action_triggered(idx) => {
+                            if root.apps[idx].status == "installed" {
+                                root.launch_app(root.apps[idx].id);
+                            } else if root.apps[idx].status == "update_available" {
+                                root.update_app(idx);
+                            } else {
+                                root.install_app(idx);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

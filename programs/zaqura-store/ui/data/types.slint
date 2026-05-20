@@ -1,0 +1,22 @@
+export struct AppInfo {
+    id: string,
+    name: string,
+    category: string, // "system" | "media" | "internet" | "external"
+    icon: string,
+    description: string,
+    long_description: string,
+    author: string,
+    version: string,
+    status: string, // "installed" | "available" | "update_available" | "installing" | "updating"
+    accent_color: color,
+    is_sumer: bool,
+}
+
+export struct AddonInfo {
+    name: string,
+    description: string,
+    version: string,
+    icon: string,
+    enabled: bool,
+    category: string,
+}

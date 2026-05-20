@@ -1,0 +1,47 @@
+import { ListView } from "std-widgets.slint";
+import { CalcButton } from "calc_button.slint";
+
+export component HistoryOverlay inherits Rectangle {
+    in property <[string]> history_list;
+    
+    callback item_clicked(string);
+    callback close_clicked();
+
+    background: #020617eb;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: #ffffff30;
+    
+    VerticalLayout {
+        padding: 18px;
+        spacing: 12px;
+        
+        Text { 
+            text: "السجل الذكي (History)"; 
+            color: #38bdf8; 
+            font-size: 18px; 
+            font-weight: 700;
+            horizontal-alignment: center;
+        }
+        
+        ListView {
+            for item in root.history_list : TouchArea {
+                height: 44px;
+                clicked => { root.item_clicked(item); }
+                Rectangle {
+                    background: parent.has-hover ? #ffffff15 : transparent;
+                    border-radius: 8px;
+                    Text { text: item; color: white; font-size: 16px; vertical-alignment: center; x: 12px; }
+                }
+            }
+        }
+        
+        CalcButton {
+            height: 45px;
+            text: "إغلاق السجل";
+            base-color: #ef444425;
+            text-color: #fca5a5;
+            clicked => { root.close_clicked(); }
+        }
+    }
+}

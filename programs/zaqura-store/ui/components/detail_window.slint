@@ -1,0 +1,99 @@
+import { Button, ScrollView } from "std-widgets.slint";
+import { AppInfo } from "../data/types.slint";
+import { StoreColors } from "../theme/colors.slint";
+import { StoreTypography } from "../theme/typography.slint";
+import { StoreSpacing } from "../theme/spacing.slint";
+
+export component AppDetailWindow inherits Window {
+    in property <AppInfo> info;
+    in property <int> index;
+    
+    // Callbacks to communicate actions
+    callback close();
+    callback action_triggered(int); // index
+    
+    title: "تفاصيل برمجية: " + info.name + " - Zaqura App Store";
+    width: 520px;
+    height: 400px;
+    background: StoreColors.surface;
+    
+    VerticalLayout {
+        padding: StoreSpacing.padding-xl;
+        spacing: StoreSpacing.space-lg;
+        
+        // App Detail Header with glowing border
+        HorizontalLayout {
+            spacing: StoreSpacing.space-xl;
+            
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 14px;
+                    background: StoreColors.background;
+                    border-width: 2px;
+                    border-color: info.accent_color;
+                    
+                    Text {
+                        text: info.icon;
+                        font-size: 32px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            
+            VerticalLayout {
+                alignment: center;
+                spacing: StoreSpacing.space-sm;
+                Text {
+                    text: info.name;
+                    font-size: StoreTypography.font-size-lg;
+                    font-weight: StoreTypography.font-weight-bold;
+                    color: StoreColors.text;
+                }
+                Text {
+                    text: "المطور: " + info.author + " | الإصدار: " + info.version;
+                    font-size: StoreTypography.font-size-xs;
+                    color: StoreColors.text-muted;
+                }
+            }
+        }
+        
+        // Separation line
+        Rectangle { height: 1px; background: StoreColors.border; }
+        
+        // Detailed description with smooth scrolling
+        ScrollView {
+            height: 150px;
+            Text {
+                text: info.long_description;
+                font-size: StoreTypography.font-size-sm;
+                color: StoreColors.text-muted;
+                wrap: word-wrap;
+            }
+        }
+        
+        // Separation line
+        Rectangle { height: 1px; background: StoreColors.border; }
+        
+        // Actions
+        HorizontalLayout {
+            alignment: space-between;
+            
+            Button {
+                text: "❌ إغلاق النافذة";
+                clicked => { root.close(); }
+            }
+            
+            Button {
+                text: info.status == "installed" ? "🚀 تشغيل التطبيق حياً" : (info.status == "update_available" ? "🔄 ترقية التحديث الآن" : "📥 تثبيت وتنزيل التطبيق");
+                clicked => {
+                    root.action_triggered(root.index);
+                    root.close();
+                }
+            }
+        }
+    }
+}
