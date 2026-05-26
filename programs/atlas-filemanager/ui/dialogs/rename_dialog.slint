@@ -1,0 +1,93 @@
+import { LineEdit } from "std-widgets.slint";
+
+export component RenameDialog inherits Rectangle {
+    in-out property <string> input-name: "";
+    
+    callback confirm(string);
+    callback cancel;
+
+    width: 100%;
+    height: 100%;
+    background: #000000a0;
+
+    TouchArea {
+        clicked => { root.cancel(); }
+    }
+
+    Rectangle {
+        width: 400px;
+        height: 180px;
+        background: #0c1224f2;
+        border-radius: 16px;
+        border-width: 1px;
+        border-color: #3b82f650;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+
+        VerticalLayout {
+            padding: 18px;
+            spacing: 16px;
+            alignment: space-between;
+
+            Text {
+                text: "إعادة تسمية العنصر ✏️";
+                font-size: 15px;
+                font-weight: 700;
+                color: #ffffff;
+                horizontal-alignment: right;
+            }
+
+            Rectangle {
+                height: 38px;
+                background: #ffffff05;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #3b82f660;
+
+                rename-input := LineEdit {
+                    x: 8px;
+                    width: parent.width - 16px;
+                    height: 100%;
+                    text: root.input-name;
+                    font-size: 13px;
+                    
+                    edited(val) => { root.input-name = val; }
+                    accepted(val) => {
+                        root.confirm(val);
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: start;
+
+                // Cancel
+                Rectangle {
+                    width: 90px;
+                    height: 32px;
+                    border-radius: 6px;
+                    background: #ffffff08;
+                    border-width: 1px;
+                    border-color: #ffffff10;
+                    TouchArea { clicked => { root.cancel(); } }
+                    Text { text: "إلغاء"; color: #cbd5e1; font-size: 12px; horizontal-alignment: center; vertical-alignment: center; }
+                }
+
+                // Confirm
+                Rectangle {
+                    width: 110px;
+                    height: 32px;
+                    border-radius: 6px;
+                    background: #3b82f6;
+                    TouchArea {
+                        clicked => {
+                            root.confirm(root.input-name);
+                        }
+                    }
+                    Text { text: "تعديل الاسم 💾"; color: white; font-size: 12px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                }
+            }
+        }
+    }
+}

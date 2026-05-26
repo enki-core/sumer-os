@@ -12,7 +12,7 @@ export component BrightnessBar inherits Rectangle {
     background: TvColors.panel-glass;
     border-radius: 20px;
     border-width: 1.5px;
-    border-color: #ffaa0040; // Golden/Yellow glow to represent brightness
+    border-color: TvColors.brightness-glow; // Golden/Yellow glow to represent brightness
     
     opacity: root.is-visible ? 1.0 : 0.0;
     visible: self.opacity > 0.0;
@@ -48,7 +48,7 @@ export component BrightnessBar inherits Rectangle {
                     x: 0px;
                     width: parent.width * Math.max(0, Math.min(100, root.system-brightness)) / 100;
                     height: 100%;
-                    background: @linear-gradient(90deg, #ffaa00 0%, #ffe066 100%);
+                    background: @linear-gradient(90deg, TvColors.brightness-accent 0%, TvColors.brightness-grad-end 100%);
                     border-radius: TvSpacing.radius-sm;
                 }
             }
@@ -59,7 +59,7 @@ export component BrightnessBar inherits Rectangle {
             font-family: TvTypography.font-family;
             font-size: TvTypography.font-size-base;
             font-weight: TvTypography.font-weight-bold;
-            color: #ffaa00;
+            color: TvColors.brightness-accent;
             vertical-alignment: center;
             width: 50px;
         }

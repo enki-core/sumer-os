@@ -1,0 +1,38 @@
+export component CompactRow inherits Rectangle {
+    in property <string> name;
+    in property <string> icon;
+    in property <bool> selected;
+    callback clicked;
+    callback double-clicked;
+    
+    height: 32px;
+    border-radius: 6px;
+    background: selected ? #3b82f618 : (ta.has-hover ? #ffffff04 : transparent);
+    border-width: 1px;
+    border-color: selected ? #3b82f638 : (ta.has-hover ? #ffffff08 : transparent);
+    
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+        double-clicked => { root.double-clicked(); }
+    }
+    
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        alignment: end;
+        
+        Text {
+            text: name;
+            font-size: 12px;
+            color: selected ? #ffffff : #cbd5e1;
+            vertical-alignment: center;
+        }
+        
+        Text {
+            text: icon;
+            font-size: 16px;
+            vertical-alignment: center;
+        }
+    }
+}

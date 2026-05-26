@@ -1,0 +1,750 @@
+import { Slider, LineEdit, Button, ScrollView } from "std-widgets.slint";
+
+export struct Track {
+    title: string,
+    artist: string,
+    duration: string,
+    duration_secs: int,
+    album_art_color_start: color,
+    album_art_color_end: color,
+}
+
+export global RaneemTheme {
+    // Elegant Dark Theme with Lapis Lazuli & Gold Mesopotamian accents
+    in-out property <color> bg-dark: #070a13;
+    in-out property <color> bg-gradient-start: #0f172a;
+    in-out property <color> bg-gradient-end: #020617;
+    in-out property <color> glass-bg: #1e293b70;
+    in-out property <color> glass-border: #ffffff15;
+    in-out property <color> gold-accent: #fbbf24;
+    in-out property <color> gold-accent-hover: #f59e0b;
+    in-out property <color> cyan-glow: #06b6d4;
+    
+    in-out property <color> text-primary: #ffffff;
+    in-out property <color> text-secondary: #94a3b8;
+    in-out property <color> text-muted: #475569;
+    
+    in-out property <color> active-item-bg: #fbbf2415;
+}
+
+component IconButton inherits Rectangle {
+    in-out property <string> icon-text;
+    in-out property <length> icon-size: 18px;
+    in-out property <color> icon-color: RaneemTheme.text-primary;
+    in-out property <color> active-color: RaneemTheme.gold-accent;
+    in-out property <bool> is-active: false;
+    
+    callback clicked;
+    
+    border-radius: self.width / 2;
+    background: touch-area.pressed ? #ffffff15 : (touch-area.has-hover ? #ffffff08 : #00000000);
+    border-width: touch-area.has-hover ? 1px : 0px;
+    border-color: RaneemTheme.glass-border;
+    
+    animate background { duration: 150ms; }
+    
+    Text {
+        text: root.icon-text;
+        font-size: root.icon-size;
+        font-family: "Outfit";
+        color: root.is-active ? root.active-color : (touch-area.has-hover ? RaneemTheme.gold-accent : root.icon-color);
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        
+        animate color { duration: 150ms; }
+    }
+    
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component TrackItem inherits Rectangle {
+    in-out property <Track> track;
+    in-out property <bool> is-selected: false;
+    in-out property <bool> is-playing: false;
+    
+    callback clicked;
+    
+    background: root.is-selected ? RaneemTheme.active-item-bg : (touch-area.has-hover ? #ffffff05 : #00000000);
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: root.is-selected ? #fbbf2430 : (touch-area.has-hover ? RaneemTheme.glass-border : #00000000);
+    
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+    
+    HorizontalLayout {
+        padding: 8px;
+        spacing: 12px;
+        alignment: space-between;
+        
+        HorizontalLayout {
+            spacing: 12px;
+            
+            // Glowing album art placeholder
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                border-radius: 6px;
+                background: @linear-gradient(135deg, root.track.album-art-color-start, root.track.album-art-color-end);
+                
+                Text {
+                    text: root.is-playing ? "🎵" : "💿";
+                    font-size: 16px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+                width: 130px;
+                
+                Text {
+                    text: root.track.title;
+                    font-size: 14px;
+                    font-weight: root.is-selected ? 600 : 500;
+                    color: root.is-selected ? RaneemTheme.gold-accent : RaneemTheme.text-primary;
+                    horizontal-alignment: left;
+                    overflow: elide;
+                    
+                    animate color { duration: 150ms; }
+                }
+                
+                Text {
+                    text: root.track.artist;
+                    font-size: 12px;
+                    color: RaneemTheme.text-secondary;
+                    horizontal-alignment: left;
+                    overflow: elide;
+                }
+            }
+        }
+        
+        VerticalLayout {
+            alignment: center;
+            
+            Text {
+                text: root.track.duration;
+                font-size: 12px;
+                color: root.is-selected ? RaneemTheme.gold-accent : RaneemTheme.text-muted;
+                horizontal-alignment: right;
+            }
+        }
+    }
+    
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "رنيم - Raneem Music Player";
+    width: 800px;
+    height: 600px;
+    background: @linear-gradient(180deg, RaneemTheme.bg-gradient-start.mix(RaneemTheme.active-item-bg, root.pulse-glow), RaneemTheme.bg-gradient-end);
+    default-font-family: "Outfit";
+    
+    // Track State
+    in-out property <[Track]> tracks: [
+        { title: "ألحان القيثارة السومرية", artist: "أور القديمة", duration: "03:45", duration_secs: 225, album_art_color_start: #3b82f6, album_art_color_end: #1d4ed8 },
+        { title: "ملحمة جلجامش الموسيقية", artist: "أنكيدو", duration: "05:12", duration_secs: 312, album_art_color_start: #ec4899, album_art_color_end: #be185d },
+        { title: "نسيم حدائق بابل المعلقة", artist: "عشتار", duration: "04:20", duration_secs: 260, album_art_color_start: #10b981, album_art_color_end: #047857 },
+        { title: "نهر دجلة الخالد", artist: "حضارة الرافدين", duration: "06:05", duration_secs: 365, album_art_color_start: #f59e0b, album_art_color_end: #b45309 },
+        { title: "ترنيمة المعابد السومرية", artist: "كاهن المعبد", duration: "02:50", duration_secs: 170, album_art_color_start: #8b5cf6, album_art_color_end: #6d28d9 }
+    ];
+    
+    in-out property <int> current-track-index: 0;
+    in-out property <bool> is-playing: false;
+    in-out property <float> playback-progress: 0.0; // 0.0 to 1.0
+    in-out property <int> current-time-secs: 0;
+    in-out property <float> volume: 0.8;
+    in-out property <bool> is-muted: false;
+    in-out property <bool> is-shuffle: false;
+    in-out property <bool> is-loop: false;
+    in-out property <string> search-query: "";
+    
+    // Sound Visualizer Bars (dynamic height percentages)
+    in-out property <[float]> visualizer-heights: [0.1, 0.4, 0.8, 0.5, 0.9, 0.3, 0.7, 0.2, 0.6, 0.8, 0.4, 0.7, 0.9, 0.2, 0.5, 0.8, 0.3, 0.6, 0.4, 0.1];
+    
+    // Album spin angle in degrees
+    in-out property <float> album-angle: 0.0;
+    
+    // Synced Lyrics, Pulse Glow, and Scratch State
+    in-out property <string> current-lyrics: "🏺 مرحباً بكم في رنيم...";
+    in-out property <float> pulse-glow: 0.0;
+    in-out property <bool> is-vinyl-pressed: vinyl-touch.pressed;
+    
+    // Callbacks to Rust Backend
+    callback play-track(int);
+    callback toggle-playback();
+    callback next-track();
+    callback prev-track();
+    callback set-volume(float);
+    callback set-progress(float);
+    callback toggle-shuffle();
+    callback toggle-loop();
+    callback search-changed(string);
+    callback add-file-clicked();
+    callback seek-forward();
+    callback seek-backward();
+    
+    // Helper formatted current time
+    pure function format-time(seconds: int) -> string {
+        return Math.floor(seconds / 60) + ":" + (Math.mod(seconds, 60) < 10 ? "0" + Math.mod(seconds, 60) : "" + Math.mod(seconds, 60));
+    }
+    
+    HorizontalLayout {
+        padding: 12px;
+        spacing: 12px;
+        
+        // LEFT PANEL: Playlist & Search (Glassmorphism)
+        Rectangle {
+            width: 260px;
+            background: RaneemTheme.glass-bg;
+            border-width: 1px;
+            border-color: RaneemTheme.glass-border;
+            border-radius: 16px;
+            clip: true;
+            
+            VerticalLayout {
+                padding: 16px;
+                spacing: 16px;
+                
+                // App Logo / Title
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    
+                    Text {
+                        text: "🎵";
+                        font-size: 24px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Text {
+                        text: "رنيم Raneem";
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: RaneemTheme.text-primary;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle { width: 1px; horizontal-stretch: 1; }
+                    
+                    Rectangle {
+                        background: #fbbf2415;
+                        border-radius: 4px;
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            padding-top: 3px;
+                            padding-bottom: 3px;
+                            Text {
+                                text: "MP3 Player";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: RaneemTheme.gold-accent;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+                
+                // Search Input
+                Rectangle {
+                    height: 38px;
+                    background: #00000030;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: RaneemTheme.glass-border;
+                    
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        spacing: 8px;
+                        alignment: center;
+                        
+                        Text {
+                            text: "🔍";
+                            font-size: 14px;
+                            vertical-alignment: center;
+                            color: RaneemTheme.text-secondary;
+                        }
+                        
+                        search-input := LineEdit {
+                            placeholder-text: "ابحث عن لوح موسيقي...";
+                            font-size: 13px;
+                            horizontal-stretch: 1;
+                            
+                            edited(text) => {
+                                root.search-query = text;
+                                root.search-changed(text);
+                            }
+                        }
+                    }
+                }
+                
+                // Playlist Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    
+                    Text {
+                        text: "الألواح الموسيقية (الأغاني)";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: RaneemTheme.text-secondary;
+                        vertical-alignment: center;
+                    }
+                    
+                    HorizontalLayout {
+                        spacing: 8px;
+                        
+                        // Add File Button
+                        add-file-btn := Rectangle {
+                            width: 80px;
+                            height: 22px;
+                            background: add-file-touch.pressed ? RaneemTheme.gold-accent-hover : (add-file-touch.has-hover ? RaneemTheme.gold-accent.mix(#ffffff, 0.2) : RaneemTheme.gold-accent);
+                            border-radius: 4px;
+                            
+                            add-file-touch := TouchArea {
+                                clicked => {
+                                    root.add-file-clicked();
+                                }
+                            }
+                            
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                
+                                Text {
+                                    text: "➕";
+                                    font-size: 10px;
+                                    color: RaneemTheme.bg-dark;
+                                    vertical-alignment: center;
+                                }
+                                Text {
+                                    text: "إضافة ملف";
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    color: RaneemTheme.bg-dark;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                        
+                        Text {
+                            text: root.tracks.length + " مقاطع";
+                            font-size: 12px;
+                            color: RaneemTheme.text-muted;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                
+                // Scrollable Playlist
+                ScrollView {
+                    viewport-height: root.tracks.length * 58px;
+                    
+                    VerticalLayout {
+                        spacing: 6px;
+                        
+                        for track[idx] in root.tracks: TrackItem {
+                            track: track;
+                            is-selected: idx == root.current-track-index;
+                            is-playing: (idx == root.current-track-index) && root.is-playing;
+                            
+                            clicked => {
+                                root.play-track(idx);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // RIGHT PANEL: Player Core (Glassmorphism + Visualizer)
+        Rectangle {
+            horizontal-stretch: 1;
+            background: RaneemTheme.glass-bg;
+            border-width: 1px;
+            border-color: RaneemTheme.glass-border;
+            border-radius: 16px;
+            clip: true;
+            
+            VerticalLayout {
+                padding: 24px;
+                spacing: 24px;
+                
+                // Top Info Bar (Window actions mockup / Status)
+                HorizontalLayout {
+                    alignment: space-between;
+                    
+                    HorizontalLayout {
+                        spacing: 6px;
+                        
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: root.is-playing ? #22c55e : #ef4444;
+                            y: (parent.height - self.height) / 2;
+                        }
+                        
+                        Text {
+                            text: root.is-playing ? "جاري التشغيل الآن" : "متوقف مؤقتاً";
+                            font-size: 12px;
+                            color: RaneemTheme.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                    
+                    Text {
+                        text: "Sumer OS Studio";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: RaneemTheme.text-muted;
+                        letter-spacing: 1px;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Main Music Core Card (Vinyl Rotation or Art Display)
+                Rectangle {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+                    background: #00000020;
+                    border-radius: 12px;
+                    border-width: 1px;
+                    border-color: #ffffff05;
+                    
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 20px;
+                        
+                        // Spin Disk Container
+                        Rectangle {
+                            width: 180px;
+                            height: 180px;
+                            border-radius: 90px;
+                            background: #0b0f19;
+                            border-width: 4px;
+                            border-color: RaneemTheme.glass-border;
+                            
+                            // Glowing aura
+                            Rectangle {
+                                width: 176px;
+                                height: 176px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 88px;
+                                background: @radial-gradient(circle, #fbbf2415 0%, #00000000 80%);
+                            }
+                            
+                            // Vinyl Grooves SVG/CSS mockup
+                            Rectangle {
+                                width: 150px;
+                                height: 150px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 75px;
+                                border-width: 2px;
+                                border-color: #ffffff05;
+                            }
+                            
+                            Rectangle {
+                                width: 110px;
+                                height: 110px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 55px;
+                                border-width: 1px;
+                                border-color: #ffffff0a;
+                            }
+                            
+                            // Beautiful Center Album Artwork (Spinning)
+                            Rectangle {
+                                width: 80px;
+                                height: 80px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 40px;
+                                background: @linear-gradient(root.album-angle * 1deg, root.tracks[root.current-track-index].album-art-color-start, root.tracks[root.current-track-index].album-art-color-end);
+                                clip: true;
+                                
+                                Text {
+                                    text: "🏺";
+                                    font-size: 32px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            
+                            // Vinyl Center Hole
+                            Rectangle {
+                                width: 12px;
+                                height: 12px;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: 6px;
+                                background: RaneemTheme.bg-dark;
+                                border-width: 2px;
+                                border-color: #ffffff30;
+                            }
+                            
+                            // TouchArea for scratching interaction
+                            vinyl-touch := TouchArea {
+                                moved => {
+                                    if (self.pressed) {
+                                        root.album-angle = ((self.mouse-x + self.mouse-y) / 1px) * 2.0;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Text Meta Info
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 4px;
+                            width: 380px;
+                            
+                            Text {
+                                text: root.tracks[root.current-track-index].title;
+                                font-size: 18px;
+                                font-weight: 700;
+                                color: RaneemTheme.text-primary;
+                                horizontal-alignment: center;
+                                overflow: elide;
+                            }
+                            
+                            Text {
+                                text: root.tracks[root.current-track-index].artist;
+                                font-size: 13px;
+                                color: RaneemTheme.text-secondary;
+                                horizontal-alignment: center;
+                                overflow: elide;
+                            }
+                            
+                            // Synced Lyrics Display
+                            Text {
+                                text: root.current-lyrics;
+                                font-size: 12px;
+                                font-italic: true;
+                                color: RaneemTheme.gold-accent;
+                                horizontal-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                    }
+                }
+                
+                // Sound Wave Audio Visualizer
+                Rectangle {
+                    height: 50px;
+                    horizontal-stretch: 1;
+                    
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 4px;
+                        
+                        for h[idx] in root.visualizer-heights: Rectangle {
+                            width: 5px;
+                            height: 5px + h * 45px;
+                            y: (parent.height - self.height) / 2;
+                            border-radius: 2.5px;
+                            background: @linear-gradient(0deg, RaneemTheme.gold-accent 0%, RaneemTheme.cyan-glow 100%);
+                            opacity: root.is-playing ? 0.9 : 0.4;
+                            
+                            animate height { duration: 120ms; }
+                        }
+                    }
+                }
+                
+                // Timeline Progress Bar
+                VerticalLayout {
+                    spacing: 6px;
+                    
+                    HorizontalLayout {
+                        alignment: space-between;
+                        
+                        Text {
+                            text: root.format-time(root.current-time-secs);
+                            font-size: 12px;
+                            color: RaneemTheme.text-secondary;
+                        }
+                        
+                        Text {
+                            text: root.tracks[root.current-track-index].duration;
+                            font-size: 12px;
+                            color: RaneemTheme.text-muted;
+                        }
+                    }
+                    
+                    // Glass progress slider
+                    progress-slider := Slider {
+                        minimum: 0.0;
+                        maximum: 1.0;
+                        value <=> root.playback-progress;
+                        
+                        changed(val) => {
+                            root.set-progress(val);
+                        }
+                    }
+                }
+                
+                // Playback Control Buttons Panel
+                HorizontalLayout {
+                    alignment: space-between;
+                    
+                    // Left Side: Extra controls (Shuffle, Loop)
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: start;
+                        
+                        IconButton {
+                            width: 36px;
+                            height: 36px;
+                            icon-text: "🔀";
+                            icon-size: 14px;
+                            is-active: root.is-shuffle;
+                            
+                            clicked => {
+                                root.is-shuffle = !root.is-shuffle;
+                                root.toggle-shuffle();
+                            }
+                        }
+                        
+                        IconButton {
+                            width: 36px;
+                            height: 36px;
+                            icon-text: "🔁";
+                            icon-size: 14px;
+                            is-active: root.is-loop;
+                            
+                            clicked => {
+                                root.is-loop = !root.is-loop;
+                                root.toggle-loop();
+                            }
+                        }
+                    }
+                    
+                    // Center: Core Playback buttons (Prev, Play, Next)
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: center;
+                        
+                        IconButton {
+                            width: 44px;
+                            height: 44px;
+                            icon-text: "⏮";
+                            icon-size: 20px;
+                            
+                            clicked => {
+                                root.prev-track();
+                            }
+                        }
+                        
+                        IconButton {
+                            width: 40px;
+                            height: 40px;
+                            icon-text: "⏪";
+                            icon-size: 16px;
+                            
+                            clicked => {
+                                root.seek-backward();
+                            }
+                        }
+                        
+                        // Floating Golden Play/Pause button
+                        Rectangle {
+                            width: 60px;
+                            height: 60px;
+                            border-radius: 30px;
+                            background: @linear-gradient(135deg, RaneemTheme.gold-accent, #ea580c);
+                            
+                            // Gold shadow/glow
+                            Rectangle {
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 28px;
+                                background: @radial-gradient(circle, #fbbf2430 0%, #00000000 80%);
+                            }
+                            
+                            Text {
+                                text: root.is-playing ? "⏸" : "▶";
+                                font-size: 24px;
+                                color: #020617;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                            
+                            touch := TouchArea {
+                                clicked => {
+                                    root.toggle-playback();
+                                }
+                            }
+                            
+                            animate background { duration: 150ms; }
+                        }
+                        
+                        IconButton {
+                            width: 40px;
+                            height: 40px;
+                            icon-text: "⏩";
+                            icon-size: 16px;
+                            
+                            clicked => {
+                                root.seek-forward();
+                            }
+                        }
+                        
+                        IconButton {
+                            width: 44px;
+                            height: 44px;
+                            icon-text: "⏭";
+                            icon-size: 20px;
+                            
+                            clicked => {
+                                root.next-track();
+                            }
+                        }
+                    }
+                    
+                    // Right Side: Volume Controller
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: end;
+                        width: 130px;
+                        
+                        IconButton {
+                            width: 32px;
+                            height: 32px;
+                            icon-text: root.is-muted ? "🔇" : (root.volume > 0.5 ? "🔊" : "🔉");
+                            icon-size: 14px;
+                            is-active: root.is-muted;
+                            
+                            clicked => {
+                                root.is-muted = !root.is-muted;
+                            }
+                        }
+                        
+                        volume-slider := Slider {
+                            minimum: 0.0;
+                            maximum: 1.0;
+                            value: root.volume;
+                            width: 80px;
+                            
+                            changed(val) => {
+                                root.volume = val;
+                                root.set-volume(val);
+                                root.is-muted = val == 0.0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

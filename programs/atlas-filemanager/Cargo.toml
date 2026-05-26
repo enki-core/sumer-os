@@ -1,0 +1,12 @@
+[package]
+name = "atlas-filemanager"
+version = "1.1.0"
+edition = "2021"
+authors = ["Sumer OS Developers"]
+description = "The official file explorer for Sumer OS."
+
+[dependencies]
+slint = "1.5.0"
+
+[build-dependencies]
+slint-build = "1.5.0"

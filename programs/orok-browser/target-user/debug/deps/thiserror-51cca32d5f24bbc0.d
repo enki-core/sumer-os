@@ -1,0 +1,14 @@
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/libthiserror-51cca32d5f24bbc0.rmeta: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/thiserror-b462a45109a96832/out/private.rs
+
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/libthiserror-51cca32d5f24bbc0.rlib: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/thiserror-b462a45109a96832/out/private.rs
+
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/thiserror-51cca32d5f24bbc0.d: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs /home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/thiserror-b462a45109a96832/out/private.rs
+
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/lib.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/aserror.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/display.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/var.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-2.0.18/src/private.rs:
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/thiserror-b462a45109a96832/out/private.rs:
+
+# env-dep:OUT_DIR=/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/thiserror-b462a45109a96832/out

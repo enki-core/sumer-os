@@ -1,0 +1,364 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { ActionButton } from "../components/action_button.slint";
+
+export component DnsNetworkView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // DNS States
+    property <string> dns-primary: "1.1.1.1";
+    property <string> dns-secondary: "1.0.0.1";
+    property <string> current-preset: "Cloudflare";
+    property <string> net-log: "إعدادات الشبكة متزامنة بالكامل";
+
+    // Proxy and Advanced States
+    property <bool> use-proxy: false;
+    property <string> proxy-ip: "192.168.1.100";
+    property <string> proxy-port: "8080";
+    property <bool> ipv6-enabled: true;
+
+    HorizontalLayout {
+        spacing: 16px;
+        padding: 24px;
+
+        // DNS Configuration Panel (Left Side)
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 14px;
+
+            Text {
+                text: "تغيير إعدادات الـ DNS عن بعد";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                vertical-stretch: 1;
+                
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 12px;
+
+                    // DNS presets selection buttons
+                    Text {
+                        text: "اختر خادم DNS جاهز:";
+                        color: text-secondary;
+                        font-size: 10px;
+                        horizontal-alignment: right;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        
+                        // Cloudflare preset
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: "كلودفلير";
+                            icon: "⚡";
+                            base-bg: current-preset == "Cloudflare" ? accent-color : rgba(255, 255, 255, 0.05);
+                            clicked => {
+                                dns-primary = "1.1.1.1";
+                                dns-secondary = "1.0.0.1";
+                                current-preset = "Cloudflare";
+                                net-log = "تم اختيار كلودفلير DNS (سريع وآمن)";
+                            }
+                        }
+
+                        // Google preset
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: "جوجل";
+                            icon: "🔍";
+                            base-bg: current-preset == "Google" ? accent-color : rgba(255, 255, 255, 0.05);
+                            clicked => {
+                                dns-primary = "8.8.8.8";
+                                dns-secondary = "8.8.4.4";
+                                current-preset = "Google";
+                                net-log = "تم اختيار جوجل DNS (مستقر وموثوق)";
+                            }
+                        }
+
+                        // AdGuard preset
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: "مانع الإعلانات";
+                            icon: "🛡️";
+                            base-bg: current-preset == "AdGuard" ? accent-color : rgba(255, 255, 255, 0.05);
+                            clicked => {
+                                dns-primary = "94.140.14.14";
+                                dns-secondary = "94.140.15.15";
+                                current-preset = "AdGuard";
+                                net-log = "تم اختيار AdGuard DNS لترشيح الإعلانات";
+                            }
+                        }
+
+                        // Auto preset
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: "تلقائي";
+                            icon: "🔄";
+                            base-bg: current-preset == "Auto" ? accent-color : rgba(255, 255, 255, 0.05);
+                            clicked => {
+                                dns-primary = "192.168.1.1";
+                                dns-secondary = "0.0.0.0";
+                                current-preset = "Auto";
+                                net-log = "تم تعيين DNS تلقائي من راوتر الشبكة";
+                            }
+                        }
+                    }
+
+                    // Input Form
+                    VerticalLayout {
+                        spacing: 8px;
+
+                        // Primary DNS Row
+                        VerticalLayout {
+                            spacing: 4px;
+                            Text { text: "عنوان DNS الرئيسي (Primary DNS):"; color: text-secondary; font-size: 9px; horizontal-alignment: right; }
+                            
+                            Rectangle {
+                                height: 32px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: theme-border-color;
+                                
+                                Text {
+                                    x: 8px;
+                                    text: dns-primary;
+                                    color: text-primary;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                                TouchArea {
+                                    clicked => {
+                                        current-preset = "Custom";
+                                        if (dns-primary == "1.1.1.1") {
+                                            dns-primary = "10.0.0.1";
+                                        } else {
+                                            dns-primary = "1.1.1.1";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Secondary DNS Row
+                        VerticalLayout {
+                            spacing: 4px;
+                            Text { text: "عنوان DNS الثانوي (Secondary DNS):"; color: text-secondary; font-size: 9px; horizontal-alignment: right; }
+                            
+                            Rectangle {
+                                height: 32px;
+                                background: rgba(0, 0, 0, 0.3);
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: theme-border-color;
+                                
+                                Text {
+                                    x: 8px;
+                                    text: dns-secondary;
+                                    color: text-primary;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                                TouchArea {
+                                    clicked => {
+                                        current-preset = "Custom";
+                                        if (dns-secondary == "1.0.0.1") {
+                                            dns-secondary = "10.0.0.2";
+                                        } else {
+                                            dns-secondary = "1.0.0.1";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Apply Button
+                    ActionButton {
+                        text: "حفظ وتطبيق إعدادات DNS الجديدة";
+                        icon: "🌐";
+                        base-bg: green-color;
+                        hover-bg: green-color.darker(10%);
+                        clicked => {
+                            net-log = "تمت تحديثات الـ DNS بنجاح إلى: " + dns-primary + " | " + dns-secondary;
+                        }
+                    }
+
+                    Text {
+                        text: net-log;
+                        color: green-color;
+                        font-size: 10px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // Network Status and Proxy Panel (Right Side)
+        VerticalLayout {
+            width: 320px;
+            spacing: 16px;
+
+            // Section 1: Phone Network Information
+            Text {
+                text: "حالة شبكة الهاتف الذكي";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                height: 190px;
+                
+                VerticalLayout {
+                    padding: 14px;
+                    spacing: 8px;
+
+                    // Detail Rows
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "Sumer_5G"; color: text-primary; font-size: 10px; font-weight: 700; }
+                        Text { text: "اسم شبكة الواي فاي:"; color: text-secondary; font-size: 10px; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "192.168.1.145"; color: text-primary; font-size: 10px; font-weight: 700; }
+                        Text { text: "عنوان IP المحلي للهاتف:"; color: text-secondary; font-size: 10px; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "7A:B4:9C:12:F3:E8"; color: text-primary; font-size: 10px; font-weight: 700; }
+                        Text { text: "عنوان الـ MAC للهاتف:"; color: text-secondary; font-size: 10px; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "سومر سيل • SumerCell"; color: text-primary; font-size: 10px; font-weight: 700; }
+                        Text { text: "شبكة الاتصال الخلوية:"; color: text-secondary; font-size: 10px; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "4G LTE (ممتاز)"; color: green-color; font-size: 10px; font-weight: 700; }
+                        Text { text: "حالة البيانات الخلوية:"; color: text-secondary; font-size: 10px; }
+                    }
+                }
+            }
+
+            // Section 2: Remote Proxy Settings
+            Text {
+                text: "إعدادات البروكسي والشبكة المتقدمة";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                vertical-stretch: 1;
+                
+                VerticalLayout {
+                    padding: 14px;
+                    spacing: 10px;
+
+                    // IPv6 Toggle
+                    HorizontalLayout {
+                        alignment: space-between;
+                        
+                        // Switch mockup
+                        Rectangle {
+                            width: 36px; height: 20px; border-radius: 10px;
+                            background: ipv6-enabled ? green-color : rgba(255, 255, 255, 0.1);
+                            
+                            Rectangle {
+                                x: ipv6-enabled ? 18px : 2px; y: 2px;
+                                width: 16px; height: 16px; border-radius: 8px;
+                                background: text-primary;
+                            }
+                            TouchArea { clicked => { ipv6-enabled = !ipv6-enabled; } }
+                        }
+                        
+                        Text { text: "تفعيل بروتوكول IPv6 عن بعد"; color: text-primary; font-size: 10px; vertical-alignment: center; }
+                    }
+
+                    // Proxy Toggle
+                    HorizontalLayout {
+                        alignment: space-between;
+                        
+                        // Switch mockup
+                        Rectangle {
+                            width: 36px; height: 20px; border-radius: 10px;
+                            background: use-proxy ? green-color : rgba(255, 255, 255, 0.1);
+                            
+                            Rectangle {
+                                x: use-proxy ? 18px : 2px; y: 2px;
+                                width: 16px; height: 16px; border-radius: 8px;
+                                background: text-primary;
+                            }
+                            TouchArea { clicked => { use-proxy = !use-proxy; } }
+                        }
+                        
+                        Text { text: "تشغيل خادم البروكسي (Proxy)"; color: text-primary; font-size: 10px; vertical-alignment: center; }
+                    }
+
+                    if use-proxy : VerticalLayout {
+                        spacing: 4px;
+                        Text { text: "عنوان ومنفذ البروكسي:"; color: text-secondary; font-size: 8px; horizontal-alignment: right; }
+                        
+                        HorizontalLayout {
+                            spacing: 8px;
+                            
+                            // Port
+                            Rectangle {
+                                width: 60px; height: 26px; background: rgba(0, 0, 0, 0.2); border-radius: 4px; border-width: 1px; border-color: theme-border-color;
+                                Text { text: proxy-port; color: text-primary; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+
+                            // IP
+                            Rectangle {
+                                horizontal-stretch: 1; height: 26px; background: rgba(0, 0, 0, 0.2); border-radius: 4px; border-width: 1px; border-color: theme-border-color;
+                                Text { text: proxy-ip; color: text-primary; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+                        }
+                    }
+
+                    Rectangle { vertical-stretch: 1; }
+
+                    ActionButton {
+                        text: "حفظ إعدادات البروكسي";
+                        icon: "🔒";
+                        base-bg: use-proxy ? accent-color : rgba(255, 255, 255, 0.05);
+                        clicked => {
+                            if (use-proxy) {
+                                net-log = "تم تطبيق خادم البروكسي: " + proxy-ip + ":" + proxy-port;
+                            } else {
+                                net-log = "تم إلغاء خادم البروكسي";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

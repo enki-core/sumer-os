@@ -1,0 +1,74 @@
+export component FileRow inherits Rectangle {
+    in property <string> name;
+    in property <string> icon;
+    in property <string> size;
+    in property <string> modified;
+    in property <bool> is-dir;
+    in property <bool> selected;
+    
+    callback clicked;
+    callback double-clicked;
+
+    height: 48px;
+    border-radius: 8px;
+    background: selected ? #3b82f618 : (ta.has-hover ? #ffffff04 : transparent);
+    border-width: 1px;
+    border-color: selected ? #3b82f638 : (ta.has-hover ? #ffffff08 : transparent);
+
+    animate background, border-color { duration: 150ms; }
+
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+        double-clicked => { root.double-clicked(); }
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 16px;
+
+        // Left Side (File details: Modified time and Size) - LTR flow within details
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            spacing: 24px;
+            alignment: start;
+
+            Text {
+                text: modified;
+                font-size: 12px;
+                color: #64748b;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: size;
+                font-size: 12px;
+                color: #94a3b8;
+                vertical-alignment: center;
+            }
+        }
+
+        // Right Side (Icon and Name) - RTL style
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: end;
+
+            Text {
+                text: name;
+                font-size: 14px;
+                color: selected ? #ffffff : #e2e8f0;
+                font-weight: selected ? 600 : 400;
+                vertical-alignment: center;
+                overflow: elide;
+                max-width: 250px;
+            }
+
+            Text {
+                text: icon;
+                font-size: 20px;
+                font-family: "sans-serif";
+                vertical-alignment: center;
+            }
+        }
+    }
+}

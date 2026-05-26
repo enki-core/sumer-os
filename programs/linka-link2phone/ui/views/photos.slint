@@ -1,0 +1,170 @@
+export component PhotosView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <bool> show-lightbox;
+    in-out property <string> lightbox-title;
+    in-out property <color> lightbox-c1;
+    in-out property <color> lightbox-c2;
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+
+        // Header
+        HorizontalLayout {
+            alignment: end;
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "معرض صور الهاتف"; color: text-primary; font-size: 22px; font-weight: 800; horizontal-alignment: right; }
+                Text { text: "استعراض الصور المخزنة على هاتفك المحمول وحفظها محلياً"; color: text-secondary; font-size: 12px; horizontal-alignment: right; }
+            }
+        }
+
+        // Photos Grid
+        GridLayout {
+            spacing: 16px;
+            
+            Row {
+                // Photo 1
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #6366f1 0%, #d946ef 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "صورة الكود.png"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "صورة الكود.png";
+                            lightbox-c1 = #6366f1;
+                            lightbox-c2 = #d946ef;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+
+                // Photo 2
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "غروب الشمس.jpg"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "غروب الشمس.jpg";
+                            lightbox-c1 = #f97316;
+                            lightbox-c2 = #ec4899;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+
+                // Photo 3
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "واجهة سومر.png"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "واجهة سومر.png";
+                            lightbox-c1 = #10b981;
+                            lightbox-c2 = #059669;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+            }
+
+            Row {
+                // Photo 4
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "المستندات.pdf.jpg"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "المستندات.pdf.jpg";
+                            lightbox-c1 = #8b5cf6;
+                            lightbox-c2 = #3b82f6;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+
+                // Photo 5
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "خلفية الهاتف.png"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "خلفية الهاتف.png";
+                            lightbox-c1 = #ec4899;
+                            lightbox-c2 = #f43f5e;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+
+                // Photo 6
+                Rectangle {
+
+                    height: 160px;
+                    border-radius: 10px;
+                    background: @linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+                    border-width: 1px;
+                    border-color: theme-border-color;
+                    clip: true;
+
+                    Text { text: "مذكرة العمل.png"; color: white; font-size: 11px; x: 10px; y: 130px; font-weight: 700; }
+                    TouchArea {
+                        clicked => {
+                            lightbox-title = "مذكرة العمل.png";
+                            lightbox-c1 = #14b8a6;
+                            lightbox-c2 = #06b6d4;
+                            show-lightbox = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

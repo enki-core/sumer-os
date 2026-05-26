@@ -11,7 +11,7 @@ echo "      SUMER OS - BATCH COMPILER            "
 echo "==========================================="
 
 # قائمة بالمجلدات المطلوب تجميعها
-TARGET_DIRS=("programs/ur-desktop" "programs/tigris-shell" "programs/nahr-tv" "programs/alwah-notepad" "programs/zaqura-store" "programs/enki-calc")
+TARGET_DIRS=("programs/ur-desktop" "programs/tigris-shell" "programs/nahr-tv" "programs/alwah-notepad" "programs/zaqura-store" "programs/enki-calc" "programs/raneem-mp3" "programs/orok-browser" "programs/prism-screenshot")
 
 for DIR in "${TARGET_DIRS[@]}"; do
     if [ -d "$DIR" ]; then

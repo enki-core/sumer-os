@@ -1,0 +1,127 @@
+import { SortRadioButton } from "../components/sort_radio_button.slint";
+import { SortCheckbox } from "../components/sort_checkbox.slint";
+
+export component SortPanel inherits Rectangle {
+    in-out property <length> grid-icon-size;
+    in-out property <string> sort-mode;
+    in-out property <bool> show-hidden;
+
+    callback refresh();
+
+    width: 280px;
+    background: #0d1222fa;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: #3b82f660;
+    padding: 16px;
+    
+    VerticalLayout {
+        spacing: 12px;
+        alignment: start;
+
+        // Header: Icon Size
+        HorizontalLayout {
+            alignment: space-between;
+            
+            // Minus / Plus buttons
+            HorizontalLayout {
+                spacing: 8px;
+                
+                Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 6px;
+                    background: dec-icon-ta.has-hover ? #ffffff10 : #ffffff05;
+                    border-width: 1px;
+                    border-color: #ffffff10;
+                    dec-icon-ta := TouchArea {
+                        clicked => {
+                            if (root.grid-icon-size > 24px) {
+                                root.grid-icon-size -= 8px;
+                            }
+                        }
+                    }
+                    Text { text: "-"; font-size: 14px; color: #cbd5e1; horizontal-alignment: center; vertical-alignment: center; }
+                }
+
+                Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 6px;
+                    background: inc-icon-ta.has-hover ? #ffffff10 : #ffffff05;
+                    border-width: 1px;
+                    border-color: #ffffff10;
+                    inc-icon-ta := TouchArea {
+                        clicked => {
+                            if (root.grid-icon-size < 96px) {
+                                root.grid-icon-size += 8px;
+                            }
+                        }
+                    }
+                    Text { text: "+"; font-size: 14px; color: #cbd5e1; horizontal-alignment: center; vertical-alignment: center; }
+                }
+            }
+
+            Text {
+                text: "حجم الأيقونة";
+                font-size: 13px;
+                font-weight: 700;
+                color: #cbd5e1;
+                vertical-alignment: center;
+            }
+        }
+
+        Rectangle { height: 1px; background: #ffffff08; }
+
+        // Sort Heading
+        Text {
+            text: "الترتيب حسب";
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            horizontal-alignment: right;
+        }
+
+        // Radio Button List
+        SortRadioButton {
+            text: "الاسم (أ - ي)";
+            selected: root.sort-mode == "a-z";
+            clicked => { root.sort-mode = "a-z"; root.refresh(); }
+        }
+        SortRadioButton {
+            text: "الاسم (ي - أ)";
+            selected: root.sort-mode == "z-a";
+            clicked => { root.sort-mode = "z-a"; root.refresh(); }
+        }
+        SortRadioButton {
+            text: "تاريخ التعديل (الأحدث أولاً)";
+            selected: root.sort-mode == "latest";
+            clicked => { root.sort-mode = "latest"; root.refresh(); }
+        }
+        SortRadioButton {
+            text: "تاريخ التعديل (الأقدم أولاً)";
+            selected: root.sort-mode == "oldest";
+            clicked => { root.sort-mode = "oldest"; root.refresh(); }
+        }
+        SortRadioButton {
+            text: "الحجم";
+            selected: root.sort-mode == "size";
+            clicked => { root.sort-mode = "size"; root.refresh(); }
+        }
+        SortRadioButton {
+            text: "النوع";
+            selected: root.sort-mode == "type";
+            clicked => { root.sort-mode = "type"; root.refresh(); }
+        }
+
+        Rectangle { height: 1px; background: #ffffff08; }
+
+        // Show Hidden Files Checkbox
+        SortCheckbox {
+            text: "عرض الملفات المخفية";
+            shortcut-text: "Ctrl+H";
+            checked: root.show-hidden;
+            clicked => { root.show-hidden = !root.show-hidden; root.refresh(); }
+        }
+    }
+}

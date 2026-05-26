@@ -1,0 +1,433 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { ActionButton } from "../components/action_button.slint";
+
+export component SecurityControlView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Security States
+    property <bool> phone-locked: false;
+    property <string> pin-code: "1234";
+    property <string> security-status: "نظام الأمان: متصل ومحمي";
+
+    // Audio Mic States
+    property <bool> mic-active: false;
+    property <string> record-time: "00:00";
+    property <string> mic-log: "المايكروفون غير نشط";
+
+    // Camera States
+    property <bool> camera-active: false;
+    property <bool> camera-front: false; // false = Back, true = Front
+    property <bool> is-recording-video: false;
+    property <string> camera-log: "بث الكاميرا مغلق";
+
+    HorizontalLayout {
+        spacing: 16px;
+        padding: 24px;
+
+        // Camera Control Panel (Left Side - Large Layout)
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 14px;
+
+            Text {
+                text: "التحكم بكاميرا الهاتف عن بعد";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                vertical-stretch: 1;
+                
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 12px;
+
+                    // Camera Viewport Simulation
+                    Rectangle {
+                        vertical-stretch: 1;
+                        background: #02040a;
+                        border-radius: 12px;
+                        border-width: 1px;
+                        border-color: theme-border-color;
+                        clip: true;
+
+                        if !camera-active : VerticalLayout {
+                            alignment: center;
+                            spacing: 12px;
+                            Text {
+                                text: "📷";
+                                font-size: 42px;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "بث الكاميرا معطل حالياً";
+                                color: text-secondary;
+                                font-size: 12px;
+                                font-weight: 700;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "اضغط على زر تشغيل الكاميرا لبدء البث المباشر";
+                                color: text-muted;
+                                font-size: 10px;
+                                horizontal-alignment: center;
+                            }
+                        }
+
+                        if camera-active : Rectangle {
+                            // Animated Lens grid representation
+                            background: @linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+                            
+                            // Mock live camera layout
+                            VerticalLayout {
+                                padding: 12px;
+                                alignment: space-between;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    // REC blinker
+                                    if is-recording-video : HorizontalLayout {
+                                        spacing: 6px;
+                                        Rectangle { width: 8px; height: 8px; border-radius: 4px; background: red-color; y: 3px; }
+                                        Text { text: "REC"; color: red-color; font-size: 10px; font-weight: 700; }
+                                    }
+                                    if !is-recording-video : Text {
+                                        text: "بث مباشر للكاميرا";
+                                        color: green-color;
+                                        font-size: 10px;
+                                        font-weight: 700;
+                                    }
+
+                                    // Cam selection tag
+                                    Text {
+                                        text: camera-front ? "الكاميرا الأمامية" : "الكاميرا الخلفية (رئيسية)";
+                                        color: text-primary;
+                                        font-size: 10px;
+                                        font-weight: 700;
+                                    }
+                                }
+
+                                // Centered focal ring
+                                HorizontalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 80px;
+                                        height: 80px;
+                                        border-radius: 40px;
+                                        border-width: 1px;
+                                        border-color: rgba(255, 255, 255, 0.25);
+                                        
+                                        Rectangle {
+                                            x: 37px; y: 37px;
+                                            width: 6px; height: 6px; border-radius: 3px; background: accent-color;
+                                        }
+                                    }
+                                }
+
+                                // Resolution indicator
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "FPS: 30 | 1080p"; color: text-muted; font-size: 9px; }
+                                    Text { text: "العدسة النشطة: 1.0x"; color: text-muted; font-size: 9px; }
+                                }
+                            }
+                        }
+                    }
+
+                    // Camera Controls Row
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        // Camera toggle
+                        ActionButton {
+                            text: camera-active ? "إيقاف الكاميرا" : "تشغيل الكاميرا";
+                            icon: camera-active ? "⏹" : "🎥";
+                            base-bg: camera-active ? red-color : green-color;
+                            hover-bg: camera-active ? red-color.darker(10%) : green-color.darker(10%);
+                            clicked => {
+                                camera-active = !camera-active;
+                                if (camera-active) {
+                                    camera-log = "تم فتح بث الكاميرا بنجاح";
+                                } else {
+                                    is-recording-video = false;
+                                    camera-log = "تم إغلاق بث الكاميرا";
+                                }
+                            }
+                        }
+
+                        // Lens Switcher
+                        ActionButton {
+                            text: camera-front ? "الكاميرا الخلفية" : "الكاميرا الأمامية";
+                            icon: "🔄";
+                            base-bg: rgba(255, 255, 255, 0.08);
+                            hover-bg: rgba(255, 255, 255, 0.15);
+                            clicked => {
+                                camera-front = !camera-front;
+                                camera-log = "تم التبديل إلى " + (camera-front ? "الكاميرا الأمامية" : "الكاميرا الخلفية");
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        // Take Photo Action
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: "التقاط صورة سريعة";
+                            icon: "📸";
+                            base-bg: accent-color;
+                            hover-bg: accent-hover;
+                            clicked => {
+                                if (camera-active) {
+                                    camera-log = "تم التقاط الصورة بنجاح وحفظها بحسابك!";
+                                } else {
+                                    camera-log = "يجب تشغيل الكاميرا أولاً لالتقاط الصور!";
+                                }
+                            }
+                        }
+
+                        // Record Video Action
+                        ActionButton {
+                            horizontal-stretch: 1;
+                            text: is-recording-video ? "إيقاف التسجيل" : "تسجيل فيديو";
+                            icon: is-recording-video ? "🛑" : "📹";
+                            base-bg: is-recording-video ? red-color : rgba(99, 102, 241, 0.15);
+                            hover-bg: is-recording-video ? red-color.darker(15%) : rgba(99, 102, 241, 0.25);
+                            clicked => {
+                                if (camera-active) {
+                                    is-recording-video = !is-recording-video;
+                                    if (is-recording-video) {
+                                        camera-log = "بدأ تسجيل الفيديو وحفظه للهاتف...";
+                                    } else {
+                                        camera-log = "تم إنهاء التسجيل وحفظ ملف الفيديو بنجاح!";
+                                    }
+                                } else {
+                                    camera-log = "يجب تشغيل الكاميرا لبدء تسجيل الفيديو!";
+                                }
+                            }
+                        }
+                    }
+
+                    // Camera log line
+                    Text {
+                        text: camera-log;
+                        color: green-color;
+                        font-size: 10px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // Right Panel (Lock Control & Microphone Recording)
+        VerticalLayout {
+            width: 320px;
+            spacing: 16px;
+
+            // Section 1: Lock & Security
+            Text {
+                text: "التحكم بقفل الهاتف والأمان";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                height: 190px;
+                
+                VerticalLayout {
+                    padding: 14px;
+                    spacing: 10px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        // Status indicator
+                        Rectangle {
+                            width: 8px; height: 8px; border-radius: 4px;
+                            background: phone-locked ? red-color : green-color;
+                            y: 4px;
+                        }
+                        Text {
+                            text: phone-locked ? "الهاتف مقفل بالكامل" : "الهاتف مفتوح وآمن";
+                            color: phone-locked ? red-color : green-color;
+                            font-size: 11px;
+                            font-weight: 700;
+                        }
+                    }
+
+                    // Giant Lock/Unlock Switch
+                    ActionButton {
+                        text: phone-locked ? "فتح قفل شاشة الهاتف" : "قفل شاشة الهاتف الآن";
+                        icon: phone-locked ? "🔓" : "🔒";
+                        base-bg: phone-locked ? green-color : red-color;
+                        hover-bg: phone-locked ? green-color.darker(10%) : red-color.darker(10%);
+                        clicked => {
+                            phone-locked = !phone-locked;
+                            security-status = phone-locked ? "تم إرسال أمر القفل للهاتف الذكي" : "تم فك قفل الهاتف باستخدام PIN المشفر";
+                        }
+                    }
+
+                    // Custom PIN changer
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text { text: "تغيير رمز قفل الهاتف (PIN):"; color: text-secondary; font-size: 9px; horizontal-alignment: right; }
+                        
+                        HorizontalLayout {
+                            spacing: 8px;
+                            ActionButton {
+                                text: "تحديث رمز الأمان";
+                                icon: "⚙️";
+                                clicked => {
+                                    security-status = "تم تحديث رمز PIN للهاتف إلى: " + pin-code;
+                                }
+                            }
+                            
+                            // Input field simulation
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                height: 32px;
+                                background: rgba(0, 0, 0, 0.2);
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: theme-border-color;
+                                
+                                Text {
+                                    x: 8px;
+                                    text: pin-code;
+                                    color: text-primary;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                                TouchArea {
+                                    clicked => {
+                                        if (pin-code == "1234") {
+                                            pin-code = "9988";
+                                        } else {
+                                            pin-code = "1234";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: security-status;
+                        color: text-secondary;
+                        font-size: 9px;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+
+            // Section 2: Remote Audio Recording
+            Text {
+                text: "تسجيل الصوت والميكروفون عن بُعد";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                vertical-stretch: 1;
+                
+                VerticalLayout {
+                    padding: 14px;
+                    spacing: 10px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: mic-active ? "جاري التسجيل..." : "المايكروفون خامد"; color: mic-active ? red-color : text-muted; font-size: 10px; font-weight: 700; }
+                        Text { text: mic-active ? record-time : "00:00"; color: text-primary; font-size: 11px; font-weight: 700; }
+                    }
+
+                    // Sound wave simulation layout (equalizer bars)
+                    HorizontalLayout {
+                        height: 30px;
+                        spacing: 4px;
+                        alignment: center;
+
+                        Rectangle { width: 3px; height: mic-active ? 25px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 15px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 28px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 10px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 22px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 8px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                        Rectangle { width: 3px; height: mic-active ? 18px : 5px; background: mic-active ? accent-color : text-muted; border-radius: 1.5px; }
+                    }
+
+                    // Record Switcher button
+                    ActionButton {
+                        text: mic-active ? "إيقاف وحفظ التسجيل للكمبيوتر" : "بدء التسجيل الصوتي المباشر";
+                        icon: mic-active ? "⏹" : "🎙️";
+                        base-bg: mic-active ? red-color : accent-color;
+                        hover-bg: mic-active ? red-color.darker(10%) : accent-hover;
+                        clicked => {
+                            mic-active = !mic-active;
+                            if (mic-active) {
+                                record-time = "00:12";
+                                mic-log = "تم تفعيل المايكروفون وتسجيل الأصوات المحيطة";
+                            } else {
+                                record-time = "00:00";
+                                mic-log = "تم حفظ التسجيل: REC_Phone_02.wav";
+                            }
+                        }
+                    }
+
+                    // Recordings list saved
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text { text: "التسجيلات المحفوظة مؤخراً على الحاسوب:"; color: text-secondary; font-size: 8px; horizontal-alignment: right; }
+                        
+                        GlassCard {
+                            height: 38px;
+                            card-bg: rgba(0, 0, 0, 0.2);
+                            HorizontalLayout {
+                                padding: 6px;
+                                alignment: space-between;
+                                ActionButton { text: "تشغيل"; icon: "▶️"; }
+                                VerticalLayout {
+                                    alignment: center;
+                                    Text { text: "تسجيل_محيط_الهاتف.wav"; color: text-primary; font-size: 9px; font-weight: 700; horizontal-alignment: right; }
+                                    Text { text: "1.4 MB • 24 ثانية"; color: text-muted; font-size: 7px; horizontal-alignment: right; }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: mic-log;
+                        color: green-color;
+                        font-size: 9px;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,2 @@
+"import { ScrollView, LineEdit, Button } from \"std-widgets.slint\";\n\nstruct FileItem {\n    name: string,\n    path: string,\n    is_dir: bool,\n    icon: string,\n    size_formatted: string,\n    modified_formatted: string,\n    file_type: string,\n}\n
+<truncated 43277 bytes>

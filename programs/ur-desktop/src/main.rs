@@ -1,65 +1,54 @@
 slint::include_modules!();
+
+mod app_launcher;
+mod ipc_bridge;
+mod app_state;
+
 use slint::{ComponentHandle, VecModel, Model};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use std::rc::Rc;
+use app_launcher::AppLauncher;
+use app_state::AppStateManager;
 
 fn main() -> Result<(), slint::PlatformError> {
     let main_window = MainWindow::new()?;
+    
+    // إنشاء مدير الحالة ومشغل التطبيقات
+    let app_launcher = Rc::new(AppLauncher::new());
+    let app_state = Rc::new(AppStateManager::new());
     
     // Initialize the dynamic Dock array in Rust
     let dock_icons = Rc::new(VecModel::from(vec![
         AppIcon { id: "files".into(), name: "Files".into(), icon: "📁".into(), bg_color: slint::Color::from_argb_encoded(0xff3b82f6), hover_bg_color: slint::Color::from_argb_encoded(0xff2563eb) },
         AppIcon { id: "console".into(), name: "Console".into(), icon: "💻".into(), bg_color: slint::Color::from_argb_encoded(0xff10b981), hover_bg_color: slint::Color::from_argb_encoded(0xff059669) },
         AppIcon { id: "tv".into(), name: "TV".into(), icon: "📺".into(), bg_color: slint::Color::from_argb_encoded(0xfff97316), hover_bg_color: slint::Color::from_argb_encoded(0xffea580c) },
+        AppIcon { id: "raneem-mp3".into(), name: "Raneem".into(), icon: "🎵".into(), bg_color: slint::Color::from_argb_encoded(0xffa855f7), hover_bg_color: slint::Color::from_argb_encoded(0xff9333ea) },
+        AppIcon { id: "prism-screenshot".into(), name: "Prism".into(), icon: "📸".into(), bg_color: slint::Color::from_argb_encoded(0xffec4899), hover_bg_color: slint::Color::from_argb_encoded(0xffdb2777) },
     ]));
     main_window.set_dock_icons(dock_icons.clone().into());
     
-    // Connect App Click Handler to Launch Standalone Binaries
+    // معالج النقر المحسّن مع إدارة الحالة
+    let launcher_clone = app_launcher.clone();
+    let state_clone = app_state.clone();
     main_window.on_app_clicked(move |app_name| {
         let app_name = app_name.to_string();
-        println!("App clicked in UI: {}", app_name);
+        println!("🚀 تم النقر على التطبيق: {}", app_name);
         
-        let binary_path = match app_name.as_str() {
-            "TV" | "تلفاز نهر" | "nahr-tv" => "/usr/bin/nahr-tv",
-            "Console" | "💻" | "شيل دجلة" => "/usr/bin/tigris-shell",
-            "Store" | "zaqura-store" => "/usr/bin/zaqura-store",
-            "Notepad" | "alwah-notepad" => "/usr/bin/alwah-notepad",
-            "Calc" | "enki-calc" => "/usr/bin/enki-calc",
-            "Browser" | "orok-browser" => "/programs/orok-browser/run",
-            _ => return,
-        };
-
-        let mut actual_path = binary_path.to_string();
-        if !std::path::Path::new(&actual_path).exists() {
-            // Check in same parent directory (programs/)
-            let relative_name = match app_name.as_str() {
-                "TV" | "تلفاز نهر" | "nahr-tv" => "nahr-tv",
-                "Console" | "💻" | "شيل دجلة" => "tigris-shell",
-                "Store" | "zaqura-store" => "zaqura-store",
-                "Notepad" | "alwah-notepad" => "alwah-notepad",
-                "Calc" | "enki-calc" => "enki-calc",
-                _ => "",
-            };
-            if !relative_name.is_empty() {
-                let paths_to_check = vec![
-                    format!("../programs/{}/target-alpine/release/{}", relative_name, relative_name),
-                    format!("../{}/target-alpine/release/{}", relative_name, relative_name),
-                    format!("../programs/{}/target/debug/{}", relative_name, relative_name),
-                    format!("../{}/target/debug/{}", relative_name, relative_name),
-                ];
-                for p in paths_to_check {
-                    if std::path::Path::new(&p).exists() {
-                        actual_path = p;
-                        break;
-                    }
-                }
+        // تعيين حالة "قيد البدء"
+        let _ = state_clone.set_state(&app_name, app_state::AppState::Launching);
+        
+        // محاولة تشغيل التطبيق
+        match launcher_clone.launch_app(&app_name) {
+            Ok(msg) => {
+                println!("{}", msg);
+                let _ = state_clone.set_state(&app_name, app_state::AppState::Running);
+            },
+            Err(err) => {
+                eprintln!("❌ خطأ: {}", err);
+                let _ = state_clone.set_error(&app_name, &err);
             }
-        }
-
-        if std::path::Path::new(&actual_path).exists() {
-            std::process::Command::new(&actual_path).spawn().ok();
         }
     });
 

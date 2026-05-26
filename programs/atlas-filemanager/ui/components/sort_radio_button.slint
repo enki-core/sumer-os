@@ -1,0 +1,42 @@
+export component SortRadioButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> selected;
+    callback clicked;
+
+    height: 28px;
+    
+    TouchArea { clicked => { root.clicked(); } }
+
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: end;
+
+        Text {
+            text: text;
+            font-size: 13px;
+            color: selected ? #ffffff : #cbd5e1;
+            font-weight: selected ? 700 : 400;
+            vertical-alignment: center;
+        }
+
+        // Radio circle
+        Rectangle {
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            border-width: 2px;
+            border-color: selected ? #3b82f6 : #64748b;
+            background: transparent;
+            y: (parent.height - self.height) / 2;
+
+            if selected : Rectangle {
+                width: 6px;
+                height: 6px;
+                border-radius: 3px;
+                background: #3b82f6;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+    }
+}

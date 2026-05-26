@@ -1,0 +1,10 @@
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/libcss_color_parser2-23e0902a5d20c0b9.rmeta: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/color.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/named_colors.rs
+
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/libcss_color_parser2-23e0902a5d20c0b9.rlib: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/color.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/named_colors.rs
+
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/css_color_parser2-23e0902a5d20c0b9.d: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/mod.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/color.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/named_colors.rs
+
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/lib.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/mod.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/color.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/css-color-parser2-1.0.1/src/color/named_colors.rs:

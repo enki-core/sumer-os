@@ -1,0 +1,1107 @@
+import { LineEdit, Button } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    title: "Anu Lock — قفل آنو";
+    width: 800px;
+    height: 550px;
+    background: @linear-gradient(135deg, #050914 0%, #0a1128 50%, #03060f 100%);
+    default-font-family: "Outfit";
+
+    // --- State Properties ---
+    in-out property <bool> show-content: false;
+    in-out property <int> active-mode: 2; // 0: Fingerprint, 1: Face ID, 2: PIN, 3: Password
+    in-out property <string> pin-text: "";
+    in-out property <string> password-text: "";
+    in-out property <bool> show-keyboard: false;
+    in-out property <bool> show-password: false;
+    in-out property <bool> is-scanning: false;
+    in-out property <string> status-msg: "";
+    in-out property <color> status-color: #64748b;
+
+    // --- Animation Properties ---
+    property <float> content-opacity: show-content ? 1.0 : 0.0;
+    property <length> content-y-offset: show-content ? 0px : 50px;
+    property <float> keyboard-opacity: show-keyboard ? 1.0 : 0.0;
+    property <length> keyboard-y: show-keyboard ? 0px : 150px;
+
+    // --- Scanner Animation Helpers ---
+    property <length> laser-y: is-scanning ? 130px : 10px;
+
+    // --- Callbacks to Rust Backend ---
+    callback authenticate(int, string) -> bool; // mode, input -> success
+    callback close-app();
+    pure callback get-string-length(string) -> int;
+    callback delete-last-char(string) -> string;
+
+    animate content-opacity { duration: 600ms; easing: ease-out; }
+    animate content-y-offset { duration: 600ms; easing: cubic-bezier(0.16, 1, 0.3, 1); }
+    animate keyboard-opacity { duration: 300ms; easing: ease-in-out; }
+    animate keyboard-y { duration: 400ms; easing: cubic-bezier(0.16, 1, 0.3, 1); }
+    animate laser-y { duration: 1500ms; easing: ease-in-out; iteration-count: -1; }
+
+    // Click anywhere on root background to activate if not loaded
+    TouchArea {
+        clicked => {
+            if (!root.show-content) {
+                root.show-content = true;
+            }
+        }
+    }
+
+    // Background Decorative Glowing Orbs
+    Rectangle {
+        x: 100px;
+        y: 80px;
+        width: 250px;
+        height: 250px;
+        border-radius: 125px;
+        background: @radial-gradient(circle, #3b82f615 0%, #00000000 80%);
+        opacity: root.content-opacity;
+        animate opacity { duration: 800ms; }
+    }
+
+    Rectangle {
+        x: 450px;
+        y: 220px;
+        width: 300px;
+        height: 300px;
+        border-radius: 150px;
+        background: @radial-gradient(circle, #8b5cf610 0%, #00000000 80%);
+        opacity: root.content-opacity;
+        animate opacity { duration: 800ms; }
+    }
+
+    // MAIN CONTAINER GLASS CARD
+    Rectangle {
+        width: 720px;
+        height: 480px;
+        background: #ffffff04;
+        border-radius: 24px;
+        border-width: 1px;
+        border-color: #ffffff0a;
+        clip: true;
+
+        // Apply glassmorphism shadow
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            background: transparent;
+        }
+
+        // Inner vertical workspace layout
+        VerticalLayout {
+            padding: 24px;
+            spacing: 16px;
+            alignment: space-between;
+
+            // TOP HEADER BAR (Logo & Exit)
+            HorizontalLayout {
+                alignment: space-between;
+                
+                // Close button (Left)
+                Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 16px;
+                    background: close-ta.has-hover ? #ef444420 : #ffffff08;
+                    border-width: 1px;
+                    border-color: close-ta.has-hover ? #ef444450 : #ffffff10;
+                    
+                    animate background, border-color { duration: 150ms; }
+
+                    close-ta := TouchArea {
+                        clicked => {
+                            root.close-app();
+                        }
+                    }
+
+                    Text {
+                        text: "✕";
+                        font-size: 14px;
+                        color: close-ta.has-hover ? #ef4444 : #94a3b8;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // App Title (Right)
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Text {
+                        text: "قفل آنو ANU LOCK";
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        letter-spacing: 1px;
+                    }
+
+                    Text {
+                        text: "🛡️";
+                        font-size: 18px;
+                    }
+                }
+            }
+
+            // MIDDLE AUTHENTICATION SECTION (Animated Rising Content)
+            Rectangle {
+                opacity: root.content-opacity;
+                height: 310px;
+
+                VerticalLayout {
+                    y: root.content-y-offset;
+                    spacing: 24px;
+                    alignment: center;
+
+                // 1. SELECT AUTH MODE TAB BAR
+                Rectangle {
+                    width: 480px;
+                    height: 48px;
+                    background: #ffffff03;
+                    border-radius: 24px;
+                    border-width: 1px;
+                    border-color: #ffffff0a;
+                    x: (parent.width - self.width) / 2;
+
+                    HorizontalLayout {
+                        padding: 4px;
+                        spacing: 4px;
+
+                        // Mode 3: Password Tab (Rightmost in Arabic order)
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: 20px;
+                            background: root.active-mode == 3 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : (tab3-ta.has-hover ? #ffffff08 : transparent);
+                            
+                            animate background { duration: 180ms; }
+
+                            tab3-ta := TouchArea {
+                                clicked => {
+                                    root.active-mode = 3;
+                                    root.show-keyboard = false;
+                                    root.status-msg = "";
+                                }
+                            }
+
+                            Text {
+                                text: "🔑 كلمة المرور";
+                                font-size: 12px;
+                                font-weight: root.active-mode == 3 ? 700 : 500;
+                                color: root.active-mode == 3 ? #ffffff : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Mode 2: PIN Tab
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: 20px;
+                            background: root.active-mode == 2 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : (tab2-ta.has-hover ? #ffffff08 : transparent);
+                            
+                            animate background { duration: 180ms; }
+
+                            tab2-ta := TouchArea {
+                                clicked => {
+                                    root.active-mode = 2;
+                                    root.show-keyboard = false;
+                                    root.status-msg = "";
+                                }
+                            }
+
+                            Text {
+                                text: "🔢 رمز PIN";
+                                font-size: 12px;
+                                font-weight: root.active-mode == 2 ? 700 : 500;
+                                color: root.active-mode == 2 ? #ffffff : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Mode 1: Face ID Tab
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: 20px;
+                            background: root.active-mode == 1 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : (tab1-ta.has-hover ? #ffffff08 : transparent);
+                            
+                            animate background { duration: 180ms; }
+
+                            tab1-ta := TouchArea {
+                                clicked => {
+                                    root.active-mode = 1;
+                                    root.show-keyboard = false;
+                                    root.status-msg = "";
+                                    root.is-scanning = false;
+                                }
+                            }
+
+                            Text {
+                                text: "👤 بصمة الوجه";
+                                font-size: 12px;
+                                font-weight: root.active-mode == 1 ? 700 : 500;
+                                color: root.active-mode == 1 ? #ffffff : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Mode 0: Fingerprint Tab (Leftmost in Arabic order)
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: 20px;
+                            background: root.active-mode == 0 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : (tab0-ta.has-hover ? #ffffff08 : transparent);
+                            
+                            animate background { duration: 180ms; }
+
+                            tab0-ta := TouchArea {
+                                clicked => {
+                                    root.active-mode = 0;
+                                    root.show-keyboard = false;
+                                    root.status-msg = "";
+                                    root.is-scanning = false;
+                                }
+                            }
+
+                            Text {
+                                text: "🧬 بصمة الإصبع";
+                                font-size: 12px;
+                                font-weight: root.active-mode == 0 ? 700 : 500;
+                                color: root.active-mode == 0 ? #ffffff : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // 2. DYNAMIC INPUT CARDS (Swaps and animates opacities beautifully)
+                Rectangle {
+                    height: 220px;
+                    width: 580px;
+                    x: (parent.width - self.width) / 2;
+
+                    // CASE A: FINGERPRINT SCANNER PANEL
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+                        opacity: root.active-mode == 0 ? 1.0 : 0.0;
+                        visible: root.active-mode == 0;
+                        
+                        animate opacity { duration: 250ms; }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 16px;
+
+                            // Glowing Fingerprint Ring
+                            Rectangle {
+                                width: 100px;
+                                height: 100px;
+                                border-radius: 50px;
+                                background: root.is-scanning ? #10b98110 : #3b82f608;
+                                border-width: 2px;
+                                border-color: root.is-scanning ? #10b98190 : #3b82f640;
+                                x: (parent.width - self.width) / 2;
+
+                                animate background, border-color { duration: 300ms; }
+
+                                // Interactive Scanner Area
+                                scan-touch := TouchArea {
+                                    clicked => {
+                                        root.is-scanning = true;
+                                        root.status-msg = "جارٍ مسح بصمة الإصبع...";
+                                        root.status-color = #3b82f6;
+                                        // Simulate scanner timer callback inside slint:
+                                        // We trigger visual scan. In main.rs we'll intercept or user can press continue.
+                                    }
+                                }
+
+                                // Large Biotech Icon
+                                Text {
+                                    text: "🧬";
+                                    font-size: 42px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    opacity: root.is-scanning ? 0.9 : 0.6;
+                                    
+                                    animate opacity { duration: 300ms; }
+                                }
+
+                                // Neon Laser Line moving up and down
+                                if root.is-scanning : Rectangle {
+                                    width: 80px;
+                                    height: 3px;
+                                    background: #10b981;
+                                    border-radius: 1px;
+                                    x: (parent.width - self.width) / 2;
+                                    y: root.laser-y;
+                                    
+                                    // Soft neon laser glow
+                                    drop-shadow-color: #10b981aa;
+                                    drop-shadow-blur: 8px;
+                                }
+                            }
+
+                            Text {
+                                text: root.is-scanning ? "ضع إصبعك على الحساس وبدأ المسح..." : "اضغط على الحساس للبدء بمسح بصمة الإصبع";
+                                font-size: 13px;
+                                color: root.is-scanning ? #10b981 : #94a3b8;
+                                horizontal-alignment: center;
+                            }
+
+                            // Verify button
+                            if root.is-scanning : Button {
+                                text: "تأكيد بصمة الإصبع ✅";
+                                width: 160px;
+                                x: (parent.width - self.width) / 2;
+                                clicked => {
+                                    root.is-scanning = false;
+                                    if root.authenticate(0, "fingerprint") {
+                                        root.status-msg = "تم التحقق بنجاح!";
+                                        root.status-color = #10b981;
+                                    } else {
+                                        root.status-msg = "لم يتم التعرف على البصمة. حاول مجدداً.";
+                                        root.status-color = #ef4444;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // CASE B: FACE ID PANEL
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+                        opacity: root.active-mode == 1 ? 1.0 : 0.0;
+                        visible: root.active-mode == 1;
+                        
+                        animate opacity { duration: 250ms; }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 16px;
+
+                            // Glowing camera reticle
+                            Rectangle {
+                                width: 100px;
+                                height: 100px;
+                                border-radius: 50px;
+                                background: root.is-scanning ? #10b98108 : #8b5cf608;
+                                border-width: 2px;
+                                border-color: root.is-scanning ? #10b98170 : #8b5cf630;
+                                x: (parent.width - self.width) / 2;
+
+                                animate border-color { duration: 300ms; }
+
+                                Text {
+                                    text: "👤";
+                                    font-size: 48px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    opacity: root.is-scanning ? 0.9 : 0.5;
+                                }
+
+                                // Interactive Scanning Rings
+                                if root.is-scanning : Rectangle {
+                                    width: 90px;
+                                    height: 90px;
+                                    border-radius: 45px;
+                                    border-width: 2px;
+                                    border-color: #10b98130;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                }
+                            }
+
+                            Text {
+                                text: root.is-scanning ? "جاري مسح ثنائي الأبعاد وتحديد نقاط الوجه..." : "انظر للكاميرا مباشرة واضغط لمسح الوجه";
+                                font-size: 13px;
+                                color: root.is-scanning ? #10b981 : #94a3b8;
+                                horizontal-alignment: center;
+                            }
+
+                            Button {
+                                text: root.is-scanning ? "التحقق من الوجه 🔍" : "ابدأ مسح الوجه 📷";
+                                width: 180px;
+                                x: (parent.width - self.width) / 2;
+                                clicked => {
+                                    if (!root.is-scanning) {
+                                        root.is-scanning = true;
+                                        root.status-msg = "جاري تشغيل الكاميرا الآمنة...";
+                                        root.status-color = #8b5cf6;
+                                    } else {
+                                        root.is-scanning = false;
+                                        if root.authenticate(1, "face") {
+                                            root.status-msg = "تم التحقق بنجاح!";
+                                            root.status-color = #10b981;
+                                        } else {
+                                            root.status-msg = "فشل التعرف على الوجه. يرجى المحاولة ثانية.";
+                                            root.status-color = #ef4444;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // CASE C: PIN CODE PANEL
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+                        opacity: root.active-mode == 2 ? 1.0 : 0.0;
+                        visible: root.active-mode == 2;
+                        
+                        animate opacity { duration: 250ms; }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 20px;
+
+                            // Glowing PIN visual dot indicators (highly premium!)
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 16px;
+
+                                for i in [1, 2, 3, 4] : Rectangle {
+                                    width: 16px;
+                                    height: 16px;
+                                    border-radius: 8px;
+                                    background: root.get-string-length(root.pin-text) >= i ? @linear-gradient(135deg, #10b981, #059669) : transparent;
+                                    border-width: 2px;
+                                    border-color: root.get-string-length(root.pin-text) >= i ? #10b981 : #ffffff20;
+                                    
+                                    drop-shadow-color: root.get-string-length(root.pin-text) >= i ? #10b98180 : transparent;
+                                    drop-shadow-blur: root.get-string-length(root.pin-text) >= i ? 8px : 0px;
+
+                                    animate background, border-color { duration: 150ms; }
+                                }
+                            }
+
+                            // INPUT ROW (RTL Visual Order: Keyboard on Right, Input in Center, Continue Arrow on Left)
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 12px;
+
+                                // --- LEFT: Sleek Arrow Button (Continue/Submit) ---
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 22px;
+                                    background: root.get-string-length(pin-text) > 0 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : #ffffff05;
+                                    border-width: 1px;
+                                    border-color: root.get-string-length(pin-text) > 0 ? #60a5fa70 : #ffffff10;
+                                    opacity: root.get-string-length(pin-text) > 0 ? 1.0 : 0.4;
+                                    
+                                    animate background, border-color, opacity { duration: 180ms; }
+
+                                    continue-ta := TouchArea {
+                                        enabled: root.get-string-length(root.pin-text) > 0;
+                                        clicked => {
+                                            if root.authenticate(2, root.pin-text) {
+                                                root.status-msg = "الرمز صحيح. جاري الدخول...";
+                                                root.status-color = #10b981;
+                                            } else {
+                                                root.status-msg = "رمز PIN خاطئ. حاول مجدداً.";
+                                                root.status-color = #ef4444;
+                                                root.pin-text = "";
+                                            }
+                                        }
+                                    }
+
+                                    // Leftwards arrow since Arabic layout/RTL flow is leftward for entry/exit,
+                                    // or a beautiful follow arrow. Let's make it a clean "➔" or "⬅".
+                                    Text {
+                                        text: "⬅";
+                                        font-size: 16px;
+                                        font-weight: 700;
+                                        color: #ffffff;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                // --- CENTER: Custom glass LineEdit container ---
+                                Rectangle {
+                                    width: 280px;
+                                    height: 46px;
+                                    background: #ffffff05;
+                                    border-radius: 12px;
+                                    border-width: 1px;
+                                    border-color: pin-input.has-focus ? #3b82f670 : #ffffff15;
+
+                                    animate border-color { duration: 150ms; }
+
+                                    pin-input := LineEdit {
+                                        x: 12px;
+                                        width: 256px;
+                                        height: 100%;
+                                        placeholder-text: "أدخل رمز PIN...";
+                                        text: root.pin-text;
+                                        input-type: password;
+                                        horizontal-alignment: center;
+                                        font-size: 16px;
+                                        
+                                        edited(val) => {
+                                            root.pin-text = val;
+                                        }
+                                        
+                                        accepted(val) => {
+                                            if root.authenticate(2, val) {
+                                                root.status-msg = "الرمز صحيح. جاري الدخول...";
+                                                root.status-color = #10b981;
+                                            } else {
+                                                root.status-msg = "رمز PIN خاطئ. حاول مجدداً.";
+                                                root.status-color = #ef4444;
+                                                root.pin-text = "";
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // --- RIGHT: Keyboard Icon Button (Toggles virtual Numpad) ---
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 12px;
+                                    background: root.show-keyboard ? #3b82f620 : #ffffff05;
+                                    border-width: 1px;
+                                    border-color: root.show-keyboard ? #3b82f6aa : #ffffff15;
+
+                                    animate background, border-color { duration: 150ms; }
+
+                                    kb-ta := TouchArea {
+                                        clicked => {
+                                            root.show-keyboard = !root.show-keyboard;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "⌨";
+                                        font-size: 20px;
+                                        color: root.show-keyboard ? #3b82f6 : #ffffff;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "أدخل 4 أرقام للمتابعة، أو استخدم الكيبورد الافتراضي";
+                                font-size: 11px;
+                                color: #64748b;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+
+                    // CASE D: PASSWORD PANEL
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+                        opacity: root.active-mode == 3 ? 1.0 : 0.0;
+                        visible: root.active-mode == 3;
+                        
+                        animate opacity { duration: 250ms; }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 16px;
+
+                            Text {
+                                text: "🔒 التحقق عبر كلمة المرور";
+                                font-size: 15px;
+                                font-weight: 700;
+                                color: #ffffff;
+                                horizontal-alignment: center;
+                            }
+
+                            // INPUT ROW (RTL Visual Order: Keyboard on Right, Input in Center, Continue Arrow on Left)
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 12px;
+
+                                // --- LEFT: Sleek Arrow Button (Continue/Submit) ---
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 22px;
+                                    background: root.get-string-length(password-text) > 0 ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : #ffffff05;
+                                    border-width: 1px;
+                                    border-color: root.get-string-length(password-text) > 0 ? #60a5fa70 : #ffffff10;
+                                    opacity: root.get-string-length(password-text) > 0 ? 1.0 : 0.4;
+                                    
+                                    animate background, border-color, opacity { duration: 180ms; }
+
+                                    pwd-continue-ta := TouchArea {
+                                        enabled: root.get-string-length(root.password-text) > 0;
+                                        clicked => {
+                                            if root.authenticate(3, root.password-text) {
+                                                root.status-msg = "كلمة المرور صحيحة!";
+                                                root.status-color = #10b981;
+                                            } else {
+                                                root.status-msg = "كلمة المرور غير صحيحة. حاول مجدداً.";
+                                                root.status-color = #ef4444;
+                                                root.password-text = "";
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "⬅";
+                                        font-size: 16px;
+                                        font-weight: 700;
+                                        color: #ffffff;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                // --- CENTER: Custom glass LineEdit container ---
+                                Rectangle {
+                                    width: 280px;
+                                    height: 46px;
+                                    background: #ffffff05;
+                                    border-radius: 12px;
+                                    border-width: 1px;
+                                    border-color: pwd-input.has-focus ? #3b82f670 : #ffffff15;
+
+                                    animate border-color { duration: 150ms; }
+
+                                    pwd-input := LineEdit {
+                                        x: 12px;
+                                        width: 256px;
+                                        height: 100%;
+                                        placeholder-text: "أدخل كلمة المرور الحالية...";
+                                        text: root.password-text;
+                                        input-type: root.show-password ? text : password;
+                                        horizontal-alignment: center;
+                                        font-size: 15px;
+                                        
+                                        edited(val) => {
+                                            root.password-text = val;
+                                        }
+                                        
+                                        accepted(val) => {
+                                            if root.authenticate(3, val) {
+                                                root.status-msg = "تم تسجيل الدخول بنجاح.";
+                                                root.status-color = #10b981;
+                                            } else {
+                                                root.status-msg = "كلمة المرور غير صحيحة. حاول مجدداً.";
+                                                root.status-color = #ef4444;
+                                                root.password-text = "";
+                                            }
+                                        }
+                                    }
+
+                                    // Eye Toggle Button inside Password Input (Right edge)
+                                    Rectangle {
+                                        x: 244px;
+                                        width: 28px;
+                                        height: 28px;
+                                        y: (parent.height - self.height) / 2;
+                                        border-radius: 14px;
+                                        background: eye-ta.has-hover ? #ffffff08 : transparent;
+
+                                        eye-ta := TouchArea {
+                                            clicked => {
+                                                root.show-password = !root.show-password;
+                                            }
+                                        }
+
+                                        Text {
+                                            text: root.show-password ? "👁️" : "👁️‍🗨️";
+                                            font-size: 12px;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                // --- RIGHT: Keyboard Icon Button (Toggles virtual Full Keyboard) ---
+                                Rectangle {
+                                    width: 44px;
+                                    height: 44px;
+                                    border-radius: 12px;
+                                    background: root.show-keyboard ? #3b82f620 : #ffffff05;
+                                    border-width: 1px;
+                                    border-color: root.show-keyboard ? #3b82f6aa : #ffffff15;
+
+                                    animate background, border-color { duration: 150ms; }
+
+                                    pwd-kb-ta := TouchArea {
+                                        clicked => {
+                                            root.show-keyboard = !root.show-keyboard;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "⌨";
+                                        font-size: 20px;
+                                        color: root.show-keyboard ? #3b82f6 : #ffffff;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "أدخل كلمة المرور اللاتينية، أو افتح لوحة المفاتيح الافتراضية";
+                                font-size: 11px;
+                                color: #64748b;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+                }
+            }
+
+            // BOTTOM STATUS MESSAGE BAR
+            HorizontalLayout {
+                alignment: center;
+                height: 24px;
+                
+                Text {
+                    text: root.status-msg;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: root.status-color;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // ==========================================
+        // ⌨️ VIRTUAL KEYBOARD PANEL (Context Aware)
+        // ==========================================
+        if root.show-keyboard : Rectangle {
+            width: 100%;
+            height: 220px;
+            y: 480px - self.height; // Floats right at the bottom of the card
+            background: #080d1aeb;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            border-width: 1px;
+            border-color: #ffffff10;
+            opacity: root.keyboard-opacity;
+            
+            // Soft glow on top border
+            drop-shadow-color: #3b82f620;
+            drop-shadow-offset-y: -4px;
+            drop-shadow-blur: 16px;
+
+            VerticalLayout {
+                padding: 12px;
+                spacing: 10px;
+
+                // Keyboard Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    padding-left: 12px;
+                    padding-right: 12px;
+
+                    // Close keyboard
+                    Rectangle {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 12px;
+                        background: #ffffff0a;
+                        
+                        kb-close-ta := TouchArea {
+                            clicked => { root.show-keyboard = false; }
+                        }
+                        
+                        Text {
+                            text: "✕";
+                            font-size: 10px;
+                            color: #94a3b8;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Text {
+                        text: root.active-mode == 2 ? "لوحة الأرقام الافتراضية" : "لوحة المفاتيح الافتراضية";
+                        font-size: 12px;
+                        font-weight: 700;
+                        color: #94a3b8;
+                    }
+                }
+
+                // Grid Selector depending on Active Auth Mode
+                if root.active-mode == 2 : VerticalLayout {
+                    spacing: 8px;
+                    alignment: center;
+                    // PIN CODE NUMPAD (3 Rows of numbers, 1 row of backspace & clear)
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: center;
+                        for n in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] : Rectangle {
+                            width: 50px;
+                            height: 38px;
+                            background: num-ta.pressed ? #3b82f640 : (num-ta.has-hover ? #ffffff10 : #ffffff05);
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #ffffff0c;
+
+                             num-ta := TouchArea {
+                                 clicked => {
+                                     if (root.get-string-length(root.pin-text) < 4) {
+                                         root.pin-text = root.pin-text + n;
+                                     }
+                                 }
+                             }
+
+                            Text {
+                                text: n;
+                                font-size: 15px;
+                                font-weight: 700;
+                                color: #ffffff;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        // Clear Button
+                        Rectangle {
+                            width: 120px;
+                            height: 38px;
+                            background: clear-ta.has-hover ? #ef444420 : #ffffff05;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: clear-ta.has-hover ? #ef444450 : #ffffff0c;
+
+                            clear-ta := TouchArea {
+                                clicked => { root.pin-text = ""; }
+                            }
+
+                            Text {
+                                text: "مسح الكل 🗑️";
+                                font-size: 12px;
+                                color: clear-ta.has-hover ? #ef4444 : #94a3b8;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Backspace Button
+                        Rectangle {
+                            width: 120px;
+                            height: 38px;
+                            background: back-ta.has-hover ? #ffffff12 : #ffffff05;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #ffffff0c;
+
+                             back-ta := TouchArea {
+                                 clicked => {
+                                     root.pin-text = root.delete-last-char(root.pin-text);
+                                 }
+                             }
+
+                            Text {
+                                text: "حذف ⬅";
+                                font-size: 12px;
+                                color: #ffffff;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Enter Button
+                        Rectangle {
+                            width: 120px;
+                            height: 38px;
+                            background: ent-ta.has-hover ? @linear-gradient(135deg, #10b981, #059669) : @linear-gradient(135deg, #10b981d0, #059669d0);
+                            border-radius: 8px;
+
+                            ent-ta := TouchArea {
+                                clicked => {
+                                    root.show-keyboard = false;
+                                    if root.authenticate(2, root.pin-text) {
+                                        root.status-msg = "الرمز صحيح. جاري الدخول...";
+                                        root.status-color = #10b981;
+                                    } else {
+                                        root.status-msg = "رمز PIN خاطئ. حاول مجدداً.";
+                                        root.status-color = #ef4444;
+                                        root.pin-text = "";
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "دخول 🚪";
+                                font-size: 12px;
+                                font-weight: 700;
+                                color: #020617;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                if root.active-mode == 3 : VerticalLayout {
+                    spacing: 6px;
+                    alignment: center;
+
+                    // QWERTY ROW 1: Numbers
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: center;
+                        for ch in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="] : Rectangle {
+                            width: 38px;
+                            height: 32px;
+                            background: k1-ta.pressed ? #3b82f640 : (k1-ta.has-hover ? #ffffff10 : #ffffff05);
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            k1-ta := TouchArea { clicked => { root.password-text = root.password-text + ch; } }
+                            Text { text: ch; color: #ffffff; horizontal-alignment: center; vertical-alignment: center; font-size: 12px; }
+                        }
+                    }
+
+                    // QWERTY ROW 2: letters 1
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: center;
+                        for ch in ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"] : Rectangle {
+                            width: 42px;
+                            height: 32px;
+                            background: k2-ta.pressed ? #3b82f640 : (k2-ta.has-hover ? #ffffff10 : #ffffff05);
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            k2-ta := TouchArea { clicked => { root.password-text = root.password-text + ch; } }
+                            Text { text: ch; color: #ffffff; horizontal-alignment: center; vertical-alignment: center; font-size: 13px; font-weight: 700; }
+                        }
+                    }
+
+                    // QWERTY ROW 3: letters 2
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: center;
+                        for ch in ["a", "s", "d", "f", "g", "h", "j", "k", "l", "_"] : Rectangle {
+                            width: 42px;
+                            height: 32px;
+                            background: k3-ta.pressed ? #3b82f640 : (k3-ta.has-hover ? #ffffff10 : #ffffff05);
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            k3-ta := TouchArea { clicked => { root.password-text = root.password-text + ch; } }
+                            Text { text: ch; color: #ffffff; horizontal-alignment: center; vertical-alignment: center; font-size: 13px; font-weight: 700; }
+                        }
+                    }
+
+                    // QWERTY ROW 4: letters 3 & Backspace
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: center;
+                        
+                        // Shift/Caps dummy (visual only)
+                        Rectangle {
+                            width: 50px;
+                            height: 32px;
+                            background: #ffffff0a;
+                            border-radius: 6px;
+                            Text { text: "⬆"; color: #94a3b8; horizontal-alignment: center; vertical-alignment: center; font-size: 11px; }
+                        }
+
+                        for ch in ["z", "x", "c", "v", "b", "n", "m", "@", "."] : Rectangle {
+                            width: 42px;
+                            height: 32px;
+                            background: k4-ta.pressed ? #3b82f640 : (k4-ta.has-hover ? #ffffff10 : #ffffff05);
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            k4-ta := TouchArea { clicked => { root.password-text = root.password-text + ch; } }
+                            Text { text: ch; color: #ffffff; horizontal-alignment: center; vertical-alignment: center; font-size: 13px; font-weight: 700; }
+                        }
+
+                        // Backspace
+                        Rectangle {
+                            width: 50px;
+                            height: 32px;
+                            background: pwd-back-ta.has-hover ? #ef444420 : #ffffff0a;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: pwd-back-ta.has-hover ? #ef444440 : #ffffff0a;
+
+                            pwd-back-ta := TouchArea {
+                                clicked => {
+                                    root.password-text = root.delete-last-char(root.password-text);
+                                }
+                            }
+                            Text { text: "⌫"; color: pwd-back-ta.has-hover ? #ef4444 : #ffffff; horizontal-alignment: center; vertical-alignment: center; font-size: 13px; }
+                        }
+                    }
+
+                    // QWERTY ROW 5: Space / Clear / Enter
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 80px;
+                            height: 32px;
+                            background: pwd-clear-ta.has-hover ? #ef444415 : #ffffff05;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            pwd-clear-ta := TouchArea { clicked => { root.password-text = ""; } }
+                            Text { text: "مسح 🗑️"; color: pwd-clear-ta.has-hover ? #ef4444 : #94a3b8; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        // Spacebar
+                        Rectangle {
+                            width: 240px;
+                            height: 32px;
+                            background: space-ta.pressed ? #ffffff15 : (space-ta.has-hover ? #ffffff0d : #ffffff05);
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff0a;
+
+                            space-ta := TouchArea { clicked => { root.password-text = root.password-text + " "; } }
+                            Text { text: "[ مسافة ]"; color: #64748b; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+
+                        Rectangle {
+                            width: 100px;
+                            height: 32px;
+                            background: pwd-enter-ta.has-hover ? @linear-gradient(135deg, #3b82f6, #8b5cf6) : @linear-gradient(135deg, #3b82f6d0, #8b5cf6d0);
+                            border-radius: 6px;
+
+                            pwd-enter-ta := TouchArea {
+                                clicked => {
+                                    root.show-keyboard = false;
+                                    if root.authenticate(3, root.password-text) {
+                                        root.status-msg = "كلمة المرور صحيحة!";
+                                        root.status-color = #10b981;
+                                    } else {
+                                        root.status-msg = "كلمة المرور غير صحيحة. حاول مجدداً.";
+                                        root.status-color = #ef4444;
+                                        root.password-text = "";
+                                    }
+                                }
+                            }
+                            Text { text: "دخول 🚪"; color: #ffffff; font-weight: 700; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

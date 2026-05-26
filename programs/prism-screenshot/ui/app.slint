@@ -1,0 +1,1295 @@
+// واجهة تطبيق بريزم للقطات الشاشة المتقدمة (Prism Screenshot) - نظام سومر OS
+// تصميم زجاجي عصري متجاوب يدعم نمط الكبسولة العائمة واستوديو التعديل الاحترافي
+
+struct HistoryItem {
+    id: int,
+    thumbnail: image,
+    is-active: bool,
+}
+
+component TabButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <bool> active;
+    callback clicked;
+
+    border-radius: 8px;
+    background: active ? #6366f1 : (touch-area.has-hover ? #1e293b : #0f172a);
+    border-width: 1px;
+    border-color: active ? #818cf8 : (touch-area.has-hover ? #334155 : #1e293b);
+
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        alignment: center;
+
+        Text {
+            text: text;
+            color: active ? #ffffff : #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component ActionButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <color> base-color: #6366f1;
+    in-out property <color> hover-color: #4f46e5;
+    in-out property <color> text-color: #ffffff;
+    callback clicked;
+
+    border-radius: 8px;
+    background: touch-area.has-hover ? hover-color : base-color;
+    border-width: 1px;
+    border-color: touch-area.has-hover ? hover-color.brighter(20%) : base-color.brighter(10%);
+
+    animate background { duration: 100ms; }
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        alignment: center;
+        spacing: 8px;
+
+        Text {
+            text: text;
+            color: text-color;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component IconButton inherits Rectangle {
+    in-out property <string> icon;
+    in-out property <string> tooltip;
+    in-out property <bool> active: false;
+    in-out property <color> active-color: #6366f1;
+    callback clicked;
+
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: active ? active-color : (touch-area.has-hover ? #1e293b : transparent);
+    border-width: 1px;
+    border-color: active ? active-color.brighter(20%) : (touch-area.has-hover ? #334155 : transparent);
+
+    animate background { duration: 120ms; }
+    animate border-color { duration: 120ms; }
+
+    Text {
+        text: icon;
+        font-size: 18px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component ToggleSwitch inherits Rectangle {
+    in-out property <bool> checked;
+    in-out property <string> label;
+    callback toggled;
+
+    width: 100%;
+    height: 32px;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: end; // RTL
+
+        Text {
+            text: label;
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+
+        switch-pill := Rectangle {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
+            background: checked ? #10b981 : #334155;
+            border-width: 1px;
+            border-color: checked ? #34d399 : #475569;
+
+            animate background { duration: 150ms; }
+
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                background: #ffffff;
+                x: checked ? 21px : 3px;
+                y: 2px;
+
+                animate x { duration: 150ms; easing: ease-out; }
+            }
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            checked = !checked;
+            root.toggled();
+        }
+    }
+}
+
+component CustomSlider inherits Rectangle {
+    in-out property <string> label;
+    in-out property <float> min-value: 0.0;
+    in-out property <float> max-value: 100.0;
+    in-out property <float> value: 20.0;
+    callback changed(float);
+
+    height: 52px;
+    background: transparent;
+
+    VerticalLayout {
+        spacing: 4px;
+
+        HorizontalLayout {
+            alignment: space-between;
+            Text {
+                text: Math.round(root.value) + "px";
+                color: #6366f1;
+                font-size: 11px;
+                font-weight: 700;
+            }
+            Text {
+                text: label;
+                color: #64748b;
+                font-size: 11px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+        }
+
+        // Slider track
+        Rectangle {
+            height: 18px;
+            background: transparent;
+
+            track := Rectangle {
+                y: 7px;
+                height: 4px;
+                background: #1e293b;
+                border-radius: 2px;
+                width: 100%;
+
+                // Progress bar
+                fill-track := Rectangle {
+                    x: 0;
+                    height: 100%;
+                    width: (root.value - root.min-value) / (root.max-value - root.min-value) * track.width;
+                    background: #6366f1;
+                    border-radius: 2px;
+                }
+            }
+
+            // Slider handle
+            handle := Rectangle {
+                width: 14px;
+                height: 14px;
+                border-radius: 7px;
+                background: #ffffff;
+                border-width: 2px;
+                border-color: #6366f1;
+                x: (root.value - root.min-value) / (root.max-value - root.min-value) * (track.width - 14px);
+                y: 2px;
+            }
+
+            slider-touch := TouchArea {
+                pointer-event(event) => {
+                    if (event.button == PointerEventButton.left) {
+                        root.value = root.min-value + (self.mouse-x / track.width).clamp(0.0, 1.0) * (root.max-value - root.min-value);
+                        root.changed(root.value);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component ChoiceSelector inherits Rectangle {
+    in-out property <string> label;
+    in-out property <int> selected-index: 0;
+    in-out property <[string]> choices;
+    callback selection-changed(int);
+
+    background: transparent;
+    height: 56px;
+
+    VerticalLayout {
+        spacing: 6px;
+
+        Text {
+            text: label;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            horizontal-alignment: right; // RTL
+        }
+
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: end; // RTL
+
+            for choice[index] in choices : Rectangle {
+                border-radius: 6px;
+                background: selected-index == index ? #312e81 : #0f172a;
+                border-width: 1px;
+                border-color: selected-index == index ? #6366f1 : #1e293b;
+
+                animate background { duration: 120ms; }
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    alignment: center;
+
+                    Text {
+                        text: choice;
+                        color: selected-index == index ? #e0e7ff : #94a3b8;
+                        font-size: 11px;
+                        font-weight: 600;
+                    }
+                }
+
+                TouchArea {
+                    clicked => {
+                        selected-index = index;
+                        root.selection-changed(index);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component ColorCircle inherits Rectangle {
+    in-out property <color> fill-color;
+    in-out property <bool> active;
+    callback clicked;
+
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: fill-color;
+    border-width: active ? 2px : 0px;
+    border-color: #ffffff;
+
+    TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "بريزم للقطات الشاشة المتقدمة (Prism Screenshot)";
+    width: is-studio-mode ? 1100px : 320px;
+    height: is-studio-mode ? 750px : 160px;
+    background: transparent;
+    no-frame: !is-studio-mode; // Floating bar is frameless
+
+    // Capsule Custom States (matching GNOME Screenshot UI)
+    in-out property <int> capsule-mode: 0; // 0: Selection, 1: Screen, 2: Window
+    in-out property <bool> show-cursor: true;
+    in-out property <bool> capture-video: false; // False: Photo, True: Video
+
+    // App state
+    in-out property <bool> is-studio-mode: false; // True = Full Beautifier, False = Floating Dock Bar
+    in-out property <bool> show-gallery: false;
+    in-out property <string> status-message: "بريزم جاهز لالتقاط الشاشة";
+    
+    // Screenshot configurations
+    in-out property <int> capture-delay: 0; // 0: Instant, 1: 3s, 2: 5s, 3: 10s
+    in-out property <bool> auto-copy-clipboard: true;
+    in-out property <bool> play-shutter-sound: true;
+    in-out property <int> countdown-number: 0; // Countdown overlay
+    in-out property <bool> show-countdown: false;
+
+    // Beautifier attributes
+    in-out property <int> backdrop-style: 0; // 0: Sunset, 1: Ocean, 2: Emerald, 3: Aurora, 4: Mystic, 5: Dark, 6: Transparent
+    in-out property <float> padding-size: 35.0; // Padding around screenshot (0 to 80)
+    in-out property <float> corner-radius: 12.0; // Corner radius of screenshot (0 to 30)
+    in-out property <bool> show-macos-bar: true;
+    in-out property <int> shadow-style: 2; // 0: None, 1: Soft, 2: Deep Glow
+    in-out property <int> canvas-aspect-ratio: 0; // 0: Auto, 1: 16:9, 2: 1:1, 3: 4:3
+
+    // Painter/Annotations attributes
+    in-out property <int> paint-tool: 0; // 0: Pen, 1: Rectangle, 2: Arrow, 3: Eraser
+    in-out property <int> paint-color: 0; // 0: Red, 1: Yellow, 2: Green, 3: Blue, 4: White
+    in-out property <float> brush-size: 4.0;
+
+    // OCR / Text results
+    in-out property <string> ocr-text: "";
+    in-out property <bool> show-ocr-panel: false;
+    in-out property <bool> ocr-loading: false;
+
+    // Images variables (communicates with Rust)
+    in-out property <image> raw-screenshot: @image-url("");
+    in-out property <image> processed-preview: @image-url(""); // The fully beautified image
+    in-out property <[HistoryItem]> history-list: [];
+
+    // Callbacks to Rust
+    callback trigger-capture();
+    callback trigger-area-capture();
+    callback save-image();
+    callback copy-image-to-clipboard();
+    callback select-gallery-item(int);
+    callback run-ocr();
+    callback draw-paint-stroke(float, float, float, float, int, int, float); // x1, y1, x2, y2, tool, color, size
+    callback clear-annotations();
+    callback backdrop-changed(int);
+    callback render-beautified(); // Request backend to refresh final image based on parameters
+    callback close-app();
+
+    // Global listeners for coordinates on the preview canvas to enable drawing!
+    callback canvas-pressed(float, float);
+    callback canvas-moved(float, float);
+    callback canvas-released(float, float);
+
+    // Dynamic color values for backdrop preview inside Slint
+    pure function get-backdrop-gradient(style: int) -> brush {
+        if (style == 0) { return @linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%); } // Sunset
+        if (style == 1) { return @linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #4f46e5 100%); } // Ocean
+        if (style == 2) { return @linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%); } // Emerald
+        if (style == 3) { return @linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #f43f5e 100%); } // Aurora
+        if (style == 4) { return @linear-gradient(135deg, #1e293b 0%, #0f172a 100%); } // Mystic Dark
+        if (style == 5) { return #020617; } // Flat Dark
+        return transparent; // Transparent
+    }
+
+    pure function get-shadow-color(style: int) -> color {
+        if (style == 1) { return rgba(0, 0, 0, 0.4); }
+        if (style == 2) { return rgba(99, 102, 241, 0.35); }
+        return transparent;
+    }
+
+    pure function get-shadow-blur(style: int) -> length {
+        if (style == 1) { return 16px; }
+        if (style == 2) { return 32px; }
+        return 0px;
+    }
+
+    pure function get-delay-label(delay: int) -> string {
+        if (delay == 0) { return "فوري"; }
+        if (delay == 1) { return "3 ثواني"; }
+        if (delay == 2) { return "5 ثواني"; }
+        return "10 ثواني";
+    }
+
+    // MAIN VIEW LAYOUT
+    ZStack {
+        // -------------------------------------------------------------
+        // STATE A: FLOATING DOCK BAR (Capsule Mode)
+        // -------------------------------------------------------------
+        if !is-studio-mode : Rectangle {
+            width: 320px;
+            height: 160px;
+            background: transparent;
+
+            // Main rounded box (matching GNOME style)
+            Rectangle {
+                x: 10px;
+                y: 16px;
+                width: 300px;
+                height: 140px;
+                background: rgba(30, 30, 30, 0.95);
+                border-radius: 28px;
+                border-width: 1px;
+                border-color: rgba(255, 255, 255, 0.12);
+                clip: true;
+
+                // Subtle inner glow
+                Rectangle {
+                    border-radius: 28px;
+                    background: @radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0) 80%);
+                }
+
+                VerticalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 14px;
+                    padding-bottom: 12px;
+                    spacing: 12px;
+
+                    // Modes Selector Tabs Row (Selection, Screen, Window)
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 8px;
+
+                        // 1. Selection Mode Tab
+                        Rectangle {
+                            width: 82px;
+                            height: 52px;
+                            border-radius: 12px;
+                            background: capsule-mode == 0 ? rgba(255, 255, 255, 0.12) : transparent;
+                            
+                            animate background { duration: 150ms; }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                
+                                // Selection Dotted Icon with 4 corner dots
+                                Rectangle {
+                                    width: 18px;
+                                    height: 14px;
+                                    x: (parent.width - self.width) / 2;
+                                    border-width: 1px;
+                                    border-color: rgba(255, 255, 255, 0.7);
+                                    
+                                    // 4 Corner dots representation
+                                    Rectangle { x: -2px; y: -2px; width: 4px; height: 4px; border-radius: 2px; background: #ffffff; }
+                                    Rectangle { x: parent.width - 2px; y: -2px; width: 4px; height: 4px; border-radius: 2px; background: #ffffff; }
+                                    Rectangle { x: -2px; y: parent.height - 2px; width: 4px; height: 4px; border-radius: 2px; background: #ffffff; }
+                                    Rectangle { x: parent.width - 2px; y: parent.height - 2px; width: 4px; height: 4px; border-radius: 2px; background: #ffffff; }
+                                }
+                                
+                                Text {
+                                    text: "تحديد";
+                                    color: capsule-mode == 0 ? #ffffff : #b3b3b3;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            TouchArea {
+                                clicked => { capsule-mode = 0; }
+                            }
+                        }
+
+                        // 2. Full Screen Mode Tab
+                        Rectangle {
+                            width: 82px;
+                            height: 52px;
+                            border-radius: 12px;
+                            background: capsule-mode == 1 ? rgba(255, 255, 255, 0.12) : transparent;
+                            
+                            animate background { duration: 150ms; }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                
+                                // Monitor Icon
+                                Text {
+                                    text: "🖥️";
+                                    font-size: 16px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                                
+                                Text {
+                                    text: "شاشة";
+                                    color: capsule-mode == 1 ? #ffffff : #b3b3b3;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            TouchArea {
+                                clicked => { capsule-mode = 1; }
+                            }
+                        }
+
+                        // 3. Window Mode Tab
+                        Rectangle {
+                            width: 82px;
+                            height: 52px;
+                            border-radius: 12px;
+                            background: capsule-mode == 2 ? rgba(255, 255, 255, 0.12) : transparent;
+                            
+                            animate background { duration: 150ms; }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                
+                                // Window overlapping icon
+                                Text {
+                                    text: "🗖";
+                                    font-size: 16px;
+                                    color: #ffffff;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                                
+                                Text {
+                                    text: "نافذة";
+                                    color: capsule-mode == 2 ? #ffffff : #b3b3b3;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            TouchArea {
+                                clicked => { capsule-mode = 2; }
+                            }
+                        }
+                    }
+
+                    // Bottom controls row: Photo/Video, Shutter, Cursor pointer
+                    HorizontalLayout {
+                        alignment: space-between;
+                        vertical-alignment: center;
+                        padding-left: 6px;
+                        padding-right: 6px;
+
+                        // Left: Photo/Video Mode Selector Switch Pill
+                        Rectangle {
+                            width: 58px;
+                            height: 28px;
+                            border-radius: 14px;
+                            background: rgba(0, 0, 0, 0.25);
+                            border-width: 1px;
+                            border-color: rgba(255, 255, 255, 0.08);
+
+                            // Toggle Slider Indicator
+                            Rectangle {
+                                x: capture-video ? 32px : 2px;
+                                y: 2px;
+                                width: 24px;
+                                height: 24px;
+                                border-radius: 12px;
+                                background: rgba(255, 255, 255, 0.15);
+                                
+                                animate x { duration: 150ms; }
+                            }
+
+                            HorizontalLayout {
+                                padding: 2px;
+                                spacing: 4px;
+                                alignment: center;
+                                
+                                Text {
+                                    text: "📹";
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                    opacity: capture-video ? 1.0 : 0.4;
+                                }
+                                Text {
+                                    text: "📸";
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                    opacity: !capture-video ? 1.0 : 0.4;
+                                }
+                            }
+
+                            TouchArea {
+                                clicked => { capture-video = !capture-video; }
+                            }
+                        }
+
+                        // Center: Large white Shutter Capture button
+                        Rectangle {
+                            width: 48px;
+                            height: 48px;
+                            border-radius: 24px;
+                            background: transparent;
+                            border-width: 3px;
+                            border-color: #ffffff;
+                            
+                            // Shutter inner circle
+                            Rectangle {
+                                width: shutter-touch.pressed ? 30px : 36px;
+                                height: shutter-touch.pressed ? 30px : 36px;
+                                border-radius: self.width / 2;
+                                background: capture-video ? #ef4444 : #ffffff;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                                
+                                animate width, height { duration: 100ms; }
+                            }
+
+                            shutter-touch := TouchArea {
+                                clicked => {
+                                    if (capsule-mode == 0) {
+                                        root.trigger-area-capture();
+                                    } else {
+                                        root.trigger-capture();
+                                    }
+                                }
+                            }
+                        }
+
+                        // Right: Show/Hide mouse pointer cursor toggle button
+                        Rectangle {
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 15px;
+                            background: show-cursor ? rgba(255, 255, 255, 0.15) : transparent;
+                            border-width: 1px;
+                            border-color: show-cursor ? rgba(255, 255, 255, 0.25) : transparent;
+                            
+                            Text {
+                                text: "⬈"; // Standard arrow pointer cursor symbol
+                                font-size: 14px;
+                                color: show-cursor ? #ffffff : #c0c0c0;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                            
+                            TouchArea {
+                                clicked => { show-cursor = !show-cursor; }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Floating Close Button 'X' at top right overlapping slightly
+            Rectangle {
+                x: 292px;
+                y: 4px;
+                width: 24px;
+                height: 24px;
+                border-radius: 12px;
+                background: rgba(45, 45, 45, 0.95);
+                border-width: 1px;
+                border-color: rgba(255, 255, 255, 0.15);
+                drop-shadow-color: rgba(0, 0, 0, 0.4);
+                drop-shadow-blur: 4px;
+                
+                Text {
+                    text: "×";
+                    color: #ffffff;
+                    font-size: 15px;
+                    font-weight: 800;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    y: -1px;
+                }
+                
+                TouchArea {
+                    clicked => { root.close-app(); }
+                }
+            }
+        }
+
+        // -------------------------------------------------------------
+        // STATE B: FULL STUDIO STUDIO EDITOR (Studio Mode)
+        // -------------------------------------------------------------
+        if is-studio-mode : Rectangle {
+            width: 100%;
+            height: 100%;
+            background: #090d16;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #1e293b;
+            clip: true;
+
+            // Background subtle glows
+            Rectangle {
+                background: @radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+            }
+
+            VerticalLayout {
+                // Top Global Bar
+                Rectangle {
+                    height: 58px;
+                    background: #0f172a;
+                    border-bottom-width: 1px;
+                    border-bottom-color: #1e293b;
+
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        alignment: space-between;
+
+                        // Left Actions: Clipboard, Save, OCR
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: center;
+
+                            ActionButton {
+                                text: "📋 نسخ للحافظة";
+                                base-color: #10b981;
+                                hover-color: #059669;
+                                clicked => { root.copy-image-to-clipboard(); }
+                            }
+
+                            ActionButton {
+                                text: "💾 حفظ الصورة";
+                                base-color: #4f46e5;
+                                hover-color: #4338ca;
+                                clicked => { root.save-image(); }
+                            }
+
+                            ActionButton {
+                                text: "🔍 استخراج النصوص (OCR)";
+                                base-color: #0f172a;
+                                hover-color: #1e293b;
+                                text-color: #c7d2fe;
+                                clicked => { root.run-ocr(); }
+                            }
+                        }
+
+                        // Status Info
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                background: #1e1b4b;
+                                border-radius: 6px;
+                                height: 32px;
+                                border-width: 1px;
+                                border-color: #312e81;
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                
+                                Text {
+                                    text: "ℹ " + root.status-message;
+                                    color: #c7d2fe;
+                                    font-size: 12px;
+                                    font-weight: 500;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        // Right Brand Name & Back to Dock button
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: center;
+
+                            ActionButton {
+                                text: "🎛️ النمط العائم";
+                                base-color: #1e293b;
+                                hover-color: #334155;
+                                text-color: #94a3b8;
+                                clicked => {
+                                    is-studio-mode = false;
+                                    show-gallery = false;
+                                }
+                            }
+
+                            IconButton {
+                                icon: "❌";
+                                tooltip: "إغلاق";
+                                clicked => { root.close-app(); }
+                            }
+                        }
+                    }
+                }
+
+                // Main workspace: split side panel / preview canvas / drawing panel
+                HorizontalLayout {
+                    height: root.height - 58px;
+
+                    // SIDEBAR LEFT: Painting / Annotations (الرسم والتوضيح)
+                    Rectangle {
+                        width: 80px;
+                        background: #0b0f19;
+                        border-right-width: 1px;
+                        border-right-color: #1e293b;
+
+                        VerticalLayout {
+                            padding-top: 16px;
+                            spacing: 20px;
+                            alignment: start;
+
+                            Text {
+                                text: "أدوات الرسم";
+                                color: #64748b;
+                                font-size: 9px;
+                                font-weight: 800;
+                                horizontal-alignment: center;
+                            }
+
+                            // Tool icons: Pen, Rect, Arrow, Eraser
+                            IconButton { x: 21px; icon: "🖌️"; tooltip: "قلم حر"; active: paint-tool == 0; clicked => { paint-tool = 0; } }
+                            IconButton { x: 21px; icon: "⬜"; tooltip: "مستطيل"; active: paint-tool == 1; clicked => { paint-tool = 1; } }
+                            IconButton { x: 21px; icon: "🎯"; tooltip: "سهم توجيهي"; active: paint-tool == 2; clicked => { paint-tool = 2; } }
+                            IconButton { x: 21px; icon: "🧼"; tooltip: "مسح الكل"; clicked => { root.clear-annotations(); } }
+
+                            // Divider
+                            Rectangle { height: 1px; background: #1e293b; width: 40px; x: 20px; }
+
+                            // Colors selectors
+                            VerticalLayout {
+                                spacing: 10px;
+                                alignment: center;
+                                ColorCircle { x: 29px; fill-color: #ef4444; active: paint-color == 0; clicked => { paint-color = 0; } } // Red
+                                ColorCircle { x: 29px; fill-color: #eab308; active: paint-color == 1; clicked => { paint-color = 1; } } // Yellow
+                                ColorCircle { x: 29px; fill-color: #22c55e; active: paint-color == 2; clicked => { paint-color = 2; } } // Green
+                                ColorCircle { x: 29px; fill-color: #3b82f6; active: paint-color == 3; clicked => { paint-color = 3; } } // Blue
+                                ColorCircle { x: 29px; fill-color: #ffffff; active: paint-color == 4; clicked => { paint-color = 4; } } // White
+                            }
+
+                            // Brush size selector
+                            VerticalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                Text {
+                                    text: Math.round(brush-size) + "px";
+                                    color: #94a3b8;
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    horizontal-alignment: center;
+                                }
+                                IconButton {
+                                    x: 21px;
+                                    icon: "⚙️";
+                                    tooltip: "حجم الفرشاة";
+                                    clicked => {
+                                        brush-size = brush-size == 2.0 ? 4.0 : (brush-size == 4.0 ? 8.0 : 2.0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // MAIN CANVAS AREA: Center area showing beautifier preview
+                    VerticalLayout {
+                        width: root.width - sidebar-right.width - 80px;
+                        background: #05070c;
+                        padding: 16px;
+                        spacing: 12px;
+
+                        // Preview Box with Gradient Backdrop
+                        Rectangle {
+                            background: #020408;
+                            border-radius: 10px;
+                            border-width: 1px;
+                            border-color: #111827;
+                            height: root.height - 180px;
+
+                            // The Interactive Preview Container
+                            canvas-box := Rectangle {
+                                width: Math.min(self.height * 1.5, parent.width - 32px);
+                                height: parent.height - 32px;
+                                x: (parent.width - self.width) / 2;
+                                y: 16px;
+                                border-radius: 8px;
+                                background: get-backdrop-gradient(backdrop-style);
+                                clip: true;
+
+                                // The Screenshot Image with Drop Shadow & Corner roundness
+                                Rectangle {
+                                    width: parent.width - root.padding-size * 2px;
+                                    height: parent.height - root.padding-size * 2px;
+                                    x: root.padding-size * 1px;
+                                    y: root.padding-size * 1px;
+                                    border-radius: root.corner-radius * 1px;
+                                    clip: true;
+                                    
+                                    // Soft drop shadow simulation
+                                    background: #090d16;
+                                    
+                                    // Display the screenshot image (with any painting done)
+                                    Image {
+                                        source: root.processed-preview;
+                                        width: 100%;
+                                        height: 100%;
+                                        image-fit: contain;
+                                    }
+
+                                    // macOS Style Title Bar Dot indicators on Top Left
+                                    if show-macos-bar : HorizontalLayout {
+                                        x: 10px;
+                                        y: 8px;
+                                        spacing: 6px;
+                                        alignment: start;
+                                        
+                                        Rectangle { width: 8px; height: 8px; border-radius: 4px; background: #ff5f56; }
+                                        Rectangle { width: 8px; height: 8px; border-radius: 4px; background: #ffbd2e; }
+                                        Rectangle { width: 8px; height: 8px; border-radius: 4px; background: #27c93f; }
+                                    }
+
+                                    // Interactive Touch Area for Painting/Drawing Annotations
+                                    paint-touch := TouchArea {
+                                        property <float> last-x: -1.0;
+                                        property <float> last-y: -1.0;
+                                        property <float> rx: 0.0;
+                                        property <float> ry: 0.0;
+
+                                        pointer-event(event) => {
+                                            if (event.button == PointerEventButton.left) {
+                                                // Convert click relative to canvas dimensions
+                                                rx = self.mouse-x / self.width;
+                                                ry = self.mouse-y / self.height;
+
+                                                if (self.pressed) {
+                                                    if (last-x >= 0.0) {
+                                                        // Invoke Rust draw callback
+                                                        root.draw-paint-stroke(last-x, last-y, rx, ry, root.paint-tool, root.paint-color, root.brush-size);
+                                                    }
+                                                    last-x = rx;
+                                                    last-y = ry;
+                                                } else {
+                                                    last-x = -1.0;
+                                                    last-y = -1.0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Bottom recent captures Gallery thumbnail strip
+                        gallery-panel := Rectangle {
+                            height: 68px;
+                            background: #0b0f19;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #1e293b;
+
+                            HorizontalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                spacing: 10px;
+                                alignment: start;
+
+                                Text {
+                                    text: "لقطات سابقة:";
+                                    color: #64748b;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+
+                                for item[index] in root.history-list : Rectangle {
+                                    width: 80px;
+                                    height: 52px;
+                                    y: 8px;
+                                    border-radius: 4px;
+                                    border-width: item.is-active ? 2px : 1px;
+                                    border-color: item.is-active ? #6366f1 : #334155;
+                                    background: #020617;
+                                    clip: true;
+
+                                    Image {
+                                        source: item.thumbnail;
+                                        width: 100%;
+                                        height: 100%;
+                                        image-fit: cover;
+                                    }
+
+                                    TouchArea {
+                                        clicked => {
+                                            root.select-gallery-item(item.id);
+                                        }
+                                    }
+                                }
+
+                                if root.history-list.length == 0 : VerticalLayout {
+                                    alignment: center;
+                                    Text {
+                                        text: "المعرض فارغ حالياً. التقط بعض الشاشات للبدء!";
+                                        color: #4b5563;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // SIDEBAR RIGHT: Beautifier Frame settings & OCR results
+                    sidebar-right := Rectangle {
+                        width: 310px;
+                        background: #0f172a;
+                        border-left-width: 1px;
+                        border-left-color: #1e293b;
+
+                        VerticalLayout {
+                            padding: 16px;
+                            spacing: 14px;
+
+                            // Title & Description
+                            HorizontalLayout {
+                                alignment: end;
+                                spacing: 8px;
+                                VerticalLayout {
+                                    Text {
+                                        text: "تجميل العرض والمؤثرات";
+                                        color: #ffffff;
+                                        font-size: 14px;
+                                        font-weight: 800;
+                                        horizontal-alignment: right;
+                                    }
+                                    Text {
+                                        text: "حوّل اللقطة إلى تصميم احترافي";
+                                        color: #64748b;
+                                        font-size: 10px;
+                                        font-weight: 600;
+                                        horizontal-alignment: right;
+                                    }
+                                }
+                                Text { text: "🎨"; font-size: 20px; vertical-alignment: center; }
+                            }
+
+                            // 1. Preset Gradient Backgrounds
+                            VerticalLayout {
+                                spacing: 6px;
+                                alignment: end;
+                                Text {
+                                    text: "خلفية التجميل المتدرجة";
+                                    color: #64748b;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: right;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    alignment: end;
+                                    ColorCircle { fill-color: #ec4899; active: backdrop-style == 0; clicked => { backdrop-style = 0; root.backdrop-changed(0); } } // Sunset
+                                    ColorCircle { fill-color: #3b82f6; active: backdrop-style == 1; clicked => { backdrop-style = 1; root.backdrop-changed(1); } } // Ocean
+                                    ColorCircle { fill-color: #10b981; active: backdrop-style == 2; clicked => { backdrop-style = 2; root.backdrop-changed(2); } } // Emerald
+                                    ColorCircle { fill-color: #d946ef; active: backdrop-style == 3; clicked => { backdrop-style = 3; root.backdrop-changed(3); } } // Aurora
+                                    ColorCircle { fill-color: #334155; active: backdrop-style == 4; clicked => { backdrop-style = 4; root.backdrop-changed(4); } } // Mystic
+                                    ColorCircle { fill-color: #020617; active: backdrop-style == 5; clicked => { backdrop-style = 5; root.backdrop-changed(5); } } // Flat Dark
+                                    ColorCircle { fill-color: transparent; active: backdrop-style == 6; border-width: 1px; border-color: #475569; clicked => { backdrop-style = 6; root.backdrop-changed(6); } } // Transparent
+                                }
+                            }
+
+                            // 2. Padding size slider
+                            CustomSlider {
+                                label: "الهامش الخارجي";
+                                min-value: 0.0;
+                                max-value: 80.0;
+                                value: root.padding-size;
+                                changed(val) => { root.padding-size = val; root.render-beautified(); }
+                            }
+
+                            // 3. Corner radius slider
+                            CustomSlider {
+                                label: "زوايا الصورة الدائرية";
+                                min-value: 0.0;
+                                max-value: 30.0;
+                                value: root.corner-radius;
+                                changed(val) => { root.corner-radius = val; root.render-beautified(); }
+                            }
+
+                            // 4. Shadow selector
+                            ChoiceSelector {
+                                label: "مستوى الظل المحيط";
+                                selected-index: root.shadow-style;
+                                choices: ["بدون ظل", "ظل ناعم", "توهج النيون"];
+                                selection-changed(index) => { root.shadow-style = index; root.render-beautified(); }
+                            }
+
+                            // 5. Switches (macOS bar, play sound)
+                            ToggleSwitch {
+                                label: "إضافة إطار macOS علوي";
+                                checked: root.show-macos-bar;
+                                toggled => { root.show-macos-bar = !root.show-macos-bar; root.render-beautified(); }
+                            }
+
+                            ToggleSwitch {
+                                label: "حفظ تلقائي للحافظة";
+                                checked: root.auto-copy-clipboard;
+                                toggled => { root.auto-copy-clipboard = !root.auto-copy-clipboard; }
+                            }
+
+                            // Divider
+                            Rectangle { height: 1px; background: #1e293b; }
+
+                            // 6. Delay Timer
+                            ChoiceSelector {
+                                label: "مؤقت اللقطة القادمة";
+                                selected-index: root.capture-delay;
+                                choices: ["بدون مؤقت", "3 ثواني", "5 ثواني", "10 ثواني"];
+                                selection-changed(index) => { root.capture-delay = index; }
+                            }
+
+                            // Action button: capture inside studio
+                            ActionButton {
+                                text: "📸 التقاط شاشة جديدة";
+                                base-color: #312e81;
+                                hover-color: #3730a3;
+                                clicked => { root.trigger-capture(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // -------------------------------------------------------------
+        // STATE C: LARGE GLOWING COUNTDOWN OVERLAY
+        // -------------------------------------------------------------
+        if show-countdown : Rectangle {
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 17, 0.85);
+            
+            VerticalLayout {
+                alignment: center;
+                spacing: 20px;
+
+                Text {
+                    text: "التقاط الشاشة بعد...";
+                    color: #94a3b8;
+                    font-size: 20px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+
+                Rectangle {
+                    width: 180px;
+                    height: 180px;
+                    border-radius: 90px;
+                    background: @radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(0, 0, 0, 0) 80%);
+                    border-width: 3px;
+                    border-color: #6366f1;
+                    x: (parent.width - self.width) / 2;
+
+                    Text {
+                        text: root.countdown-number;
+                        color: #ffffff;
+                        font-size: 78px;
+                        font-weight: 900;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // -------------------------------------------------------------
+        // STATE D: OCR TEXT RESULT POPUP OVERLAY
+        // -------------------------------------------------------------
+        if show-ocr-panel : Rectangle {
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 17, 0.9);
+
+            VerticalLayout {
+                alignment: center;
+                padding: 40px;
+
+                Rectangle {
+                    width: 550px;
+                    height: 420px;
+                    background: #0f172a;
+                    border-radius: 12px;
+                    border-width: 1.5px;
+                    border-color: #6366f1;
+                    padding: 20px;
+
+                    VerticalLayout {
+                        spacing: 16px;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            IconButton {
+                                icon: "❌";
+                                tooltip: "إغلاق";
+                                clicked => { show-ocr-panel = false; }
+                            }
+                            Text {
+                                text: "🔍 النصوص المستخرجة من اللقطة (OCR)";
+                                color: #ffffff;
+                                font-size: 16px;
+                                font-weight: 800;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Loader or content
+                        if ocr-loading : VerticalLayout {
+                            height: 280px;
+                            alignment: center;
+                            spacing: 16px;
+
+                            Rectangle {
+                                width: 50px;
+                                height: 50px;
+                                border-radius: 25px;
+                                border-width: 3px;
+                                border-color: #6366f1;
+                                x: (parent.width - self.width) / 2;
+                            }
+
+                            Text {
+                                text: "جاري تحليل الصورة واستخراج النصوص...";
+                                color: #94a3b8;
+                                font-size: 13px;
+                                horizontal-alignment: center;
+                            }
+                        }
+
+                        if !ocr-loading : VerticalLayout {
+                            spacing: 12px;
+                            
+                            Rectangle {
+                                height: 260px;
+                                background: #05070c;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: #1e293b;
+                                padding: 12px;
+
+                                Flickable {
+                                    viewport-height: 500px;
+                                    
+                                    Text {
+                                        text: root.ocr-text;
+                                        color: #e2e8f0;
+                                        font-size: 13px;
+                                        font-weight: 500;
+                                        wrap: word-wrap;
+                                        horizontal-alignment: right;
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 10px;
+                                ActionButton {
+                                    text: "📋 نسخ النص المكتوب";
+                                    base-color: #10b981;
+                                    hover-color: #059669;
+                                    clicked => {
+                                        // Trigger custom copy
+                                        root.status-message = "تم نسخ النص المستخرج!";
+                                        show-ocr-panel = false;
+                                    }
+                                }
+                                ActionButton {
+                                    text: "إغلاق";
+                                    base-color: #1e293b;
+                                    hover-color: #334155;
+                                    clicked => { show-ocr-panel = false; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

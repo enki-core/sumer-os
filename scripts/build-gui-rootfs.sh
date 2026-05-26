@@ -84,6 +84,24 @@ fi
 cp programs/zaqura-store/target-alpine/release/zaqura-store $ROOTFS/usr/bin/zaqura-store
 chmod +x $ROOTFS/usr/bin/zaqura-store
 
+# 2.9. نسخ مشغل الموسيقى رنيم المجمع مسبقاً
+echo "[+] Copying Raneem MP3 Player..."
+if [ ! -f "programs/raneem-mp3/target-alpine/release/raneem-mp3" ]; then
+    echo -e "\e[31m[!] Error: raneem-mp3 is not compiled yet. Please run 'programs/raneem-mp3/build.sh' first!\e[0m"
+    exit 1
+fi
+cp programs/raneem-mp3/target-alpine/release/raneem-mp3 $ROOTFS/usr/bin/raneem-mp3
+chmod +x $ROOTFS/usr/bin/raneem-mp3
+
+# 2.10. نسخ استوديو لقطات الشاشة بريزم المجمع مسبقاً
+echo "[+] Copying Prism Screenshot..."
+if [ ! -f "programs/prism-screenshot/target-alpine/release/prism-screenshot" ]; then
+    echo -e "\e[31m[!] Error: prism-screenshot is not compiled yet. Please run 'programs/prism-screenshot/build.sh' first!\e[0m"
+    exit 1
+fi
+cp programs/prism-screenshot/target-alpine/release/prism-screenshot $ROOTFS/usr/bin/prism-screenshot
+chmod +x $ROOTFS/usr/bin/prism-screenshot
+
 
 
 # 3. إعداد بيئة الإقلاع

@@ -1,0 +1,403 @@
+export component PhoneMockup inherits Rectangle {
+    in-out property <bool> active;
+    in-out property <int> active-app: 0; // 0: Home, 1: Music, 2: Gallery, 3: Chat
+    callback close-mirroring;
+
+    width: 250px;
+    height: 440px;
+    background: #000000;
+    border-radius: 32px;
+    border-width: 6px;
+    border-color: #1e293b;
+
+    // Screen area
+    Rectangle {
+        x: 0px;
+        y: 0px;
+        width: 100%;
+        height: 100%;
+        border-radius: 26px;
+        background: @linear-gradient(135deg, #101827 0%, #1e1b4b 100%);
+        clip: true;
+
+        // Status Bar
+        HorizontalLayout {
+            y: 8px;
+            height: 14px;
+            padding-left: 14px;
+            padding-right: 14px;
+            alignment: space-between;
+
+            Text {
+                text: "10:45 AM";
+                color: #ffffff;
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+            HorizontalLayout {
+                spacing: 3px;
+                Text { text: "📶"; color: #ffffff; font-size: 9px; }
+                Text { text: "🔋"; color: #ffffff; font-size: 9px; }
+            }
+        }
+
+        // Screen Content
+        if active-app == 0 : VerticalLayout {
+            padding-top: 32px;
+            padding-bottom: 16px;
+            padding-left: 12px;
+            padding-right: 12px;
+            spacing: 16px;
+            alignment: space-between;
+
+            // Widget Card (Clock & Weather)
+            Rectangle {
+                height: 70px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.08);
+                border-width: 1px;
+                border-color: rgba(255, 255, 255, 0.12);
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    Text {
+                        text: "الـمـوصـل";
+                        color: #ffffff;
+                        font-size: 10px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "28°م مشمس";
+                        color: #e2e8f0;
+                        font-size: 9px;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "الأثنين، 25 مايو";
+                        color: #94a3b8;
+                        font-size: 8px;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            // Grid of Apps
+            GridLayout {
+                spacing: 12px;
+                Row {
+                    // App: Chat
+                    VerticalLayout {
+                        spacing: 2px;
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 8px;
+                            background: #10b981;
+                            
+                            Text { text: "💬"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            TouchArea { clicked => { active-app = 3; } }
+                        }
+                        Text { text: "أوروك"; color: #ffffff; font-size: 8px; font-weight: 600; horizontal-alignment: center; }
+                    }
+
+                    // App: Music Player
+                    VerticalLayout {
+                        spacing: 2px;
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 8px;
+                            background: #d946ef;
+                            
+                            Text { text: "🎵"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            TouchArea { clicked => { active-app = 1; } }
+                        }
+                        Text { text: "رنيم MP3"; color: #ffffff; font-size: 8px; font-weight: 600; horizontal-alignment: center; }
+                    }
+
+                    // App: Camera
+                    VerticalLayout {
+                        spacing: 2px;
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 8px;
+                            background: #6366f1;
+                            
+                            Text { text: "📷"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            TouchArea { clicked => { active-app = 2; } }
+                        }
+                        Text { text: "المعرض"; color: #ffffff; font-size: 8px; font-weight: 600; horizontal-alignment: center; }
+                    }
+                }
+            }
+
+            // Bottom Dock
+            Rectangle {
+                height: 48px;
+                border-radius: 12px;
+                background: rgba(0, 0, 0, 0.4);
+                border-width: 1px;
+                border-color: rgba(255, 255, 255, 0.08);
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 12px;
+                    padding: 4px;
+
+                    // Phone icon
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 6px;
+                        background: #3b82f6;
+                        Text { text: "📞"; font-size: 14px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                    // Messages icon
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 6px;
+                        background: #10b981;
+                        Text { text: "✉️"; font-size: 14px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                    // Browser icon
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 6px;
+                        background: #f59e0b;
+                        Text { text: "🌐"; font-size: 14px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                }
+            }
+        }
+
+        // Inside App 1: Music Player
+        if active-app == 1 : VerticalLayout {
+            padding-top: 32px;
+            padding-bottom: 20px;
+            padding-left: 12px;
+            padding-right: 12px;
+            alignment: space-between;
+
+            Text {
+                text: "مشغل الموسيقى (رنيم)";
+                color: #ffffff;
+                font-size: 10px;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+
+            // Album cover mockup (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 10px;
+                    background: @linear-gradient(45deg, #d946ef 0%, #6366f1 100%);
+
+                    Text {
+                        text: "🎵";
+                        font-size: 32px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Track details
+            VerticalLayout {
+                spacing: 2px;
+                Text {
+                    text: "مقام السيكا العراقي";
+                    color: #ffffff;
+                    font-size: 10px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "التراث السومري";
+                    color: #94a3b8;
+                    font-size: 8px;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Audio Player Controls
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: center;
+                Text { text: "⏮"; color: #ffffff; font-size: 12px; }
+                Text { text: "⏸"; color: #ffffff; font-size: 16px; font-weight: 700; }
+                Text { text: "⏭"; color: #ffffff; font-size: 12px; }
+            }
+
+            // Progress bar
+            Rectangle {
+                height: 3px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 1.5px;
+                
+                Rectangle {
+                    width: 40%;
+                    height: 100%;
+                    background: #d946ef;
+                    border-radius: 1.5px;
+                }
+            }
+
+            // Home Indicator Line (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 70px;
+                    height: 3px;
+                    border-radius: 1.5px;
+                    background: #ffffff;
+
+                    TouchArea {
+                        clicked => { active-app = 0; }
+                    }
+                }
+            }
+        }
+
+        // Inside App 2: Gallery
+        if active-app == 2 : VerticalLayout {
+            padding-top: 32px;
+            padding-bottom: 20px;
+            padding-left: 12px;
+            padding-right: 12px;
+            alignment: space-between;
+
+            Text {
+                text: "معرض الصور";
+                color: #ffffff;
+                font-size: 10px;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+
+            // Grid of colored squares representing photos
+            GridLayout {
+                spacing: 6px;
+                Row {
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #3b82f6; }
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #10b981; }
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #f59e0b; }
+                }
+                Row {
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #ec4899; }
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #8b5cf6; }
+                    Rectangle { width: 48px; height: 48px; border-radius: 4px; background: #ef4444; }
+                }
+            }
+
+            // Home Indicator Line (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 70px;
+                    height: 3px;
+                    border-radius: 1.5px;
+                    background: #ffffff;
+
+                    TouchArea {
+                        clicked => { active-app = 0; }
+                    }
+                }
+            }
+        }
+
+        // Inside App 3: Chat/Uruk
+        if active-app == 3 : VerticalLayout {
+            padding-top: 32px;
+            padding-bottom: 20px;
+            padding-left: 12px;
+            padding-right: 12px;
+            alignment: space-between;
+
+            Text {
+                text: "أوروك تشات • أحمد";
+                color: #ffffff;
+                font-size: 9px;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+
+            // Messages chat thread mock
+            VerticalLayout {
+                spacing: 6px;
+                padding: 4px;
+                
+                // Recieved Message
+                Rectangle {
+                    background: #1e293b;
+                    border-radius: 6px;
+                    border-bottom-left-radius: 0px;
+                    width: 110px;
+                    height: 28px;
+                    x: 0px;
+                    
+                    Text {
+                        text: "هل تعمل واجهة لينكا؟";
+                        color: #ffffff;
+                        font-size: 8px;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        vertical-alignment: center;
+                    }
+                }
+                
+                // Sent Message
+                Rectangle {
+                    background: #10b981;
+                    border-radius: 6px;
+                    border-bottom-right-radius: 0px;
+                    width: 110px;
+                    height: 28px;
+                    x: 90px;
+                    
+                    Text {
+                        text: "نعم! تبدو رائعة جداً.";
+                        color: #ffffff;
+                        font-size: 8px;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Home Indicator Line (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 70px;
+                    height: 3px;
+                    border-radius: 1.5px;
+                    background: #ffffff;
+
+                    TouchArea {
+                        clicked => { active-app = 0; }
+                    }
+                }
+            }
+        }
+    }
+
+    // Notch / Dynamic Island
+    Rectangle {
+        x: (parent.width - 80px) / 2;
+        y: 6px;
+        width: 80px;
+        height: 14px;
+        border-radius: 7px;
+        background: #000000;
+    }
+}

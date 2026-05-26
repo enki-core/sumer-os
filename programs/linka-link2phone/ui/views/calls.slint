@@ -1,0 +1,261 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { DialButton } from "../components/dial_button.slint";
+import { ActionButton } from "../components/action_button.slint";
+
+export component CallsView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <string> dialed-number;
+    in-out property <bool> is-calling;
+    callback backspace-pressed();
+
+    HorizontalLayout {
+        // Call History List (Left)
+        VerticalLayout {
+            horizontal-stretch: 1;
+            padding: 24px;
+            spacing: 14px;
+
+            Text {
+                text: "سجل المكالمات الأخيرة";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            // Log 1
+            GlassCard {
+                height: 54px;
+                HorizontalLayout {
+                    padding: 10px;
+                    alignment: space-between;
+
+                    Text { text: "10:30 ص"; color: text-muted; font-size: 11px; vertical-alignment: center; }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: end;
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "أحمد مطور سومر"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "📞 مكالمة صادرة (دقيقتين)"; color: green-color; font-size: 9px; horizontal-alignment: right; }
+                        }
+                        Text { text: "👤"; font-size: 20px; vertical-alignment: center; }
+                    }
+                }
+            }
+
+            // Log 2
+            GlassCard {
+                height: 54px;
+                HorizontalLayout {
+                    padding: 10px;
+                    alignment: space-between;
+
+                    Text { text: "أمس 09:15 م"; color: text-muted; font-size: 11px; vertical-alignment: center; }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: end;
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "سارة (العمل)"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "🔴 مكالمة فائتة"; color: red-color; font-size: 9px; horizontal-alignment: right; }
+                        }
+                        Text { text: "👤"; font-size: 20px; vertical-alignment: center; }
+                    }
+                }
+            }
+
+            // Log 3
+            GlassCard {
+                height: 54px;
+                HorizontalLayout {
+                    padding: 10px;
+                    alignment: space-between;
+
+                    Text { text: "22 مايو"; color: text-muted; font-size: 11px; vertical-alignment: center; }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: end;
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "0781293849"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "📞 مكالمة واردة (5 دقائق)"; color: text-secondary; font-size: 9px; horizontal-alignment: right; }
+                        }
+                        Text { text: "👤"; font-size: 20px; vertical-alignment: center; }
+                    }
+                }
+            }
+
+            Rectangle {
+                vertical-stretch: 1;
+            }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // Dialer Pad (Right)
+        VerticalLayout {
+            width: 280px;
+            padding: 24px;
+            spacing: 16px;
+            alignment: center;
+
+            // Number Display
+            Rectangle {
+                height: 50px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: theme-border-color;
+                
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    alignment: space-between;
+
+                    // Clear All Button (Only visible if there is input)
+                    if dialed-number != "" : Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 14px;
+                        background: rgba(239, 68, 68, 0.15);
+                        y: (parent.height - 28px) / 2;
+                        
+                        Text {
+                            text: "❌";
+                            font-size: 11px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => {
+                                dialed-number = "";
+                            }
+                        }
+                    }
+                    if dialed-number == "" : Rectangle {
+                        width: 28px;
+                    }
+
+                    // Dialed Number Text
+                    Text {
+                        text: dialed-number == "" ? "أدخل رقم الهاتف" : dialed-number;
+                        color: dialed-number == "" ? text-muted : text-primary;
+                        font-size: 18px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+
+                    // Backspace Button
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 16px;
+                        background: rgba(255, 255, 255, 0.08);
+                        y: (parent.height - 32px) / 2;
+                        
+                        Text {
+                            text: "⌫";
+                            font-size: 14px;
+                            color: text-primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => {
+                                backspace-pressed();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Keypad Grid
+            VerticalLayout {
+                spacing: 12px;
+                
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+                    DialButton { text: "3"; subtext: "DEF"; clicked => { dialed-number = dialed-number + "3"; } }
+                    DialButton { text: "2"; subtext: "ABC"; clicked => { dialed-number = dialed-number + "2"; } }
+                    DialButton { text: "1"; subtext: ""; clicked => { dialed-number = dialed-number + "1"; } }
+                }
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+                    DialButton { text: "6"; subtext: "MNO"; clicked => { dialed-number = dialed-number + "6"; } }
+                    DialButton { text: "5"; subtext: "JKL"; clicked => { dialed-number = dialed-number + "5"; } }
+                    DialButton { text: "4"; subtext: "GHI"; clicked => { dialed-number = dialed-number + "4"; } }
+                }
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+                    DialButton { text: "9"; subtext: "WXYZ"; clicked => { dialed-number = dialed-number + "9"; } }
+                    DialButton { text: "8"; subtext: "TUV"; clicked => { dialed-number = dialed-number + "8"; } }
+                    DialButton { text: "7"; subtext: "PQRS"; clicked => { dialed-number = dialed-number + "7"; } }
+                }
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+                    DialButton { text: "#"; subtext: ""; clicked => { dialed-number = dialed-number + "#"; } }
+                    DialButton { text: "0"; subtext: "+"; clicked => { dialed-number = dialed-number + "0"; } }
+                    DialButton { text: "*"; subtext: ""; clicked => { dialed-number = dialed-number + "*"; } }
+                }
+            }
+
+            // Action Row: Call and Clear
+            HorizontalLayout {
+                spacing: 12px;
+                
+                ActionButton {
+                    width: 75px;
+                    text: "مسح";
+                    icon: "🗑️";
+                    base-bg: red-color;
+                    hover-bg: red-color.darker(10%);
+                    clicked => {
+                        dialed-number = "";
+                    }
+                }
+                
+                ActionButton {
+                    horizontal-stretch: 1;
+                    text: "اتصال عبر الهاتف";
+                    icon: "📞";
+                    base-bg: green-color;
+                    hover-bg: green-color.darker(10%);
+                    clicked => {
+                        if (dialed-number != "") {
+                            is-calling = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

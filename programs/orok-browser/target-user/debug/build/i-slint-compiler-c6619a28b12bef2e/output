@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-compiler-1.5.0/widgets
+cargo:rustc-env=SLINT_WIDGETS_LIBRARY=/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/i-slint-compiler-c6619a28b12bef2e/out/included_library.rs

@@ -1,0 +1,892 @@
+// واجهة استوديو جيرسو المتقدم لإنشاء أكواد الـ QR - نظام سومر
+// تصميم زجاجي عصري متجاوب بالكامل مع جميع الشاشات ومعرّب بالكامل
+
+component TabButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <bool> active;
+    callback clicked;
+
+    border-radius: 8px;
+    background: active ? #6366f1 : (touch-area.has-hover ? #1e293b : #0f172a);
+    border-width: 1px;
+    border-color: active ? #818cf8 : (touch-area.has-hover ? #334155 : #1e293b);
+
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        alignment: center;
+
+        Text {
+            text: text;
+            color: active ? #ffffff : #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component ActionButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <color> base-color: #6366f1;
+    in-out property <color> hover-color: #4f46e5;
+    in-out property <color> text-color: #ffffff;
+    callback clicked;
+
+    border-radius: 8px;
+    background: touch-area.has-hover ? hover-color : base-color;
+    border-width: 1px;
+    border-color: touch-area.has-hover ? hover-color.brighter(20%) : base-color.brighter(10%);
+
+    animate background { duration: 100ms; }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        alignment: center;
+
+        Text {
+            text: text;
+            color: text-color;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component ToggleSwitch inherits Rectangle {
+    in-out property <bool> checked;
+    in-out property <string> label;
+    callback toggled;
+
+    width: 100%;
+    height: 32px;
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 12px;
+        alignment: end; // RTL
+
+        Text {
+            text: label;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+
+        // The Switch Pill
+        switch-pill := Rectangle {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: checked ? #10b981 : #334155;
+            border-width: 1px;
+            border-color: checked ? #34d399 : #475569;
+
+            animate background { duration: 150ms; }
+
+            // Inner circle
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background: #ffffff;
+                x: checked ? 23px : 3px;
+                y: 2px;
+
+                animate x { duration: 150ms; easing: ease-out; }
+            }
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            checked = !checked;
+            root.toggled();
+        }
+    }
+}
+
+component CustomInput inherits Rectangle {
+    in-out property <string> label;
+    in-out property <string> placeholder;
+    in-out property <string> text;
+    in-out property <bool> is-textarea: false;
+    callback edited(string);
+
+    background: #0f172a;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: input-focus.has-focus ? #6366f1 : #1e293b;
+    height: is-textarea ? 100px : 68px;
+
+    animate border-color { duration: 150ms; }
+
+    VerticalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        spacing: 2px;
+
+        Text {
+            text: label;
+            color: input-focus.has-focus ? #818cf8 : #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            horizontal-alignment: right; // RTL
+        }
+
+        input-focus := TextInput {
+            text: root.text;
+            color: #f1f5f9;
+            font-size: 14px;
+            single-line: !is-textarea;
+            wrap: is-textarea ? word-wrap : no-wrap;
+            horizontal-alignment: right; // RTL
+            
+            edited => {
+                root.text = self.text;
+                root.edited(self.text);
+            }
+        }
+    }
+}
+
+component ChoiceSelector inherits Rectangle {
+    in-out property <string> label;
+    in-out property <int> selected-index: 0;
+    in-out property <[string]> choices;
+    callback selection-changed(int);
+
+    background: transparent;
+    height: 60px;
+
+    VerticalLayout {
+        spacing: 6px;
+
+        Text {
+            text: label;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            horizontal-alignment: right; // RTL
+        }
+
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: end; // RTL
+
+            for choice[index] in choices : Rectangle {
+                border-radius: 6px;
+                background: selected-index == index ? #312e81 : #0f172a;
+                border-width: 1px;
+                border-color: selected-index == index ? #6366f1 : #1e293b;
+
+                animate background { duration: 120ms; }
+
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    alignment: center;
+
+                    Text {
+                        text: choice;
+                        color: selected-index == index ? #e0e7ff : #94a3b8;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+                }
+
+                TouchArea {
+                    clicked => {
+                        selected-index = index;
+                        root.selection-changed(index);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component ColorCircle inherits Rectangle {
+    in-out property <color> fill-color;
+    in-out property <bool> active;
+    callback clicked;
+
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background: fill-color;
+    border-width: active ? 2px : 0px;
+    border-color: #ffffff;
+
+    TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "استوديو جيرسو المتقدم لإنشاء أكواد الـ QR";
+    width: 1024px;
+    height: 740px;
+    background: #090d16;
+
+    // Responsive flag
+    property <bool> is-portrait: root.width < 900px;
+
+    // QR Properties
+    in-out property <int> qr-type: 0; // 0: Text/URL, 1: WiFi, 2: vCard, 3: Email, 4: SMS
+    in-out property <string> qr-text: "https://google.com";
+
+    // Sub-fields for WiFi
+    in-out property <string> wifi-ssid: "Sumer-Network";
+    in-out property <string> wifi-password: "sumer-password";
+    in-out property <int> wifi-security: 0; // 0: WPA/WPA2, 1: WEP, 2: Open
+
+    // Sub-fields for vCard
+    in-out property <string> contact-name: "Sumer Dev";
+    in-out property <string> contact-phone: "+9647700000000";
+    in-out property <string> contact-email: "dev@sumer.os";
+    in-out property <string> contact-org: "Sumer OS Team";
+    in-out property <string> contact-address: "Ur, Mesopotamia";
+
+    // Sub-fields for Email
+    in-out property <string> email-to: "support@sumer.os";
+    in-out property <string> email-subject: "Hello Sumer";
+    in-out property <string> email-body: "Sent from Girsu QR Code Generator.";
+
+    // Sub-fields for SMS
+    in-out property <string> sms-phone: "+9647700000000";
+    in-out property <string> sms-message: "Hello from Girsu QR!";
+
+    // Customization fields
+    in-out property <int> fg-style: 0; // 0: Solid, 1: Linear H, 2: Linear V, 3: Radial
+    in-out property <string> fg-color1: "#6366f1";
+    in-out property <string> fg-color2: "#d946ef";
+    in-out property <int> bg-style: 0; // 0: Solid, 1: Transparent
+    in-out property <string> bg-color: "#ffffff";
+
+    in-out property <int> module-shape: 0; // 0: Square, 1: Rounded, 2: Dot
+    in-out property <int> eye-frame-shape: 0; // 0: Square, 1: Rounded, 2: Circle
+    in-out property <int> eye-ball-shape: 0; // 0: Square, 1: Rounded, 2: Circle
+
+    in-out property <int> error-correction: 2; // 0: L, 1: M, 2: Q, 3: H
+    in-out property <int> margin: 1; // 0 to 4
+    
+    // Logo properties
+    in-out property <bool> has-logo: false;
+    in-out property <string> logo-path: "";
+    in-out property <int> logo-size: 20; // 10% to 30%
+    in-out property <bool> clear-logo-bg: true;
+
+    // Generated QR Output (Set from Rust)
+    in-out property <image> qr-image: @image-url("");
+    in-out property <string> status-message: "جاهز لإنشاء كود الـ QR";
+    in-out property <bool> has-qr: false;
+
+    // Callbacks
+    callback trigger-generate();
+    callback select-logo-file();
+    callback save-png-file();
+    callback save-svg-file();
+    callback copy-to-clipboard();
+
+    main-flicker := Flickable {
+        width: 100%;
+        height: 100%;
+        viewport-width: root.width;
+        viewport-height: root.is-portrait ? 1220px : root.height;
+        interactive: root.is-portrait;
+
+        // Preview Panel (Positioned on the LEFT in landscape, TOP in portrait)
+        preview-panel := Rectangle {
+            x: 16px;
+            y: 16px;
+            width: root.is-portrait ? (root.width - 32px) : (root.width - controls-panel.width - 48px);
+            height: root.is-portrait ? 480px : (root.height - 32px);
+            background: #0b0f19;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #1e293b;
+
+            VerticalLayout {
+                padding: 24px;
+                spacing: 20px;
+                alignment: space-between;
+
+                // QR Container Card
+                HorizontalLayout {
+                    alignment: center;
+                    
+                    Rectangle {
+                        background: #111827;
+                        border-radius: 16px;
+                        border-width: 1px;
+                        border-color: #374151;
+                        height: 280px;
+                        width: 280px;
+
+                        // Nice subtle gradient glow behind the QR code
+                        Rectangle {
+                            border-radius: 16px;
+                            background: @radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+                        }
+
+                        if has-qr : Image {
+                            source: root.qr-image;
+                            width: 240px;
+                            height: 240px;
+                            x: 20px;
+                            y: 20px;
+                        }
+
+                        if !has-qr : VerticalLayout {
+                            alignment: center;
+                            spacing: 12px;
+
+                            Text {
+                                text: "لم يتم إنشاء كود QR بعد";
+                                color: #4b5563;
+                                font-size: 14px;
+                                font-weight: 600;
+                                horizontal-alignment: center;
+                            }
+
+                            Text {
+                                text: "املأ البيانات على اليمين واضغط على إنشاء.";
+                                color: #374151;
+                                font-size: 12px;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Status Message Box
+                Rectangle {
+                    background: #1e1b4b;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: #312e81;
+                    height: 48px;
+
+                    HorizontalLayout {
+                        padding: 12px;
+                        spacing: 8px;
+                        alignment: center;
+
+                        Text {
+                            text: "ℹ " + root.status-message;
+                            color: #c7d2fe;
+                            font-size: 13px;
+                            font-weight: 500;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+
+                // Action Area
+                VerticalLayout {
+                    spacing: 12px;
+
+                    ActionButton {
+                        text: "✨ إنشاء كود الـ QR";
+                        base-color: #4f46e5;
+                        hover-color: #4338ca;
+                        clicked => { root.trigger-generate(); }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+
+                        ActionButton {
+                            width: (preview-panel.width - 58px) / 2;
+                            text: "💾 حفظ بصيغة PNG";
+                            base-color: #0f172a;
+                            hover-color: #1e293b;
+                            clicked => { root.save-png-file(); }
+                        }
+
+                        ActionButton {
+                            width: (preview-panel.width - 58px) / 2;
+                            text: "🎨 حفظ بصيغة SVG";
+                            base-color: #0f172a;
+                            hover-color: #1e293b;
+                            clicked => { root.save-svg-file(); }
+                        }
+                    }
+
+                    ActionButton {
+                        text: "📋 نسخ صورة الكود إلى الحافظة";
+                        base-color: #10b981;
+                        hover-color: #059669;
+                        clicked => { root.copy-to-clipboard(); }
+                    }
+                }
+
+                // Footer
+                Text {
+                    text: "استوديو جيرسو • نظام سومر 2026";
+                    color: #4b5563;
+                    font-size: 11px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+
+        // Controls Panel / Sidebar (Positioned on the RIGHT in landscape, BOTTOM in portrait)
+        controls-panel := Rectangle {
+            x: root.is-portrait ? 16px : (root.width - self.width - 16px);
+            y: root.is-portrait ? (preview-panel.y + preview-panel.height + 16px) : 16px;
+            width: root.is-portrait ? (root.width - 32px) : 520px;
+            height: root.is-portrait ? 680px : (root.height - 32px);
+            background: #0f172a;
+            border-radius: 12px;
+            border-width: 1px;
+            border-color: #1e293b;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                // Header / RTL Header layout
+                HorizontalLayout {
+                    alignment: end; // RTL
+                    spacing: 12px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+
+                        Text {
+                            text: "استوديو جيرسو";
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 800;
+                            letter-spacing: 1px;
+                            horizontal-alignment: right;
+                        }
+                        Text {
+                            text: "أداة توليد أكواد QR المتقدمة";
+                            color: #64748b;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: right;
+                        }
+                    }
+
+                    // Futuristic emblem
+                    Rectangle {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 8px;
+                        background: @linear-gradient(135deg, #6366f1 0%, #d946ef 100%);
+                        
+                        Text {
+                            text: "G";
+                            font-size: 22px;
+                            font-weight: 800;
+                            color: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // QR Type Navigation Tabs
+                HorizontalLayout {
+                    spacing: 4px;
+                    alignment: center;
+                    TabButton { text: "رابط / نص"; active: qr-type == 0; clicked => { qr-type = 0; root.trigger-generate(); } }
+                    TabButton { text: "واي فاي"; active: qr-type == 1; clicked => { qr-type = 1; root.trigger-generate(); } }
+                    TabButton { text: "بطاقة اتصال"; active: qr-type == 2; clicked => { qr-type = 2; root.trigger-generate(); } }
+                    TabButton { text: "بريد إلكتروني"; active: qr-type == 3; clicked => { qr-type = 3; root.trigger-generate(); } }
+                    TabButton { text: "رسالة نصية"; active: qr-type == 4; clicked => { qr-type = 4; root.trigger-generate(); } }
+                }
+
+                // Dynamic Input Sections inside a Flickable container
+                Flickable {
+                    viewport-height: root.is-portrait ? 500px : (root.height - 180px);
+                    interactive: true;
+
+                    VerticalLayout {
+                        spacing: 14px;
+                        padding-left: 4px;
+                        padding-right: 12px;
+
+                        // Section 1: Data Inputs based on active tab
+                        if qr-type == 0 : VerticalLayout {
+                            spacing: 10px;
+                            CustomInput {
+                                label: "الرابط أو النص";
+                                placeholder: "أدخل رابط الموقع أو النص هنا...";
+                                text: root.qr-text;
+                                is-textarea: true;
+                                edited(val) => { root.qr-text = val; root.trigger-generate(); }
+                            }
+                        }
+
+                        if qr-type == 1 : VerticalLayout {
+                            spacing: 10px;
+                            CustomInput {
+                                label: "اسم شبكة الواي فاي (SSID)";
+                                text: root.wifi-ssid;
+                                edited(val) => { root.wifi-ssid = val; root.trigger-generate(); }
+                            }
+                            CustomInput {
+                                label: "كلمة المرور";
+                                text: root.wifi-password;
+                                edited(val) => { root.wifi-password = val; root.trigger-generate(); }
+                            }
+                            ChoiceSelector {
+                                label: "نوع التشفير";
+                                selected-index: root.wifi-security;
+                                choices: ["WPA / WPA2", "WEP", "بدون تشفير (مفتوح)"];
+                                selection-changed(index) => { root.wifi-security = index; root.trigger-generate(); }
+                            }
+                        }
+
+                        if qr-type == 2 : VerticalLayout {
+                            spacing: 10px;
+                            CustomInput {
+                                label: "الاسم الكامل";
+                                text: root.contact-name;
+                                edited(val) => { root.contact-name = val; root.trigger-generate(); }
+                            }
+                            HorizontalLayout {
+                                spacing: 10px;
+                                CustomInput {
+                                    width: 48%;
+                                    label: "رقم الهاتف";
+                                    text: root.contact-phone;
+                                    edited(val) => { root.contact-phone = val; root.trigger-generate(); }
+                                }
+                                CustomInput {
+                                    width: 48%;
+                                    label: "البريد الإلكتروني";
+                                    text: root.contact-email;
+                                    edited(val) => { root.contact-email = val; root.trigger-generate(); }
+                                }
+                            }
+                            CustomInput {
+                                label: "المؤسسة / الشركة";
+                                text: root.contact-org;
+                                edited(val) => { root.contact-org = val; root.trigger-generate(); }
+                            }
+                            CustomInput {
+                                label: "العنوان";
+                                text: root.contact-address;
+                                edited(val) => { root.contact-address = val; root.trigger-generate(); }
+                            }
+                        }
+
+                        if qr-type == 3 : VerticalLayout {
+                            spacing: 10px;
+                            CustomInput {
+                                label: "المرسل إليه (بريد إلكتروني)";
+                                text: root.email-to;
+                                edited(val) => { root.email-to = val; root.trigger-generate(); }
+                            }
+                            CustomInput {
+                                label: "الموضوع";
+                                text: root.email-subject;
+                                edited(val) => { root.email-subject = val; root.trigger-generate(); }
+                            }
+                            CustomInput {
+                                label: "نص الرسالة";
+                                text: root.email-body;
+                                is-textarea: true;
+                                edited(val) => { root.email-body = val; root.trigger-generate(); }
+                            }
+                        }
+
+                        if qr-type == 4 : VerticalLayout {
+                            spacing: 10px;
+                            CustomInput {
+                                label: "رقم الهاتف";
+                                text: root.sms-phone;
+                                edited(val) => { root.sms-phone = val; root.trigger-generate(); }
+                            }
+                            CustomInput {
+                                label: "نص الرسالة القصيرة";
+                                text: root.sms-message;
+                                is-textarea: true;
+                                edited(val) => { root.sms-message = val; root.trigger-generate(); }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle {
+                            height: 9px;
+                            Rectangle {
+                                y: 4px;
+                                height: 1px;
+                                background: #1e293b;
+                            }
+                        }
+
+                        // Section 2: Colors Customization
+                        Text {
+                            text: "تخصيص الألوان والتدرجات";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: end;
+
+                            // Preset Palettes Selector
+                            VerticalLayout {
+                                spacing: 6px;
+                                Text {
+                                    text: "قوالب ألوان جاهزة";
+                                    color: #64748b;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: right;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    alignment: end;
+                                    ColorCircle { fill-color: #6366f1; active: fg-color1 == "#6366f1"; clicked => { fg-color1 = "#6366f1"; fg-color2 = "#d946ef"; root.trigger-generate(); } } // Cyberpunk
+                                    ColorCircle { fill-color: #f97316; active: fg-color1 == "#f97316"; clicked => { fg-color1 = "#f97316"; fg-color2 = "#ec4899"; root.trigger-generate(); } } // Sunset
+                                    ColorCircle { fill-color: #10b981; active: fg-color1 == "#10b981"; clicked => { fg-color1 = "#10b981"; fg-color2 = "#14b8a6"; root.trigger-generate(); } } // Emerald
+                                    ColorCircle { fill-color: #3b82f6; active: fg-color1 == "#3b82f6"; clicked => { fg-color1 = "#3b82f6"; fg-color2 = "#4f46e5"; root.trigger-generate(); } } // Ocean
+                                    ColorCircle { fill-color: #ef4444; active: fg-color1 == "#ef4444"; clicked => { fg-color1 = "#ef4444"; fg-color2 = "#f59e0b"; root.trigger-generate(); } } // Fiery
+                                    ColorCircle { fill-color: #020617; active: fg-color1 == "#020617"; clicked => { fg-color1 = "#020617"; fg-color2 = "#1e293b"; root.trigger-generate(); } } // Dark Classic
+                                }
+                            }
+                        }
+
+                        ChoiceSelector {
+                            label: "نمط اللون الأمامي";
+                            selected-index: root.fg-style;
+                            choices: ["لون ثابت", "تدرج خطي أفقي", "تدرج خطي عمودي", "تدرج دائري"];
+                            selection-changed(index) => { root.fg-style = index; root.trigger-generate(); }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 12px;
+                            CustomInput {
+                                width: 48%;
+                                label: fg-style == 0 ? "اللون الأمامي" : "بداية التدرج";
+                                text: root.fg-color1;
+                                edited(val) => { root.fg-color1 = val; root.trigger-generate(); }
+                            }
+                            if fg-style > 0 : CustomInput {
+                                width: 48%;
+                                label: "نهاية التدرج";
+                                text: root.fg-color2;
+                                edited(val) => { root.fg-color2 = val; root.trigger-generate(); }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: end;
+                            if bg-style == 0 : CustomInput {
+                                width: 280px;
+                                label: "لون الخلفية";
+                                text: root.bg-color;
+                                edited(val) => { root.bg-color = val; root.trigger-generate(); }
+                            }
+                            ChoiceSelector {
+                                width: 180px;
+                                label: "نمط الخلفية";
+                                selected-index: root.bg-style;
+                                choices: ["خلفية ملونة", "شفافة"];
+                                selection-changed(index) => { root.bg-style = index; root.trigger-generate(); }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle {
+                            height: 9px;
+                            Rectangle {
+                                y: 4px;
+                                height: 1px;
+                                background: #1e293b;
+                            }
+                        }
+
+                        // Section 3: Shapes & Patterns Customization
+                        Text {
+                            text: "تخصيص أشكال وهندسة الكود";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        ChoiceSelector {
+                            label: "النقاط الداخلية (الجسم)";
+                            selected-index: root.module-shape;
+                            choices: ["مربع", "دائري الحواف", "نقطة دائرية"];
+                            selection-changed(index) => { root.module-shape = index; root.trigger-generate(); }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 12px;
+                            ChoiceSelector {
+                                width: 48%;
+                                label: "إطار العين الزاوية";
+                                selected-index: root.eye-frame-shape;
+                                choices: ["مربع", "دائري الحواف", "دائري"];
+                                selection-changed(index) => { root.eye-frame-shape = index; root.trigger-generate(); }
+                            }
+                            ChoiceSelector {
+                                width: 48%;
+                                label: "مركز العين الزاوية";
+                                selected-index: root.eye-ball-shape;
+                                choices: ["مربع", "دائري الحواف", "دائري"];
+                                selection-changed(index) => { root.eye-ball-shape = index; root.trigger-generate(); }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle {
+                            height: 9px;
+                            Rectangle {
+                                y: 4px;
+                                height: 1px;
+                                background: #1e293b;
+                            }
+                        }
+
+                        // Section 4: Advanced QR Standards & Margins
+                        Text {
+                            text: "المواصفات والمعايير";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 16px;
+                            ChoiceSelector {
+                                width: 220px;
+                                label: "المنطقة الهادئة (الهامش)";
+                                selected-index: root.margin;
+                                choices: ["بدون هامش", "1 خلية", "2 خلية", "3 خلايا", "4 (قياسي)"];
+                                selection-changed(index) => { root.margin = index; root.trigger-generate(); }
+                            }
+                            ChoiceSelector {
+                                width: 240px;
+                                label: "مستوى تصحيح الأخطاء";
+                                selected-index: root.error-correction;
+                                choices: ["منخفض (7%)", "متوسط (15%)", "ربع (25%)", "مرتفع (30%)"];
+                                selection-changed(index) => { root.error-correction = index; root.trigger-generate(); }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle {
+                            height: 9px;
+                            Rectangle {
+                                y: 4px;
+                                height: 1px;
+                                background: #1e293b;
+                            }
+                        }
+
+                        // Section 5: Logo Overlay Customization
+                        Text {
+                            text: "الشعار والهوية البصرية";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        ToggleSwitch {
+                            checked: root.has-logo;
+                            label: "دمج شعار في مركز الكود";
+                            toggled => {
+                                root.has-logo = !root.has-logo;
+                                if (root.has-logo && root.error-correction < 2) {
+                                    root.error-correction = 2; // Quartile
+                                }
+                                root.trigger-generate();
+                            }
+                        }
+
+                        if has-logo : VerticalLayout {
+                            spacing: 12px;
+                            HorizontalLayout {
+                                spacing: 12px;
+                                alignment: end;
+                                VerticalLayout {
+                                    alignment: center;
+                                    ActionButton {
+                                        text: "اختر ملف...";
+                                        base-color: #1e293b;
+                                        hover-color: #334155;
+                                        clicked => { root.select-logo-file(); }
+                                    }
+                                }
+                                CustomInput {
+                                    width: 340px;
+                                    label: "مسار ملف الشعار";
+                                    placeholder: "اضغط على اختر ملف...";
+                                    text: root.logo-path;
+                                    edited(val) => { root.logo-path = val; root.trigger-generate(); }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 16px;
+                                alignment: end;
+
+                                ToggleSwitch {
+                                    checked: root.clear-logo-bg;
+                                    label: "رسم خلفية حماية تحت الشعار";
+                                    toggled => {
+                                        root.clear-logo-bg = !root.clear-logo-bg;
+                                        root.trigger-generate();
+                                    }
+                                }
+
+                                ChoiceSelector {
+                                    width: 280px;
+                                    label: "حجم الشعار المعروض";
+                                    selected-index: root.logo-size == 15 ? 0 : (root.logo-size == 20 ? 1 : 2);
+                                    choices: ["صغير (15%)", "متوسط (20%)", "كبير (25%)"];
+                                    selection-changed(index) => {
+                                        if (index == 0) { root.logo-size = 15; }
+                                        if (index == 1) { root.logo-size = 20; }
+                                        if (index == 2) { root.logo-size = 25; }
+                                        root.trigger-generate();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

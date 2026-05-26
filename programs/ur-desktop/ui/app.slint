@@ -65,12 +65,11 @@ export component MainWindow inherits Window {
     callback trigger-volume-timer();
     callback trigger-brightness-timer();
     
-    // Drag and Drop Models exposed to Rust
     in-out property <[AppIcon]> dock-icons: [
         { id: "files", name: "مدير الملفات", icon: "📁", bg_color: #3b82f6, hover_bg_color: #2563eb },
         { id: "console", name: "شيل دجلة", icon: "💻", bg_color: #10b981, hover_bg_color: #059669 },
         { id: "tv", name: "أندرويد تي في", icon: "📺", bg_color: #f97316, hover_bg_color: #ea580c },
-        { id: "wallpapers", name: "الخلفيات", icon: "🎨", bg_color: #8b5cf6, hover_bg_color: #7c3aed }
+        { id: "prism-screenshot", name: "لقطة الشاشة", icon: "📸", bg_color: #ec4899, hover_bg_color: #db2777 }
     ];
     in-out property <AppIcon> dragged-icon;
     in-out property <bool> is-dragging-icon: false;

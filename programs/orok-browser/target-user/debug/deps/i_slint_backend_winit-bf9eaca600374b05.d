@@ -1,0 +1,14 @@
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/libi_slint_backend_winit-bf9eaca600374b05.rmeta: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/winitwindowadapter.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/event_loop.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg/glcontext.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/sw.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/accesskit.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/README.md
+
+/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/deps/i_slint_backend_winit-bf9eaca600374b05.d: /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/lib.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/winitwindowadapter.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/event_loop.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg/glcontext.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/sw.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/accesskit.rs /home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/README.md
+
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/lib.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/winitwindowadapter.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/event_loop.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/femtovg/glcontext.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/renderer/sw.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/accesskit.rs:
+/home/debian/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/i-slint-backend-winit-1.5.0/README.md:
+
+# env-dep:CARGO_PKG_VERSION=1.5.0

@@ -1,0 +1,17 @@
+[package]
+name = "orok-browser"
+version = "0.9.8"
+edition = "2021"
+authors = ["Sumer OS Developers"]
+description = "The official web browser for Sumer OS."
+
+[dependencies]
+slint = "1.5.0"
+headless_chrome = "1.0.14"
+url = "2.5.0"
+serde_json = "1.0"
+open = "5.0.0"
+image = "0.25.2"
+
+[build-dependencies]
+slint-build = "1.5.0"

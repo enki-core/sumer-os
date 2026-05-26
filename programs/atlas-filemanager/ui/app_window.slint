@@ -1,0 +1,498 @@
+import { Button, LineEdit, ScrollView } from "std-widgets.slint";
+import { SidebarButton } from "./components/sidebar_button.slint";
+import { CreateDialog } from "./dialogs/create_dialog.slint";
+import { RenameDialog } from "./dialogs/rename_dialog.slint";
+import { TextPreviewDialog } from "./dialogs/text_preview.slint";
+
+import { FileItem, PathSegment } from "./types.slint";
+import { Toolbar } from "./layouts/toolbar.slint";
+import { FileListPanel } from "./layouts/file_list_panel.slint";
+import { SortPanel } from "./dialogs/sort_panel.slint";
+
+export { FileItem, PathSegment }
+
+export component AppWindow inherits Window {
+    title: "أطلس لمدير الملفات — Atlas File Manager";
+    width: 980px;
+    height: 620px;
+    background: @linear-gradient(135deg, #050814 0%, #0c152d 50%, #03060f 100%);
+    default-font-family: "Outfit";
+
+    // --- State Properties ---
+    in-out property <string> current-path: "/home/debian/Desktop/Sumer-OS-Portable";
+    in-out property <string> search-query: "";
+    in-out property <[FileItem]> files: [];
+    in-out property <FileItem> selected-item;
+    in-out property <bool> has-selected: false;
+    
+    in-out property <string> status-msg: "جاهز";
+    in-out property <color> status-color: #10b981;
+    in-out property <bool> is-loading: false;
+
+    // Preview state
+    in-out property <string> text-preview: "";
+    in-out property <bool> show-text-preview: false;
+
+    // Dialog state for Creating File/Folder
+    in-out property <bool> show-create-dialog: false;
+    in-out property <bool> create-dialog-is-folder: true;
+    in-out property <string> create-input-name: "";
+
+    // Dialog state for Rename
+    in-out property <bool> show-rename-dialog: false;
+    in-out property <string> rename-input-name: "";
+
+    // Clipboard state
+    in-out property <bool> has-clipboard: false;
+    in-out property <string> clipboard-source-path: "";
+    in-out property <bool> clipboard-is-cut: false;
+
+    // History state
+    in-out property <bool> can-go-back: false;
+
+    // Path segments state (Breadcrumbs)
+    in-out property <[PathSegment]> path-segments: [];
+    in-out property <bool> edit-path-mode: false;
+
+    // Dropdown Settings / View options
+    in-out property <bool> show-sort-menu: false;
+    in-out property <string> view-mode: "list"; // "list", "grid", "compact"
+    in-out property <string> sort-mode: "a-z"; // "a-z", "z-a", "latest", "oldest", "size", "type"
+    in-out property <length> grid-icon-size: 48px;
+    in-out property <bool> show-hidden: false;
+
+    // --- Callbacks ---
+    callback go-back();
+    callback go-up();
+    callback refresh();
+    callback change-directory(string);
+    callback select-item(FileItem);
+    callback open-item(FileItem);
+    callback delete-item(FileItem);
+    callback rename-item(FileItem, string);
+    callback create-item(string, bool);
+    
+    callback load-text-preview(FileItem);
+    callback copy-item(FileItem);
+    callback cut-item(FileItem);
+    callback paste-item();
+
+    forward-focus: main-focus;
+
+    // Root container
+    Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: @linear-gradient(135deg, #050814 0%, #0c152d 50%, #03060f 100%);
+
+        main-focus := FocusScope {
+            width: 100%;
+            height: 100%;
+
+            key-pressed(event) => {
+                if (event.text == Key.F2) {
+                    if (root.has-selected) {
+                        root.rename-input-name = root.selected-item.name;
+                        root.show-rename-dialog = true;
+                        return accept;
+                    }
+                }
+                return reject;
+            }
+
+        // 🕸️ Background Glow Effects
+        Rectangle {
+            x: -150px; y: -150px; width: 400px; height: 400px;
+            background: #3b82f615;
+            border-radius: 200px;
+        }
+        Rectangle {
+            x: parent.width - 250px; y: parent.height - 250px; width: 500px; height: 500px;
+            background: #8b5cf610;
+            border-radius: 250px;
+        }
+
+        // 📱 Main Window Container
+        VerticalLayout {
+            width: parent.width;
+            height: parent.height;
+            padding: 16px;
+            spacing: 12px;
+
+            // 1. TOP HEADER & SUB-HEADER (Interactive Path Bar & Search Bar)
+            Toolbar {
+                current-path <=> root.current-path;
+                search-query <=> root.search-query;
+                can-go-back: root.can-go-back;
+                path-segments: root.path-segments;
+                edit-path-mode <=> root.edit-path-mode;
+                view-mode <=> root.view-mode;
+                show-sort-menu <=> root.show-sort-menu;
+
+                refresh => { root.refresh(); }
+                go-up => { root.go-up(); }
+                go-back => { root.go-back(); }
+                change-directory(path) => { root.change-directory(path); }
+            }
+
+            // 3. MAIN APP PANEL: Horizontal sidebar, files list, and file details
+            HorizontalLayout {
+                spacing: 12px;
+                vertical-stretch: 1;
+
+                // LEFT SIDE: File Details/Metadata Card & Clipboard Indicator
+                Rectangle {
+                    width: 200px;
+                    background: #ffffff02;
+                    border-radius: 12px;
+                    border-width: 1px;
+                    border-color: #ffffff0a;
+                    padding: 12px;
+
+                    VerticalLayout {
+                        width: 100%;
+                        height: 100%;
+                        spacing: 14px;
+
+                        // Clipboard Info Area
+                        if root.has-clipboard : Rectangle {
+                            background: #3b82f615;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #3b82f638;
+                            padding: 8px;
+
+                            VerticalLayout {
+                                spacing: 6px;
+                                Text {
+                                    text: root.clipboard-is-cut ? "قص قيد الانتظار ✂️" : "نسخ قيد الانتظار 📋";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: #60a5fa;
+                                    horizontal-alignment: center;
+                                }
+                                Button {
+                                    text: "لصق هنا 📥";
+                                    clicked => { root.paste-item(); }
+                                }
+                            }
+                        }
+
+                        if !root.has-selected : VerticalLayout {
+                            alignment: center;
+                            spacing: 12px;
+                            vertical-stretch: 1;
+
+                            Text {
+                                text: "🔍";
+                                font-size: 40px;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "حدد ملفاً أو مجلداً لمعاينة تفاصيله وإجراء العمليات";
+                                font-size: 12px;
+                                color: #64748b;
+                                horizontal-alignment: center;
+                                wrap: word-wrap;
+                            }
+                        }
+
+                        if root.has-selected : VerticalLayout {
+                            spacing: 12px;
+                            vertical-stretch: 1;
+
+                            // Big file icon
+                            Text {
+                                text: root.selected-item.icon;
+                                font-size: 48px;
+                                horizontal-alignment: center;
+                            }
+
+                            // Selected Item Name
+                            Text {
+                                text: root.selected-item.name;
+                                font-size: 14px;
+                                font-weight: 700;
+                                color: #ffffff;
+                                horizontal-alignment: center;
+                                overflow: elide;
+                                wrap: word-wrap;
+                            }
+
+                            // Horizontal separator line
+                            Rectangle {
+                                height: 1px;
+                                background: #ffffff08;
+                            }
+
+                            // Details grid
+                            VerticalLayout {
+                                spacing: 6px;
+
+                                HorizontalLayout {
+                                    Text { text: root.selected-item.file-type == "folder" ? "مجلد" : root.selected-item.file-type; font-size: 12px; color: #cbd5e1; }
+                                    Text { text: "النوع: "; font-size: 12px; color: #64748b; }
+                                }
+
+                                HorizontalLayout {
+                                    Text { text: root.selected-item.size-formatted; font-size: 12px; color: #cbd5e1; }
+                                    Text { text: "الحجم: "; font-size: 12px; color: #64748b; }
+                                }
+
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text { text: "تاريخ التعديل: "; font-size: 12px; color: #64748b; }
+                                    Text { text: root.selected-item.modified-formatted; font-size: 11px; color: #94a3b8; }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 1px;
+                                background: #ffffff08;
+                            }
+
+                            // Actions Section
+                            VerticalLayout {
+                                spacing: 8px;
+
+                                Text {
+                                    text: "العمليات المتاحة";
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    color: #64748b;
+                                    horizontal-alignment: right;
+                                }
+
+                                if root.selected-item.file-type == "text" : Button {
+                                    text: "معاينة سريعة 👁️";
+                                    clicked => { root.load-text-preview(root.selected-item); }
+                                }
+
+                                Button {
+                                    text: "نسخ 📋";
+                                    clicked => { root.copy-item(root.selected-item); }
+                                }
+
+                                Button {
+                                    text: "قص ✂️";
+                                    clicked => { root.cut-item(root.selected-item); }
+                                }
+
+                                Button {
+                                    text: "إعادة تسمية ✏️";
+                                    clicked => {
+                                        root.rename-input-name = root.selected-item.name;
+                                        root.show-rename-dialog = true;
+                                    }
+                                }
+
+                                Button {
+                                    text: "حذف 🗑️";
+                                    clicked => { root.delete-item(root.selected-item); }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // CENTER: Main File List Area
+                FileListPanel {
+                    horizontal-stretch: 1;
+                    background: #ffffff02;
+                    border-radius: 12px;
+                    border-width: 1px;
+                    border-color: #ffffff0a;
+
+                    files: root.files;
+                    is-loading: root.is-loading;
+                    view-mode: root.view-mode;
+                    grid-icon-size: root.grid-icon-size;
+                    has-selected: root.has-selected;
+                    selected-item: root.selected-item;
+
+                    select-item(item) => { root.select-item(item); }
+                    open-item(item) => { root.open-item(item); }
+                }
+
+                // RIGHT SIDE: Navigation Sidebar & Quick Actions
+                Rectangle {
+                    width: 180px;
+                    background: #ffffff02;
+                    border-radius: 12px;
+                    border-width: 1px;
+                    border-color: #ffffff0a;
+                    padding: 10px;
+
+                    VerticalLayout {
+                        width: 100%;
+                        height: 100%;
+                        spacing: 8px;
+
+                        Text {
+                            text: "الوصول السريع";
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: #64748b;
+                            horizontal-alignment: right;
+                            padding-right: 4px;
+                        }
+
+                        SidebarButton {
+                            text: "المجلد الشخصي";
+                            icon: "🏠";
+                            active: root.current-path == "/home/debian";
+                            clicked => { root.change-directory("/home/debian"); }
+                        }
+
+                        SidebarButton {
+                            text: "سطح المكتب";
+                            icon: "🖥️";
+                            active: root.current-path == "/home/debian/Desktop" || root.current-path == "/home/debian/Desktop/Sumer-OS-Portable";
+                            clicked => { root.change-directory("/home/debian/Desktop/Sumer-OS-Portable"); }
+                        }
+
+                        SidebarButton {
+                            text: "المستندات";
+                            icon: "📂";
+                            active: root.current-path == "/home/debian/Documents";
+                            clicked => { root.change-directory("/home/debian/Documents"); }
+                        }
+
+                        SidebarButton {
+                            text: "التنزيلات";
+                            icon: "📥";
+                            active: root.current-path == "/home/debian/Downloads";
+                            clicked => { root.change-directory("/home/debian/Downloads"); }
+                        }
+
+                        SidebarButton {
+                            text: "جذر النظام /";
+                            icon: "💾";
+                            active: root.current-path == "/";
+                            clicked => { root.change-directory("/"); }
+                        }
+
+                        Rectangle {
+                            height: 17px;
+                            Rectangle {
+                                y: 8px;
+                                height: 1px;
+                                background: #ffffff10;
+                            }
+                        }
+
+                        Text {
+                            text: "إنشاء جديد";
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: #64748b;
+                            horizontal-alignment: right;
+                        }
+
+                        // Create Folder Button
+                        SidebarButton {
+                            text: "مجلد جديد";
+                            icon: "📁";
+                            active: false;
+                            clicked => {
+                                root.create-input-name = "مجلد جديد";
+                                root.create-dialog-is-folder = true;
+                                root.show-create-dialog = true;
+                            }
+                        }
+
+                        // Create File Button
+                        SidebarButton {
+                            text: "ملف جديد";
+                            icon: "📄";
+                            active: false;
+                            clicked => {
+                                root.create-input-name = "ملف جديد.txt";
+                                root.create-dialog-is-folder = false;
+                                root.show-create-dialog = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. BOTTOM FOOTER: Status Bar
+            Rectangle {
+                height: 24px;
+                background: #ffffff02;
+                border-radius: 6px;
+                border-width: 1px;
+                border-color: #ffffff06;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    alignment: space-between;
+
+                    // Clipboard helper text (left side)
+                    Text {
+                        text: root.has-clipboard ? "يوجد ملف بالحافظة قيد الانتظار" : "";
+                        font-size: 11px;
+                        color: #3b82f6;
+                        vertical-alignment: center;
+                    }
+
+                    // Message text (right side)
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Text {
+                            text: root.status-msg;
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: root.status-color;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "حالة النظام:";
+                            font-size: 11px;
+                            color: #64748b;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 🎭 POPUP DIALOGS & OVERLAYS (Floating Glassmorphism)
+        if (root.show-text-preview) : TextPreviewDialog {
+            file-name: root.selected-item.name;
+            text-content: root.text-preview;
+            close => { root.show-text-preview = false; }
+        }
+
+        if (root.show-create-dialog) : CreateDialog {
+            is-folder: root.create-dialog-is-folder;
+            input-name: root.create-input-name;
+            confirm(name) => {
+                root.show-create-dialog = false;
+                root.create-item(name, root.create-dialog-is-folder);
+            }
+            cancel => { root.show-create-dialog = false; }
+        }
+
+        if (root.show-rename-dialog) : RenameDialog {
+            input-name: root.rename-input-name;
+            confirm(name) => {
+                root.show-rename-dialog = false;
+                root.rename-item(root.selected-item, name);
+            }
+            cancel => { root.show-rename-dialog = false; }
+        }
+
+        // ⚙️ SORT & VIEW OPTIONS DROPDOWN CARD (Floating Overlay)
+        if (root.show-sort-menu) : SortPanel {
+            x: 16px; y: 64px;
+            grid-icon-size <=> root.grid-icon-size;
+            sort-mode <=> root.sort-mode;
+            show-hidden <=> root.show-hidden;
+
+            refresh => { root.refresh(); }
+        }
+    }
+}
+}

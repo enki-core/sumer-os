@@ -1,0 +1,43 @@
+export component ActionButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <string> icon: "";
+    in-out property <color> base-bg: #6366f1;
+    in-out property <color> hover-bg: #4f46e5;
+    in-out property <color> text-color: #ffffff;
+    callback clicked;
+
+    border-radius: 8px;
+    background: touch-area.has-hover ? hover-bg : base-bg;
+    border-width: 1px;
+    border-color: touch-area.has-hover ? hover-bg.brighter(20%) : base-bg.brighter(10%);
+
+    animate background { duration: 120ms; }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 8px;
+        alignment: center;
+
+        Text {
+            text: text;
+            color: text-color;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+
+        if icon != "" : Text {
+            text: icon;
+            color: text-color;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}

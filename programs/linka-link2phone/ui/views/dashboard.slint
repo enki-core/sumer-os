@@ -1,0 +1,641 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { ActionButton } from "../components/action_button.slint";
+import { PhoneMockup } from "../components/phone_mockup.slint";
+
+export component DashboardView inherits Rectangle {
+    // Theme Colors (passed from root/AppWindow)
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <int> active-tab;
+    in-out property <bool> connected;
+    in-out property <string> device-name;
+    in-out property <int> battery-level;
+    in-out property <string> connection-type;
+    in-out property <bool> is-ringing;
+    in-out property <bool> is-mirroring;
+    in-out property <string> pc-clipboard;
+    in-out property <string> phone-clipboard;
+    in-out property <string> clipboard-sync-message;
+
+    // New Technical State Properties
+    in-out property <bool> flashlight-on;
+    in-out property <int> active-phone-app;
+    in-out property <bool> is-mirroring-fullscreen;
+    in-out property <bool> media-playing;
+    in-out property <float> media-volume;
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 20px;
+
+        // Title row
+        HorizontalLayout {
+            alignment: end;
+            VerticalLayout {
+                spacing: 4px;
+                Text {
+                    text: "لوحة التحكم الرئيسية";
+                    color: text-primary;
+                    font-size: 22px;
+                    font-weight: 800;
+                    horizontal-alignment: right;
+                }
+                Text {
+                    text: "إدارة الاتصال السريع والخدمات الأساسية لهاتفك الذكي";
+                    color: text-secondary;
+                    font-size: 12px;
+                    horizontal-alignment: right;
+                }
+            }
+        }
+
+        // Stats Grid
+        HorizontalLayout {
+            spacing: 16px;
+            
+            // Stat Card 3: Wi-Fi
+            GlassCard {
+                width: (parent.width - 32px) / 3;
+                height: 90px;
+                VerticalLayout {
+                    padding: 12px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "📶"; font-size: 18px; }
+                        Text { text: "الاتصال اللاسلكي"; color: text-secondary; font-size: 11px; font-weight: 700; }
+                    }
+                    Text {
+                        text: connection-type;
+                        color: text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+
+            // Stat Card 2: Battery
+            GlassCard {
+                width: (parent.width - 32px) / 3;
+                height: 90px;
+                VerticalLayout {
+                    padding: 12px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: battery-level > 20 ? "🔋" : "🪫"; font-size: 18px; }
+                        Text { text: "مستوى شحن البطارية"; color: text-secondary; font-size: 11px; font-weight: 700; }
+                    }
+                    Text {
+                        text: battery-level + "% - " + (connected ? "متصل ويشحن" : "غير متصل");
+                        color: green-color;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+
+            // Stat Card 1: Connection Status
+            GlassCard {
+                width: (parent.width - 32px) / 3;
+                height: 90px;
+                VerticalLayout {
+                    padding: 12px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: connected ? green-color : red-color;
+                            y: 5px;
+                        }
+                        Text { text: "حالة الربط المباشر"; color: text-secondary; font-size: 11px; font-weight: 700; }
+                    }
+                    Text {
+                        text: connected ? "متصل بـ " + device-name : "غير متصل بالهاتف";
+                        color: text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: right;
+                    }
+                }
+            }
+        }
+
+        // Interactive Panels
+        HorizontalLayout {
+            spacing: 16px;
+            vertical-stretch: 1;
+
+            // Left Side Panel: Tools, Resources, Media, Clipboard (RTL)
+            VerticalLayout {
+                spacing: 16px;
+                width: (parent.width - 16px) / 2;
+
+                // Row 1: Tools & Resources side-by-side
+                HorizontalLayout {
+                    spacing: 16px;
+                    height: 135px;
+
+                    // Quick Tools (Flashlight & Ringer)
+                    GlassCard {
+                        width: (parent.width - 16px) / 2;
+                        VerticalLayout {
+                            padding: 12px;
+                            spacing: 8px;
+                            alignment: space-between;
+                            
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text { text: "🛠️"; font-size: 14px; }
+                                Text {
+                                    text: "أدوات الهاتف السريعة";
+                                    color: text-primary;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                }
+                            }
+
+                            // Flashlight Toggle Action
+                            ActionButton {
+                                text: flashlight-on ? "إطفاء الكشاف" : "تشغيل الكشاف";
+                                icon: flashlight-on ? "🔦" : "💡";
+                                base-bg: flashlight-on ? green-color : rgba(255, 255, 255, 0.08);
+                                hover-bg: flashlight-on ? green-color.darker(10%) : rgba(255, 255, 255, 0.15);
+                                clicked => { flashlight-on = !flashlight-on; }
+                            }
+
+                            // Ringer Action
+                            if !is-ringing : ActionButton {
+                                text: "تفعيل الرنين";
+                                icon: "🔊";
+                                base-bg: accent-color;
+                                hover-bg: accent-hover;
+                                clicked => { is-ringing = true; }
+                            }
+                            if is-ringing : ActionButton {
+                                text: "إيقاف الرنين";
+                                icon: "📴";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(15%);
+                                clicked => { is-ringing = false; }
+                            }
+                        }
+                    }
+
+                    // Resource Monitor Panel
+                    GlassCard {
+                        width: (parent.width - 16px) / 2;
+                        VerticalLayout {
+                            padding: 12px;
+                            spacing: 6px;
+                            alignment: center;
+                            
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text { text: "📊"; font-size: 14px; }
+                                Text {
+                                    text: "لوحة موارد الهاتف";
+                                    color: text-primary;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                }
+                            }
+
+                            // RAM Monitor Widget
+                            VerticalLayout {
+                                spacing: 1px;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "5.4 / 12 GB"; color: text-secondary; font-size: 8px; }
+                                    Text { text: "الرام المستهلكة"; color: text-secondary; font-size: 8px; }
+                                }
+                                Rectangle {
+                                    height: 5px;
+                                    background: rgba(255, 255, 255, 0.1);
+                                    border-radius: 2.5px;
+                                    HorizontalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 45%;
+                                            height: 100%;
+                                            background: accent-color;
+                                            border-radius: 2.5px;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Storage Monitor Widget
+                            VerticalLayout {
+                                spacing: 1px;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "128 / 512 GB"; color: text-secondary; font-size: 8px; }
+                                    Text { text: "سعة التخزين"; color: text-secondary; font-size: 8px; }
+                                }
+                                Rectangle {
+                                    height: 5px;
+                                    background: rgba(255, 255, 255, 0.1);
+                                    border-radius: 2.5px;
+                                    HorizontalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 25%;
+                                            height: 100%;
+                                            background: green-color;
+                                            border-radius: 2.5px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Row 2: Media Controller Panel
+                GlassCard {
+                    height: 110px;
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 6px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "🎵"; font-size: 16px; }
+                            Text {
+                                text: "التحكم بالوسائط والميديا";
+                                color: text-primary;
+                                font-size: 12px;
+                                font-weight: 700;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            // Volume Controller
+                            VerticalLayout {
+                                spacing: 4px;
+                                width: 100px;
+                                alignment: center;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: Math.round(media-volume * 100) + "%"; color: text-secondary; font-size: 8px; }
+                                    Text { text: "صوت الهاتف"; color: text-secondary; font-size: 8px; }
+                                }
+                                Rectangle {
+                                    height: 4px;
+                                    background: rgba(255, 255, 255, 0.15);
+                                    border-radius: 2px;
+                                    
+                                    Rectangle {
+                                        x: 0px;
+                                        width: media-volume * 100px;
+                                        height: 100%;
+                                        background: accent-color;
+                                        border-radius: 2px;
+                                    }
+                                    TouchArea {
+                                        clicked => { media-volume = self.pressed-x / 100px; }
+                                        moved => {
+                                            if (self.pressed-x >= 0px && self.pressed-x <= 100px) {
+                                                media-volume = self.pressed-x / 100px;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Song Metadata & Playback Action controls
+                            VerticalLayout {
+                                spacing: 2px;
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                
+                                Text {
+                                    text: "مقام السيكا العراقي - رنيم";
+                                    color: text-primary;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    horizontal-alignment: right;
+                                }
+                                Text {
+                                    text: "تشغيل من الهاتف الذكي";
+                                    color: text-muted;
+                                    font-size: 9px;
+                                    horizontal-alignment: right;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 12px;
+                                    alignment: end;
+                                    Text { text: "⏮"; font-size: 12px; TouchArea { clicked => { active-phone-app = 1; } } }
+                                    Text {
+                                        text: media-playing ? "⏸" : "▶️";
+                                        font-size: 14px;
+                                        font-weight: 700;
+                                        TouchArea {
+                                            clicked => {
+                                                media-playing = !media-playing;
+                                                active-phone-app = 1;
+                                            }
+                                        }
+                                    }
+                                    Text { text: "⏭"; font-size: 12px; TouchArea { clicked => { active-phone-app = 1; } } }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Row 3: Shared Clipboard Panel
+                GlassCard {
+                    vertical-stretch: 1;
+                    VerticalLayout {
+                        padding: 14px;
+                        spacing: 8px;
+                        
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "📋"; font-size: 16px; }
+                            Text {
+                                text: "الحافظة المشتركة";
+                                color: text-primary;
+                                font-size: 12px;
+                                font-weight: 700;
+                            }
+                        }
+
+                        Text {
+                            text: clipboard-sync-message;
+                            color: green-color;
+                            font-size: 10px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        VerticalLayout {
+                            spacing: 6px;
+                            
+                            // PC Clipboard Row
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text { text: "منسوخ من الحاسوب:"; color: text-muted; font-size: 8px; horizontal-alignment: right; }
+                                Rectangle {
+                                    height: 34px;
+                                    background: rgba(0, 0, 0, 0.2);
+                                    border-radius: 6px;
+                                    border-width: 1px;
+                                    border-color: theme-border-color;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        padding-right: 10px;
+                                        alignment: space-between;
+                                        
+                                        ActionButton {
+                                            text: "نسخ";
+                                            icon: "📄";
+                                            base-bg: rgba(255, 255, 255, 0.08);
+                                            hover-bg: rgba(255, 255, 255, 0.15);
+                                            clicked => { clipboard-sync-message = "تمت إعادة النسخ للحافظة!"; }
+                                        }
+                                        Text {
+                                            text: pc-clipboard;
+                                            color: text-primary;
+                                            font-size: 10px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Phone Clipboard Row
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text { text: "منسوخ من الهاتف:"; color: text-muted; font-size: 8px; horizontal-alignment: right; }
+                                Rectangle {
+                                    height: 34px;
+                                    background: rgba(0, 0, 0, 0.2);
+                                    border-radius: 6px;
+                                    border-width: 1px;
+                                    border-color: theme-border-color;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        padding-right: 10px;
+                                        alignment: space-between;
+                                        
+                                        ActionButton {
+                                            text: "حفظ للحاسوب";
+                                            icon: "📥";
+                                            base-bg: rgba(99, 102, 241, 0.15);
+                                            hover-bg: rgba(99, 102, 241, 0.25);
+                                            clicked => { clipboard-sync-message = "تم حفظ نص الهاتف بحافظة الحاسوب!"; }
+                                        }
+                                        Text {
+                                            text: phone-clipboard;
+                                            color: text-primary;
+                                            font-size: 10px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Right Side Panel: Screen Mirroring & App Mirroring (RTL)
+            GlassCard {
+                width: (parent.width - 16px) / 2;
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 12px;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "📱"; font-size: 18px; }
+                        Text {
+                            text: is-mirroring-fullscreen ? "بث كامل الشاشة" : "بث شاشة الهاتف المباشر";
+                            color: text-primary;
+                            font-size: 14px;
+                            font-weight: 700;
+                        }
+                    }
+
+                    if !is-mirroring : VerticalLayout {
+                        spacing: 16px;
+                        alignment: center;
+                        
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 110px;
+                                height: 190px;
+                                border-radius: 16px;
+                                border-width: 3px;
+                                border-color: theme-border-color;
+                                background: rgba(0, 0, 0, 0.2);
+
+                                Text {
+                                    text: "💤";
+                                    font-size: 32px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "بث شاشة الهاتف معطل حالياً.";
+                            color: text-secondary;
+                            font-size: 12px;
+                            horizontal-alignment: center;
+                        }
+
+                        ActionButton {
+                            text: "بدء بث الشاشة";
+                            icon: "▶️";
+                            base-bg: green-color;
+                            hover-bg: green-color.darker(10%);
+                            clicked => { is-mirroring = true; }
+                        }
+                    }
+
+                    if is-mirroring : HorizontalLayout {
+                        spacing: 14px;
+                        alignment: center;
+
+                        // Phone mockup component
+                        PhoneMockup {
+                            active: true;
+                            active-app <=> active-phone-app;
+                        }
+
+                        // App Mirroring Switcher list
+                        if !is-mirroring-fullscreen : VerticalLayout {
+                            spacing: 8px;
+                            alignment: center;
+                            width: 140px;
+
+                            Text { text: "مرايا التطبيقات النشطة"; color: text-secondary; font-size: 9px; font-weight: 700; horizontal-alignment: right; }
+                            
+                            // Home screen app trigger
+                            Rectangle {
+                                height: 26px;
+                                background: active-phone-app == 0 ? rgba(99, 102, 241, 0.25) : rgba(255, 255, 255, 0.05);
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: active-phone-app == 0 ? accent-color : transparent;
+                                Text { text: "🏠 الشاشة الرئيسية"; color: text-primary; font-size: 9px; horizontal-alignment: right; x: 8px; vertical-alignment: center; }
+                                TouchArea { clicked => { active-phone-app = 0; } }
+                            }
+
+                            // Music app trigger
+                            Rectangle {
+                                height: 26px;
+                                background: active-phone-app == 1 ? rgba(99, 102, 241, 0.25) : rgba(255, 255, 255, 0.05);
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: active-phone-app == 1 ? accent-color : transparent;
+                                Text { text: "🎵 مشغل رنيم MP3"; color: text-primary; font-size: 9px; horizontal-alignment: right; x: 8px; vertical-alignment: center; }
+                                TouchArea { clicked => { active-phone-app = 1; } }
+                            }
+
+                            // Gallery app trigger
+                            Rectangle {
+                                height: 26px;
+                                background: active-phone-app == 2 ? rgba(99, 102, 241, 0.25) : rgba(255, 255, 255, 0.05);
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: active-phone-app == 2 ? accent-color : transparent;
+                                Text { text: "📷 معرض الصور"; color: text-primary; font-size: 9px; horizontal-alignment: right; x: 8px; vertical-alignment: center; }
+                                TouchArea { clicked => { active-phone-app = 2; } }
+                            }
+
+                            // Chat app trigger
+                            Rectangle {
+                                height: 26px;
+                                background: active-phone-app == 3 ? rgba(99, 102, 241, 0.25) : rgba(255, 255, 255, 0.05);
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: active-phone-app == 3 ? accent-color : transparent;
+                                Text { text: "💬 أوروك تشات"; color: text-primary; font-size: 9px; horizontal-alignment: right; x: 8px; vertical-alignment: center; }
+                                TouchArea { clicked => { active-phone-app = 3; } }
+                            }
+
+                            Rectangle { height: 6px; } // spacer
+
+                            ActionButton {
+                                text: "ملء الشاشة";
+                                icon: "📺";
+                                base-bg: rgba(255, 255, 255, 0.08);
+                                hover-bg: rgba(255, 255, 255, 0.15);
+                                clicked => { is-mirroring-fullscreen = true; }
+                            }
+
+                            ActionButton {
+                                text: "صورة شاشة";
+                                icon: "📸";
+                                base-bg: rgba(255, 255, 255, 0.08);
+                                hover-bg: rgba(255, 255, 255, 0.15);
+                                clicked => { clipboard-sync-message = "تم حفظ لقطة الشاشة في الصور!"; }
+                            }
+
+                            ActionButton {
+                                text: "قطع البث";
+                                icon: "⏹";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(15%);
+                                clicked => { is-mirroring = false; }
+                            }
+                        }
+
+                        if is-mirroring-fullscreen : VerticalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            width: 140px;
+
+                            Text {
+                                text: "وضع البث كامل الشاشة نشط حالياً.";
+                                color: text-secondary;
+                                font-size: 10px;
+                                wrap: word-wrap;
+                                horizontal-alignment: right;
+                            }
+
+                            ActionButton {
+                                text: "إنهاء ملء الشاشة";
+                                icon: "📺";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(15%);
+                                clicked => { is-mirroring-fullscreen = false; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,183 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { ActionButton } from "../components/action_button.slint";
+
+export component FilesView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <string> clipboard-sync-message;
+    in-out property <bool> is-uploading;
+    in-out property <float> upload-progress;
+    in-out property <string> upload-status;
+
+    HorizontalLayout {
+        padding: 24px;
+        spacing: 20px;
+
+        // Clipboard History Section (Left)
+        VerticalLayout {
+            width: (parent.width - 20px) / 2;
+            spacing: 12px;
+
+            Text {
+                text: "سجل حافظة الهاتف المزامنة";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            // Clipboard Item 1
+            GlassCard {
+                height: 70px;
+                VerticalLayout {
+                    padding: 10px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "منسوخ قبل ساعة"; color: text-muted; font-size: 9px; }
+                        Text { text: "نص قصير"; color: text-secondary; font-size: 10px; font-weight: 700; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        ActionButton { text: "نسخ"; base-bg: rgba(255, 255, 255, 0.08); hover-bg: rgba(255, 255, 255, 0.15); clicked => { clipboard-sync-message = "تم النسخ من سجل الحافظة!"; } }
+                        Text { text: "رابط المستند: sumer.os/docs/report"; color: text-primary; font-size: 11px; }
+                    }
+                }
+            }
+
+            // Clipboard Item 2
+            GlassCard {
+                height: 70px;
+                VerticalLayout {
+                    padding: 10px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "منسوخ قبل ساعتين"; color: text-muted; font-size: 9px; }
+                        Text { text: "رمز تحقق"; color: text-secondary; font-size: 10px; font-weight: 700; }
+                    }
+                    HorizontalLayout {
+                        alignment: space-between;
+                        ActionButton { text: "نسخ"; base-bg: rgba(255, 255, 255, 0.08); hover-bg: rgba(255, 255, 255, 0.15); clicked => { clipboard-sync-message = "تم نسخ رمز التحقق!"; } }
+                        Text { text: "رمز تفعيل البنك: 4920"; color: text-primary; font-size: 11px; }
+                    }
+                }
+            }
+
+            Rectangle { vertical-stretch: 1; }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // File Share Drop Zone (Right)
+        VerticalLayout {
+            width: (parent.width - 20px) / 2;
+            spacing: 16px;
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "مشاركة وتبادل الملفات السريع"; color: text-primary; font-size: 18px; font-weight: 800; horizontal-alignment: right; }
+                Text { text: "أرسل الملفات مباشرة من حاسوب سومر إلى ذاكرة الهاتف الداخلية"; color: text-secondary; font-size: 11px; horizontal-alignment: right; }
+            }
+
+            // Drop area
+            Rectangle {
+                vertical-stretch: 1;
+                background: rgba(0, 0, 0, 0.25);
+                border-radius: 12px;
+                border-width: 2px;
+                border-color: is-uploading ? accent-color : theme-border-color;
+
+                VerticalLayout {
+                    padding: 24px;
+                    alignment: center;
+                    spacing: 16px;
+
+                    Text {
+                        text: is-uploading ? "📂" : "📥";
+                        font-size: 48px;
+                        horizontal-alignment: center;
+                    }
+
+                    Text {
+                        text: (is-uploading && upload-progress == 100.0) ? "✅ تم إرسال الملف بنجاح!" : upload-status;
+                        color: text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+
+                    if is-uploading : VerticalLayout {
+                        spacing: 8px;
+                        // Progress bar (Centered via HorizontalLayout)
+                        HorizontalLayout {
+                            alignment: center;
+                            Rectangle {
+                                height: 8px;
+                                background: rgba(255, 255, 255, 0.1);
+                                border-radius: 4px;
+                                width: 200px;
+
+                                Rectangle {
+                                    x: 0px;
+                                    width: (upload-progress / 100.0) * 200px;
+                                    height: 100%;
+                                    background: accent-color;
+                                    border-radius: 4px;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: Math.round(upload-progress) + "% تم الإرسال";
+                            color: text-secondary;
+                            font-size: 10px;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    if !is-uploading : ActionButton {
+                        text: "اختيار ملف للإرسال";
+                        icon: "➕";
+                        base-bg: accent-color;
+                        hover-bg: accent-hover;
+                        clicked => {
+                            is-uploading = true;
+                            upload-progress = 0.0;
+                            upload-status = "جاري إرسال الملف: code_project.tar.gz";
+                            upload-progress = 100.0;
+                        }
+                    }
+
+                    if is-uploading && upload-progress == 100 : ActionButton {
+                        text: "إرسال ملف آخر";
+                        icon: "🔄";
+                        base-bg: green-color;
+                        hover-bg: green-color.darker(10%);
+                        clicked => {
+                            is-uploading = false;
+                            upload-progress = 0.0;
+                            upload-status = "اسحب ملفاً هنا أو اضغط للاختيار";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

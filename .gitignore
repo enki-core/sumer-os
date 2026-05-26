@@ -9,3 +9,27 @@ bzImage
 build_tmp/
 .DS_Store
 **/*.log
+gui_rootfs/
+# مفاتيح الأمان والبيئة السرية
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.secret
+# ملفات محرر الأكواد والنظام
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+# حزم اللغات والمكتبات الخارجية
+node_modules/
+bower_components/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/

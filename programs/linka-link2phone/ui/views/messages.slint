@@ -1,0 +1,404 @@
+import { ActionButton } from "../components/action_button.slint";
+
+export component MessagesView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <int> active-tab;
+    in-out property <string> dialed-number;
+    in-out property <bool> is-calling;
+    in-out property <string> active-chat-name;
+    in-out property <string> typed-message;
+    in-out property <bool> sent-msg-1-active;
+    in-out property <string> sent-msg-1-text;
+    in-out property <bool> sent-msg-2-active;
+    in-out property <string> sent-msg-2-text;
+    in-out property <bool> sent-msg-3-active;
+    in-out property <string> sent-msg-3-text;
+
+    HorizontalLayout {
+        // Active Chat Panel (Left)
+        VerticalLayout {
+            horizontal-stretch: 1;
+
+            // Chat Header
+            Rectangle {
+                height: 60px;
+                background: rgba(15, 23, 42, 0.3);
+                
+                // Bottom border line
+                Rectangle {
+                    y: parent.height - 1px;
+                    height: 1px;
+                    background: theme-border-color;
+                }
+
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    alignment: space-between;
+
+                    // Chat status/actions
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: start;
+                        Text { text: "📞"; font-size: 16px; TouchArea { clicked => { active-tab = 3; dialed-number = "0770281920"; is-calling = true; } } }
+                        Text { text: "⚙️"; font-size: 16px; }
+                    }
+
+                    // Contact info
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            spacing: 2px;
+                            alignment: center;
+                            Text { text: active-chat-name; color: text-primary; font-size: 13px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "متصل الآن عبر الهاتف"; color: green-color; font-size: 9px; horizontal-alignment: right; }
+                        }
+                        Rectangle {
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 18px;
+                            background: @linear-gradient(135deg, accent-color 0%, #10b981 100%);
+                            Text { text: "أ"; color: white; font-size: 14px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Chat Bubbles Stream (Scrollable mock)
+            VerticalLayout {
+                vertical-stretch: 1;
+                padding: 20px;
+                spacing: 12px;
+
+                // Bubble 1 (Recieved)
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 8px;
+                    
+                    Rectangle {
+                        background: bg-card;
+                        border-radius: 12px;
+                        border-bottom-right-radius: 2px;
+                        border-width: 1px;
+                        border-color: theme-border-color;
+                        
+                        Text {
+                            text: "أهلاً، كيف حال المشروع؟ هل أكملت واجهة لينكا؟";
+                            color: text-primary;
+                            font-size: 12px;
+                            padding: 10px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                // Bubble 2 (Sent)
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    
+                    Rectangle {
+                        background: rgba(99, 102, 241, 0.25);
+                        border-radius: 12px;
+                        border-bottom-left-radius: 2px;
+                        border-width: 1px;
+                        border-color: accent-color;
+                        
+                        Text {
+                            text: "الحمد لله، نقوم بإنهاء واجهة لينكا للهاتف للهامش والتطوير.";
+                            color: text-primary;
+                            font-size: 12px;
+                            padding: 10px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                // Bubble 3 (Recieved)
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 8px;
+                    
+                    Rectangle {
+                        background: bg-card;
+                        border-radius: 12px;
+                        border-bottom-right-radius: 2px;
+                        border-width: 1px;
+                        border-color: theme-border-color;
+                        
+                        Text {
+                            text: "رائع جداً! هل تعمل الواجهة بدون مشاكل وسريعة التفاعل؟";
+                            color: text-primary;
+                            font-size: 12px;
+                            padding: 10px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                // Bubble 4 (Sent)
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    
+                    Rectangle {
+                        background: rgba(99, 102, 241, 0.25);
+                        border-radius: 12px;
+                        border-bottom-left-radius: 2px;
+                        border-width: 1px;
+                        border-color: accent-color;
+                        
+                        Text {
+                            text: "نعم، الواجهة سريعة ومتجاوبة بشكل كامل وتفاعلية 100%.";
+                            color: text-primary;
+                            font-size: 12px;
+                            padding: 10px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                // Simulated Sent Message 1
+                if sent-msg-1-active : HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    Rectangle {
+                        background: rgba(99, 102, 241, 0.25);
+                        border-radius: 12px;
+                        border-bottom-left-radius: 2px;
+                        border-width: 1px;
+                        border-color: accent-color;
+                        Text { text: sent-msg-1-text; color: text-primary; font-size: 12px; padding: 10px; }
+                    }
+                }
+
+                // Simulated Sent Message 2
+                if sent-msg-2-active : HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    Rectangle {
+                        background: rgba(99, 102, 241, 0.25);
+                        border-radius: 12px;
+                        border-bottom-left-radius: 2px;
+                        border-width: 1px;
+                        border-color: accent-color;
+                        Text { text: sent-msg-2-text; color: text-primary; font-size: 12px; padding: 10px; }
+                    }
+                }
+
+                // Simulated Sent Message 3
+                if sent-msg-3-active : HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    Rectangle {
+                        background: rgba(99, 102, 241, 0.25);
+                        border-radius: 12px;
+                        border-bottom-left-radius: 2px;
+                        border-width: 1px;
+                        border-color: accent-color;
+                        Text { text: sent-msg-3-text; color: text-primary; font-size: 12px; padding: 10px; }
+                    }
+                }
+
+                // Flex filler
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+            }
+
+            // Chat Input Area
+            Rectangle {
+                height: 64px;
+                background: rgba(15, 23, 42, 0.2);
+                
+                // Top border line
+                Rectangle {
+                    y: 0px;
+                    height: 1px;
+                    background: theme-border-color;
+                }
+
+                HorizontalLayout {
+                    padding: 10px;
+                    spacing: 12px;
+
+                    ActionButton {
+                        text: "إرسال";
+                        icon: "⚡";
+                        base-bg: accent-color;
+                        hover-bg: accent-hover;
+                        clicked => {
+                            if (typed-message != "") {
+                                if (!sent-msg-1-active) {
+                                    sent-msg-1-text = typed-message;
+                                    sent-msg-1-active = true;
+                                    typed-message = "";
+                                } else if (!sent-msg-2-active) {
+                                    sent-msg-2-text = typed-message;
+                                    sent-msg-2-active = true;
+                                    typed-message = "";
+                                } else if (!sent-msg-3-active) {
+                                    sent-msg-3-text = typed-message;
+                                    sent-msg-3-active = true;
+                                    typed-message = "";
+                                }
+                            }
+                        }
+                    }
+
+                    // TextInput
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        background: rgba(0, 0, 0, 0.2);
+                        border-radius: 6px;
+                        border-width: 1px;
+                        border-color: chat-input.has-focus ? accent-color : theme-border-color;
+                        
+                        chat-input := TextInput {
+                            text: typed-message;
+                            color: text-primary;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            horizontal-alignment: right; // RTL
+                            
+                            edited => {
+                                typed-message = self.text;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // Conversations List (Right)
+        Rectangle {
+            width: 240px;
+            background: rgba(15, 23, 42, 0.15);
+            
+            VerticalLayout {
+                padding: 12px;
+                spacing: 8px;
+
+                Text {
+                    text: "المحادثات النشطة";
+                    color: text-primary;
+                    font-size: 13px;
+                    font-weight: 700;
+                    horizontal-alignment: right;
+                    padding-bottom: 8px;
+                }
+
+                // Contact 1 (Active)
+                Rectangle {
+                    height: 52px;
+                    border-radius: 6px;
+                    background: active-chat-name == "أحمد مطور سومر" ? rgba(255, 255, 255, 0.05) : transparent;
+                    
+                    HorizontalLayout {
+                        padding: 6px;
+                        spacing: 10px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            Text { text: "أحمد مطور سومر"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "رائع جداً! هل تعمل الواجهة..."; color: text-secondary; font-size: 10px; horizontal-alignment: right; }
+                        }
+
+                        Rectangle {
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 17px;
+                            background: #6366f1;
+                            Text { text: "أ"; color: white; font-size: 12px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                    
+                    TouchArea { clicked => { active-chat-name = "أحمد مطور سومر"; } }
+                }
+
+                // Contact 2
+                Rectangle {
+                    height: 52px;
+                    border-radius: 6px;
+                    background: active-chat-name == "سارة (العمل)" ? rgba(255, 255, 255, 0.05) : transparent;
+                    
+                    HorizontalLayout {
+                        padding: 6px;
+                        spacing: 10px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            Text { text: "سارة (العمل)"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "تم إرسال الملف المطلوب"; color: text-muted; font-size: 10px; horizontal-alignment: right; }
+                        }
+
+                        Rectangle {
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 17px;
+                            background: #10b981;
+                            Text { text: "س"; color: white; font-size: 12px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                    
+                    TouchArea { clicked => { active-chat-name = "سارة (العمل)"; } }
+                }
+
+                // Contact 3
+                Rectangle {
+                    height: 52px;
+                    border-radius: 6px;
+                    background: active-chat-name == "العائلة" ? rgba(255, 255, 255, 0.05) : transparent;
+                    
+                    HorizontalLayout {
+                        padding: 6px;
+                        spacing: 10px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            Text { text: "العائلة"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                            Text { text: "لا تنسَ الخبز اليوم"; color: text-muted; font-size: 10px; horizontal-alignment: right; }
+                        }
+
+                        Rectangle {
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 17px;
+                            background: #f59e0b;
+                            Text { text: "ع"; color: white; font-size: 12px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                    
+                    TouchArea { clicked => { active-chat-name = "العائلة"; } }
+                }
+            }
+        }
+    }
+}

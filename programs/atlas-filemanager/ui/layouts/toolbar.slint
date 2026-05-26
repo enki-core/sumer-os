@@ -1,0 +1,269 @@
+import { LineEdit } from "std-widgets.slint";
+import { IconButton } from "../components/icon_button.slint";
+import { PathSegment } from "../types.slint";
+
+export component Toolbar inherits Rectangle {
+    in-out property <string> current-path;
+    in-out property <string> search-query;
+    in-out property <bool> can-go-back;
+    in-out property <[PathSegment]> path-segments;
+    in-out property <bool> edit-path-mode;
+    in-out property <string> view-mode;
+    in-out property <bool> show-sort-menu;
+
+    callback refresh();
+    callback go-up();
+    callback go-back();
+    callback change-directory(string);
+
+    height: 98px;
+    background: transparent;
+
+    VerticalLayout {
+        spacing: 12px;
+
+        // 1. TOP HEADER: Navigation and Title
+        HorizontalLayout {
+            height: 48px;
+            alignment: space-between;
+
+            // Navigation Buttons (Left side)
+            HorizontalLayout {
+                spacing: 8px;
+                y: (parent.height - self.height) / 2;
+
+                IconButton {
+                    icon: "↻";
+                    tooltip: "تحديث";
+                    clicked => { root.refresh(); }
+                }
+                IconButton {
+                    icon: "▲";
+                    tooltip: "المجلد الأعلى";
+                    clicked => { root.go-up(); }
+                }
+                IconButton {
+                    icon: "▶";
+                    tooltip: "رجوع للخلف";
+                    enabled: root.can-go-back;
+                    clicked => { root.go-back(); }
+                }
+
+                // Vertical Divider Line
+                Rectangle {
+                    width: 1px;
+                    height: 24px;
+                    background: #ffffff1c;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                // View Mode Toggle (list ☰, grid ☷, compact ⠇)
+                IconButton {
+                    icon: root.view-mode == "list" ? "☰" : (root.view-mode == "grid" ? "☷" : "⠇");
+                    tooltip: "تغيير طريقة العرض";
+                    clicked => {
+                        if (root.view-mode == "list") {
+                            root.view-mode = "grid";
+                        } else if (root.view-mode == "grid") {
+                            root.view-mode = "compact";
+                        } else {
+                            root.view-mode = "list";
+                        }
+                    }
+                }
+
+                // Dropdown Settings Menu Arrow
+                IconButton {
+                    icon: "▼";
+                    tooltip: "خيارات العرض والترتيب";
+                    clicked => {
+                        root.show-sort-menu = !root.show-sort-menu;
+                    }
+                }
+            }
+
+            // Brand Title & Logo (Right side)
+            HorizontalLayout {
+                spacing: 12px;
+                y: (parent.height - self.height) / 2;
+
+                Text {
+                    text: "أطلس لمدير الملفات";
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: #ffffff;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: "📁";
+                    font-size: 26px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // 2. SUB-HEADER: Path Bar (Breadcrumbs / Edit) and Search Bar
+        HorizontalLayout {
+            height: 38px;
+            spacing: 12px;
+
+            // RIGHT: Search Bar Container
+            Rectangle {
+                width: 240px;
+                height: 38px;
+                background: #ffffff05;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: search-input.has-focus ? #3b82f660 : #ffffff10;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 8px;
+
+                    search-input := LineEdit {
+                        horizontal-stretch: 1;
+                        height: 100%;
+                        placeholder-text: "البحث في المجلد... 🔍";
+                        text: root.search-query;
+                        font-size: 13px;
+                        
+                        edited(val) => {
+                            root.search-query = val;
+                            root.refresh();
+                        }
+                    }
+                }
+            }
+
+            // LEFT/CENTER: Interactive Path Bar (Breadcrumbs or Edit Mode)
+            Rectangle {
+                horizontal-stretch: 1;
+                height: 38px;
+                background: #ffffff05;
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: root.edit-path-mode ? #3b82f660 : #ffffff10;
+
+                // Click background to enter Edit Mode
+                TouchArea {
+                    clicked => {
+                        if (!root.edit-path-mode) {
+                            root.edit-path-mode = true;
+                            path-input.focus();
+                        }
+                    }
+                }
+
+                // A. Breadcrumb Mode (clickable segments)
+                HorizontalLayout {
+                    visible: !root.edit-path-mode;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 4px;
+                    alignment: start;
+
+                    for segment[idx] in root.path-segments : HorizontalLayout {
+                        spacing: 4px;
+                        
+                        Rectangle {
+                            height: 26px;
+                            border-radius: 6px;
+                            background: seg-ta.has-hover ? #ffffff0d : transparent;
+                            border-width: seg-ta.has-hover ? 1px : 0px;
+                            border-color: #ffffff15;
+                            y: (parent.height - self.height) / 2;
+
+                            seg-ta := TouchArea {
+                                clicked => {
+                                    root.change-directory(segment.path);
+                                }
+                            }
+
+                            Text {
+                                text: " " + segment.name + " ";
+                                font-size: 13px;
+                                color: seg-ta.has-hover ? #60a5fa : #e2e8f0;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        if (idx < root.path-segments.length - 1) : Text {
+                            text: " ➔ ";
+                            font-size: 11px;
+                            color: #64748b;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // B. Edit Mode (manual path input)
+                HorizontalLayout {
+                    visible: root.edit-path-mode;
+                    padding-left: 4px;
+                    padding-right: 4px;
+                    
+                    path-input := LineEdit {
+                        horizontal-stretch: 1;
+                        height: 100%;
+                        text: root.current-path;
+                        font-size: 13px;
+                        
+                        accepted(val) => {
+                            root.edit-path-mode = false;
+                            root.change-directory(val);
+                        }
+                    }
+
+                    // Confirm edit button
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 6px;
+                        background: confirm-edit-ta.has-hover ? #10b98130 : transparent;
+                        y: (parent.height - self.height) / 2;
+                        
+                        confirm-edit-ta := TouchArea {
+                            clicked => {
+                                root.edit-path-mode = false;
+                                root.change-directory(path-input.text);
+                            }
+                        }
+                        
+                        Text {
+                            text: "✓";
+                            font-size: 13px;
+                            color: #10b981;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Cancel/Dismiss Button
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 6px;
+                        background: cancel-edit-ta.has-hover ? #ef444430 : transparent;
+                        y: (parent.height - self.height) / 2;
+                        
+                        cancel-edit-ta := TouchArea {
+                            clicked => {
+                                root.edit-path-mode = false;
+                            }
+                        }
+                        
+                        Text {
+                            text: "✕";
+                            font-size: 12px;
+                            color: #ef4444;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

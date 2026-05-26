@@ -25,6 +25,7 @@ export component SumerDesktop inherits Rectangle {
         { id: "files", name: "مدير الملفات", icon: "📁", bg_color: #3b82f6, hover_bg_color: #2563eb },
         { id: "console", name: "شيل دجلة", icon: "💻", bg_color: #10b981, hover_bg_color: #059669 },
         { id: "tv", name: "أندرويد تي في", icon: "📺", bg_color: #f97316, hover_bg_color: #ea580c },
+        { id: "raneem-mp3", name: "مشغل رنيم", icon: "🎵", bg_color: #a855f7, hover_bg_color: #9333ea },
         { id: "wallpapers", name: "الخلفيات", icon: "🎨", bg_color: #8b5cf6, hover_bg_color: #7c3aed },
         { id: "shortcuts", name: "الاختصارات", icon: "⌨️", bg_color: #64748b, hover_bg_color: #475569 }
     ];
@@ -344,6 +345,7 @@ export component SumerDesktop inherits Rectangle {
             else if (id == "tv") { root.launch-tv(); }
             else if (id == "wallpapers") { root.wallpapers-window-open = !root.wallpapers-window-open; }
             else if (id == "shortcuts") { root.shortcuts-window-open = !root.shortcuts-window-open; }
+            else { root.app-clicked(id); }
         }
         item-drag-started(idx, mx, my) => { root.icon-drag-started(idx, mx, my); }
         item-dragged(idx, mx, my) => { root.icon-drag-moved(idx, mx, my); }

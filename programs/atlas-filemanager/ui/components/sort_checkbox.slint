@@ -1,0 +1,54 @@
+export component SortCheckbox inherits Rectangle {
+    in property <string> text;
+    in property <string> shortcut-text;
+    in property <bool> checked;
+    callback clicked;
+
+    height: 28px;
+    
+    TouchArea { clicked => { root.clicked(); } }
+
+    HorizontalLayout {
+        alignment: space-between;
+
+        Text {
+            text: shortcut-text;
+            font-size: 11px;
+            color: #64748b;
+            vertical-alignment: center;
+        }
+
+        HorizontalLayout {
+            spacing: 10px;
+            alignment: end;
+
+            Text {
+                text: text;
+                font-size: 13px;
+                color: checked ? #ffffff : #cbd5e1;
+                font-weight: checked ? 700 : 400;
+                vertical-alignment: center;
+            }
+
+            // Checkbox box
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 4px;
+                border-width: 2px;
+                border-color: checked ? #10b981 : #64748b;
+                background: checked ? #10b98120 : transparent;
+                y: (parent.height - self.height) / 2;
+
+                if checked : Text {
+                    text: "✓";
+                    font-size: 11px;
+                    color: #10b981;
+                    font-weight: 900;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

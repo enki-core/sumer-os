@@ -1,0 +1,1043 @@
+// Inanna Tasks - Sumer OS Premium Task Manager
+// تصميم زجاجي متطور لإدارة المهام اليومية مع دعم كامل للغة العربية
+
+struct SlintTask {
+    id: string,
+    title: string,
+    description: string,
+    priority: string,   // "عالية", "متوسطة", "منخفضة"
+    category: string,   // "العمل", "شخصية", "الدراسة", "التسوق", "الصحة", "أخرى"
+    due_date: string,
+    completed: bool,
+    created_at: string,
+}
+
+component CustomButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <string> icon;
+    in-out property <color> base-bg: #6366f1;
+    in-out property <color> hover-bg: #4f46e5;
+    in-out property <color> text-color: #ffffff;
+    callback clicked;
+
+    border-radius: 8px;
+    background: touch-area.has-hover ? hover-bg : base-bg;
+    border-width: 1px;
+    border-color: touch-area.has-hover ? hover-bg.brighter(15%) : base-bg.brighter(10%);
+
+    animate background { duration: 120ms; }
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 8px;
+        alignment: center;
+
+        if icon != "" : Text {
+            text: icon;
+            color: text-color;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: text;
+            color: text-color;
+            font-size: 13px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component FilterTab inherits Rectangle {
+    in-out property <string> text;
+    in-out property <bool> active;
+    callback clicked;
+
+    border-radius: 8px;
+    background: active ? #6366f1 : (touch-area.has-hover ? #1e293b : #0f172a);
+    border-width: 1px;
+    border-color: active ? #818cf8 : (touch-area.has-hover ? #334155 : #1e293b);
+
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        alignment: center;
+
+        Text {
+            text: text;
+            color: active ? #ffffff : #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component ChoiceSelector inherits Rectangle {
+    in-out property <string> label;
+    in-out property <int> selected-index: 0;
+    in-out property <[string]> choices;
+    callback selection-changed(int);
+
+    background: transparent;
+    height: 62px;
+
+    VerticalLayout {
+        spacing: 6px;
+
+        Text {
+            text: label;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 700;
+            horizontal-alignment: right; // RTL
+        }
+
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: end; // RTL
+
+            for choice[index] in choices : Rectangle {
+                border-radius: 6px;
+                background: selected-index == index ? #312e81 : #0f172a;
+                border-width: 1px;
+                border-color: selected-index == index ? #6366f1 : #1e293b;
+
+                animate background { duration: 120ms; }
+
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    alignment: center;
+
+                    Text {
+                        text: choice;
+                        color: selected-index == index ? #e0e7ff : #94a3b8;
+                        font-size: 11px;
+                        font-weight: 600;
+                    }
+                }
+
+                TouchArea {
+                    clicked => {
+                        selected-index = index;
+                        root.selection-changed(index);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component CustomInput inherits Rectangle {
+    in-out property <string> label;
+    in-out property <string> placeholder;
+    in-out property <string> text;
+    in-out property <bool> is-textarea: false;
+    callback edited(string);
+
+    background: #0f172a;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: input-focus.has-focus ? #6366f1 : #1e293b;
+    height: is-textarea ? 85px : 58px;
+
+    animate border-color { duration: 150ms; }
+
+    VerticalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        spacing: 2px;
+
+        Text {
+            text: label;
+            color: input-focus.has-focus ? #818cf8 : #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            horizontal-alignment: right; // RTL
+        }
+
+        input-focus := TextInput {
+            text: root.text;
+            color: #f1f5f9;
+            font-size: 13px;
+            single-line: !is-textarea;
+            wrap: is-textarea ? word-wrap : no-wrap;
+            horizontal-alignment: right; // RTL
+            
+            edited => {
+                root.text = self.text;
+                root.edited(self.text);
+            }
+        }
+    }
+}
+
+component StatCard inherits Rectangle {
+    in-out property <string> title;
+    in-out property <string> value;
+    in-out property <string> icon;
+    in-out property <color> icon-color: #6366f1;
+
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.45);
+    border-width: 1px;
+    border-color: rgba(30, 41, 59, 0.6);
+
+    HorizontalLayout {
+        padding: 14px;
+        spacing: 12px;
+        alignment: space-between;
+
+        // Text details (Left side in LTR, Right side here)
+        VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+
+            Text {
+                text: title;
+                color: #94a3b8;
+                font-size: 11px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            Text {
+                text: value;
+                color: #ffffff;
+                font-size: 18px;
+                font-weight: 800;
+                horizontal-alignment: right;
+            }
+        }
+
+        // Icon container
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: icon-color.with-alpha(0.1);
+            border-width: 1px;
+            border-color: icon-color.with-alpha(0.2);
+
+            Text {
+                text: icon;
+                font-size: 18px;
+                color: icon-color;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+component TaskCard inherits Rectangle {
+    in property <string> id;
+    in property <string> title;
+    in property <string> description;
+    in property <string> priority;   // "عالية", "متوسطة", "منخفضة"
+    in property <string> category;   // "العمل", "شخصية", "الدراسة", "التسوق", "الصحة", "أخرى"
+    in property <string> due_date;
+    in property <bool> completed;
+    
+    callback toggle-complete(string);
+    callback edit-task(string);
+    callback delete-task(string);
+
+    border-radius: 10px;
+    background: completed ? rgba(16, 185, 129, 0.04) : rgba(15, 23, 42, 0.4);
+    border-width: 1px;
+    border-color: completed ? rgba(16, 185, 129, 0.25) : (touch-area.has-hover ? rgba(99, 102, 241, 0.4) : rgba(30, 41, 59, 0.6));
+
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding: 12px;
+        spacing: 12px;
+
+        // Action Buttons (Left)
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: center;
+            
+            // Edit button
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: edit-touch.has-hover ? rgba(99, 102, 241, 0.15) : transparent;
+                border-width: 1px;
+                border-color: edit-touch.has-hover ? rgba(99, 102, 241, 0.3) : transparent;
+                
+                Text {
+                    text: "✏️";
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+                
+                edit-touch := TouchArea {
+                    clicked => { root.edit-task(root.id); }
+                }
+            }
+
+            // Delete button
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: delete-touch.has-hover ? rgba(239, 68, 68, 0.15) : transparent;
+                border-width: 1px;
+                border-color: delete-touch.has-hover ? rgba(239, 68, 68, 0.3) : transparent;
+                
+                Text {
+                    text: "🗑️";
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+                
+                delete-touch := TouchArea {
+                    clicked => { root.delete-task(root.id); }
+                }
+            }
+        }
+
+        // Details Container (Center-Right, RTL alignment)
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 4px;
+            alignment: center;
+
+            HorizontalLayout {
+                alignment: space-between;
+                spacing: 8px;
+
+                // Tags container
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    
+                    // Priority Badge
+                    Rectangle {
+                        border-radius: 4px;
+                        background: priority == "عالية" ? rgba(239, 68, 68, 0.15) : (priority == "متوسطة" ? rgba(245, 158, 11, 0.15) : rgba(16, 185, 129, 0.15));
+                        border-width: 1px;
+                        border-color: priority == "عالية" ? rgba(239, 68, 68, 0.3) : (priority == "متوسطة" ? rgba(245, 158, 11, 0.3) : rgba(16, 185, 129, 0.3));
+                        
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            
+                            Text {
+                                text: priority;
+                                color: priority == "عالية" ? #f87171 : (priority == "متوسطة" ? #fbbf24 : #34d399);
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                        }
+                    }
+
+                    // Category Badge
+                    Rectangle {
+                        border-radius: 4px;
+                        background: rgba(255, 255, 255, 0.05);
+                        border-width: 1px;
+                        border-color: rgba(255, 255, 255, 0.1);
+                        
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            padding-top: 2px;
+                            padding-bottom: 2px;
+                            
+                            Text {
+                                text: (category == "العمل" ? "💼 " : 
+                                       (category == "شخصية" ? "🏠 " : 
+                                        (category == "الدراسة" ? "📚 " : 
+                                         (category == "التسوق" ? "🛒 " : 
+                                          (category == "الصحة" ? "❤️ " : "🏷️ "))))) + category;
+                                color: #cbd5e1;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                        }
+                    }
+
+                    // Due Date
+                    if due_date != "" : HorizontalLayout {
+                        spacing: 2px;
+                        alignment: center;
+                        Text {
+                            text: "📅 " + due_date;
+                            color: #94a3b8;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Task Title
+                Text {
+                    text: title;
+                    color: completed ? #64748b : #f1f5f9;
+                    font-size: 14px;
+                    font-weight: 700;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                }
+            }
+
+            if description != "" : Text {
+                text: description;
+                color: completed ? #475569 : #94a3b8;
+                font-size: 11px;
+                wrap: word-wrap;
+                horizontal-alignment: right;
+            }
+        }
+
+        // Complete Checkbox (Right)
+        Rectangle {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: completed ? #10b981 : rgba(0, 0, 0, 0.2);
+            border-width: 2px;
+            border-color: completed ? #34d399 : (checkbox-touch.has-hover ? #6366f1 : rgba(71, 85, 105, 0.8));
+            
+            animate background { duration: 100ms; }
+            animate border-color { duration: 100ms; }
+
+            if completed : Text {
+                text: "✓";
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: 900;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            checkbox-touch := TouchArea {
+                clicked => { root.toggle-complete(root.id); }
+            }
+        }
+    }
+
+    touch-area := TouchArea {
+        // Just empty to catch hover, but click works on child buttons
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "إنانا للمهام - Inanna Tasks Studio";
+    width: 1000px;
+    height: 720px;
+    background: #090d16;
+
+    // Task Model (Provided by Rust)
+    in-out property <[SlintTask]> tasks: [];
+
+    // Filter and Search states
+    in-out property <string> filter-category: "الكل";
+    in-out property <string> filter-status: "الكل";
+    in-out property <string> search-query: "";
+    in-out property <string> sort-by: "التاريخ";
+
+    // Dashboard Statistics (Calculated and updated by Rust)
+    in-out property <int> stat-total: 0;
+    in-out property <int> stat-completed: 0;
+    in-out property <int> stat-pending: 0;
+    in-out property <float> completion-rate: 0.0; // 0.0 to 1.0
+
+    // Form inputs state
+    in-out property <string> current-title: "";
+    in-out property <string> current-desc: "";
+    in-out property <int> selected-priority-index: 1; // Default "متوسطة"
+    in-out property <int> selected-category-index: 0; // Default "العمل"
+    in-out property <string> current-due-date: "";
+    in-out property <string> editing-id: ""; // If non-empty, we are editing this task ID
+
+    // Application Status Message (Saves, logs, etc.)
+    in-out property <string> status-message: "جاهز لإدارة مهامك بذكاء.";
+    in-out property <bool> is-status-error: false;
+
+    // Callbacks to Rust
+    callback add-or-update-task(string, string, string, int, int, string); // (id, title, desc, priority_index, category_index, due_date)
+    callback delete-task(string);
+    callback toggle-complete(string);
+    callback export-to-txt();
+    callback clear-all-tasks();
+    callback request-edit(string); // Ask Rust to populate editing fields
+    callback apply-filters(string, string, string, string); // Ask Rust to filter tasks (cat, status, search, sort)
+
+    // Helper functions inside Slint to trigger Rust filters
+    function trigger-filter() {
+        apply-filters(filter-category, filter-status, search-query, sort-by);
+    }
+
+    HorizontalLayout {
+        padding: 20px;
+        spacing: 20px;
+
+        // LEFT COLUMN: Add / Edit Task Form (Width 380px)
+        VerticalLayout {
+            width: 360px;
+            spacing: 16px;
+
+            // Form Title card
+            Rectangle {
+                height: 52px;
+                background: rgba(15, 23, 42, 0.45);
+                border-radius: 10px;
+                border-width: 1px;
+                border-color: rgba(30, 41, 59, 0.6);
+
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    alignment: end;
+                    spacing: 10px;
+                    
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: editing-id != "" ? "تعديل المهمة الحالية" : "إضافة مهمة جديدة";
+                            color: editing-id != "" ? #fbbf24 : #6366f1;
+                            font-size: 14px;
+                            font-weight: 800;
+                            horizontal-alignment: right;
+                        }
+                        if editing-id != "" : Text {
+                            text: "اضغط على إلغاء للعودة لنمط الإضافة";
+                            color: #64748b;
+                            font-size: 9px;
+                            horizontal-alignment: right;
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 6px;
+                        background: editing-id != "" ? rgba(245, 158, 11, 0.1) : rgba(99, 102, 241, 0.1);
+                        y: 10px;
+                        
+                        Text {
+                            text: editing-id != "" ? "✏️" : "✨";
+                            font-size: 14px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Input Fields Card
+            Rectangle {
+                vertical-stretch: 1;
+                background: rgba(15, 23, 42, 0.45);
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: rgba(30, 41, 59, 0.6);
+
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 12px;
+                    alignment: start;
+
+                    // 1. Task Title Input
+                    CustomInput {
+                        label: "عنوان المهمة *";
+                        placeholder: "مثال: مراجعة الكود، شراء البقالة...";
+                        text: root.current-title;
+                        edited(val) => { root.current-title = val; }
+                    }
+
+                    // 2. Task Description Input
+                    CustomInput {
+                        label: "تفاصيل المهمة (اختياري)";
+                        placeholder: "تفاصيل إضافية حول المهمة...";
+                        text: root.current-desc;
+                        is-textarea: true;
+                        edited(val) => { root.current-desc = val; }
+                    }
+
+                    // 3. Priority Choice
+                    ChoiceSelector {
+                        label: "مستوى الأولوية";
+                        selected-index: root.selected-priority-index;
+                        choices: ["منخفضة", "متوسطة", "عالية"];
+                        selection-changed(idx) => { root.selected-priority-index = idx; }
+                    }
+
+                    // 4. Category Choice
+                    ChoiceSelector {
+                        label: "تصنيف المهمة";
+                        selected-index: root.selected-category-index;
+                        choices: ["العمل", "شخصية", "الدراسة", "التسوق", "الصحة", "أخرى"];
+                        selection-changed(idx) => { root.selected-category-index = idx; }
+                    }
+
+                    // 5. Due Date Input
+                    CustomInput {
+                        label: "تاريخ الاستحقاق (اختياري)";
+                        placeholder: "YYYY-MM-DD (مثال: 2026-05-28)";
+                        text: root.current-due-date;
+                        edited(val) => { root.current-due-date = val; }
+                    }
+
+                    // Spacer
+                    Rectangle { height: 10px; }
+
+                    // Action buttons (Save & Cancel)
+                    HorizontalLayout {
+                        spacing: 10px;
+
+                        if editing-id != "" : CustomButton {
+                            horizontal-stretch: 1;
+                            text: "إلغاء";
+                            icon: "❌";
+                            base-bg: #475569;
+                            hover-bg: #334155;
+                            clicked => {
+                                editing-id = "";
+                                current-title = "";
+                                current-desc = "";
+                                current-due-date = "";
+                                selected-priority-index = 1;
+                                selected-category-index = 0;
+                                status-message = "تم إلغاء التعديل.";
+                            }
+                        }
+
+                        CustomButton {
+                            horizontal-stretch: 2;
+                            text: editing-id != "" ? "حفظ التغييرات" : "إضافة المهمة";
+                            icon: editing-id != "" ? "💾" : "➕";
+                            base-bg: editing-id != "" ? #fbbf24 : #6366f1;
+                            hover-bg: editing-id != "" ? #d97706 : #4f46e5;
+                            text-color: editing-id != "" ? #000000 : #ffffff;
+                            clicked => {
+                                if (current-title == "") {
+                                    status-message = "خطأ: يجب إدخال عنوان المهمة!";
+                                    is-status-error = true;
+                                    return;
+                                }
+
+                                root.add-or-update-task(
+                                    editing-id,
+                                    current-title,
+                                    current-desc,
+                                    selected-priority-index,
+                                    selected-category-index,
+                                    current-due-date
+                                );
+
+                                // Reset form fields
+                                editing-id = "";
+                                current-title = "";
+                                current-desc = "";
+                                current-due-date = "";
+                                selected-priority-index = 1;
+                                selected-category-index = 0;
+                                is-status-error = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Quick Backup & Export Box
+            Rectangle {
+                height: 105px;
+                background: rgba(15, 23, 42, 0.45);
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: rgba(30, 41, 59, 0.6);
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+                    alignment: center;
+
+                    Text {
+                        text: "حفظ وتصدير المهام سريعا";
+                        color: #cbd5e1;
+                        font-size: 11px;
+                        font-weight: 700;
+                        horizontal-alignment: right;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        CustomButton {
+                            horizontal-stretch: 1;
+                            text: "تصدير لسطح المكتب";
+                            icon: "📝";
+                            base-bg: #10b981;
+                            hover-bg: #059669;
+                            clicked => { root.export-to-txt(); }
+                        }
+
+                        CustomButton {
+                            horizontal-stretch: 1;
+                            text: "مسح جميع المهام";
+                            icon: "⚠️";
+                            base-bg: rgba(239, 68, 68, 0.2);
+                            hover-bg: rgba(239, 68, 68, 0.4);
+                            text-color: #f87171;
+                            clicked => { root.clear-all-tasks(); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // RIGHT COLUMN: Statistics Dashboard, Filter Bar & Scrollable Task List
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 16px;
+
+            // 1. Dashboard Header & App Name
+            HorizontalLayout {
+                alignment: space-between;
+                
+                // Status notifications (Left)
+                Rectangle {
+                    background: is-status-error ? rgba(239, 68, 68, 0.15) : rgba(99, 102, 241, 0.12);
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: is-status-error ? rgba(239, 68, 68, 0.3) : rgba(99, 102, 241, 0.3);
+                    height: 38px;
+                    
+                    HorizontalLayout {
+                        padding-left: 14px;
+                        padding-right: 14px;
+                        spacing: 6px;
+                        alignment: center;
+                        
+                        Text {
+                            text: "ℹ️  " + root.status-message;
+                            color: is-status-error ? #f87171 : #c7d2fe;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // App Identity (Right)
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: end;
+                    
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: "إنانا للمهام";
+                            color: #ffffff;
+                            font-size: 18px;
+                            font-weight: 800;
+                            horizontal-alignment: right;
+                        }
+                        Text {
+                            text: "إدارة المهام المتقدمة بنظام سومر";
+                            color: #64748b;
+                            font-size: 11px;
+                            font-weight: 600;
+                            horizontal-alignment: right;
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 10px;
+                        background: @linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+                        
+                        Text {
+                            text: "📌";
+                            font-size: 20px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // 2. Statistics Dashboard Widgets
+            HorizontalLayout {
+                spacing: 12px;
+                
+                StatCard {
+                    horizontal-stretch: 1;
+                    title: "المهام المعلقة";
+                    value: root.stat-pending + " مهام";
+                    icon: "⏳";
+                    icon-color: #fbbf24;
+                }
+
+                StatCard {
+                    horizontal-stretch: 1;
+                    title: "المهام المكتملة";
+                    value: root.stat-completed + " من " + root.stat-total;
+                    icon: "✅";
+                    icon-color: #10b981;
+                }
+
+                // Completion Rate Dynamic Ring / Progress Card
+                Rectangle {
+                    horizontal-stretch: 1.5;
+                    border-radius: 12px;
+                    background: rgba(15, 23, 42, 0.45);
+                    border-width: 1px;
+                    border-color: rgba(30, 41, 59, 0.6);
+                    
+                    VerticalLayout {
+                        padding: 12px;
+                        spacing: 8px;
+                        alignment: center;
+                        
+                        HorizontalLayout {
+                            alignment: space-between;
+                            
+                            Text {
+                                text: Math.round(completion-rate * 100) + "%";
+                                color: #10b981;
+                                font-size: 14px;
+                                font-weight: 800;
+                                vertical-alignment: center;
+                            }
+                            
+                            Text {
+                                text: "معدل إنجاز المهام الكلي";
+                                color: #94a3b8;
+                                font-size: 11px;
+                                font-weight: 700;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Custom Progress Bar Track
+                        Rectangle {
+                            height: 8px;
+                            background: rgba(255, 255, 255, 0.05);
+                            border-radius: 4px;
+                            clip: true;
+                            
+                            // Glowing Progress Indicator
+                            Rectangle {
+                                x: 0px;
+                                width: parent.width * completion-rate;
+                                height: 100%;
+                                background: @linear-gradient(90deg, #6366f1 0%, #10b981 100%);
+                                border-radius: 4px;
+                                
+                                animate width { duration: 250ms; easing: ease-out; }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Filtering, Search & Sorting Panel
+            Rectangle {
+                height: 115px;
+                background: rgba(15, 23, 42, 0.45);
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: rgba(30, 41, 59, 0.6);
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 10px;
+                    alignment: center;
+
+                    // Row 1: Search Input (Left) & Category Filter Tabs (Right)
+                    HorizontalLayout {
+                        spacing: 12px;
+
+                        // Search box
+                        Rectangle {
+                            width: 250px;
+                            height: 38px;
+                            background: #0f172a;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: search-input.has-focus ? #6366f1 : #1e293b;
+                            
+                            animate border-color { duration: 150ms; }
+
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                spacing: 6px;
+                                
+                                search-input := TextInput {
+                                    horizontal-stretch: 1;
+                                    text: root.search-query;
+                                    color: #f1f5f9;
+                                    font-size: 12px;
+                                    single-line: true;
+                                    horizontal-alignment: right;
+                                    
+                                    edited => {
+                                        root.search-query = self.text;
+                                        root.trigger-filter();
+                                    }
+                                }
+
+                                Text {
+                                    text: "🔍";
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        // Categories Scroll/Tabs
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 4px;
+                            alignment: end;
+
+                            FilterTab { text: "الكل"; active: filter-category == "الكل"; clicked => { filter-category = "الكل"; root.trigger-filter(); } }
+                            FilterTab { text: "العمل"; active: filter-category == "العمل"; clicked => { filter-category = "العمل"; root.trigger-filter(); } }
+                            FilterTab { text: "شخصية"; active: filter-category == "شخصية"; clicked => { filter-category = "شخصية"; root.trigger-filter(); } }
+                            FilterTab { text: "الدراسة"; active: filter-category == "الدراسة"; clicked => { filter-category = "الدراسة"; root.trigger-filter(); } }
+                            FilterTab { text: "التسوق"; active: filter-category == "التسوق"; clicked => { filter-category = "التسوق"; root.trigger-filter(); } }
+                            FilterTab { text: "الصحة"; active: filter-category == "الصحة"; clicked => { filter-category = "الصحة"; root.trigger-filter(); } }
+                            FilterTab { text: "أخرى"; active: filter-category == "أخرى"; clicked => { filter-category = "أخرى"; root.trigger-filter(); } }
+                        }
+                    }
+
+                    // Row 2: Status Filter Tabs (Left) & Sort Options (Right)
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: space-between;
+
+                        // Status filter
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: start;
+                            
+                            Text {
+                                text: "تصفية الحالة:";
+                                color: #94a3b8;
+                                font-size: 11px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+
+                            FilterTab { text: "الكل"; active: filter-status == "الكل"; clicked => { filter-status = "الكل"; root.trigger-filter(); } }
+                            FilterTab { text: "النشطة"; active: filter-status == "النشطة"; clicked => { filter-status = "النشطة"; root.trigger-filter(); } }
+                            FilterTab { text: "المكتملة"; active: filter-status == "المكتملة"; clicked => { filter-status = "المكتملة"; root.trigger-filter(); } }
+                        }
+
+                        // Sorting filter
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: end;
+
+                            FilterTab { text: "الأولوية"; active: sort-by == "الأولوية"; clicked => { sort-by = "الأولوية"; root.trigger-filter(); } }
+                            FilterTab { text: "التاريخ"; active: sort-by == "التاريخ"; clicked => { sort-by = "التاريخ"; root.trigger-filter(); } }
+                            
+                            Text {
+                                text: "ترتيب حسب:";
+                                color: #94a3b8;
+                                font-size: 11px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Tasks List (Scrollable Viewport)
+            Rectangle {
+                vertical-stretch: 1;
+                background: rgba(15, 23, 42, 0.25);
+                border-radius: 12px;
+                border-width: 1px;
+                border-color: rgba(30, 41, 59, 0.4);
+                clip: true;
+
+                if tasks.length == 0 : VerticalLayout {
+                    alignment: center;
+                    spacing: 12px;
+                    
+                    Text {
+                        text: "📭";
+                        font-size: 42px;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "لا توجد مهام مطابقة للمواصفات";
+                        color: #94a3b8;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "ابدأ بإضافة مهمة جديدة من القائمة الجانبية!";
+                        color: #64748b;
+                        font-size: 11px;
+                        horizontal-alignment: center;
+                    }
+                }
+
+                if tasks.length > 0 : Flickable {
+                    viewport-height: tasks.length * 76px + 20px;
+                    interactive: true;
+
+                    VerticalLayout {
+                        padding: 10px;
+                        spacing: 8px;
+                        alignment: start;
+
+                        for task in root.tasks : TaskCard {
+                            id: task.id;
+                            title: task.title;
+                            description: task.description;
+                            priority: task.priority;
+                            category: task.category;
+                            due_date: task.due_date;
+                            completed: task.completed;
+                            
+                            toggle-complete(tid) => { root.toggle-complete(tid); }
+                            edit-task(tid) => { root.request-edit(tid); }
+                            delete-task(tid) => { root.delete-task(tid); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

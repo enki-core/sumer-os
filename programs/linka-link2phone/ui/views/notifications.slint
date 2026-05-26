@@ -1,0 +1,225 @@
+import { ActionButton } from "../components/action_button.slint";
+import { GlassCard } from "../components/glass_card.slint";
+
+export component NotificationsView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // Direct State Properties
+    in-out property <int> notification-count;
+    in-out property <bool> show-whatsapp-notif;
+    in-out property <bool> show-gmail-notif;
+    in-out property <bool> show-call-notif;
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 16px;
+
+        // Header
+        HorizontalLayout {
+            alignment: space-between;
+
+            if notification-count > 0 : ActionButton {
+                text: "مسح جميع الإشعارات";
+                icon: "🧹";
+                base-bg: rgba(255, 255, 255, 0.08);
+                hover-bg: rgba(255, 255, 255, 0.15);
+                clicked => {
+                    show-whatsapp-notif = false;
+                    show-gmail-notif = false;
+                    show-call-notif = false;
+                    notification-count = 0;
+                }
+            }
+
+            if notification-count == 0 : Rectangle {}
+
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "مركز إشعارات الهاتف"; color: text-primary; font-size: 22px; font-weight: 800; horizontal-alignment: right; }
+                Text { text: "عرض فوري لجميع الإشعارات الواردة على هاتفك الذكي"; color: text-secondary; font-size: 12px; horizontal-alignment: right; }
+            }
+        }
+
+        // Notifications List
+        VerticalLayout {
+            spacing: 12px;
+
+            // WhatsApp Notif
+            if show-whatsapp-notif : GlassCard {
+                height: 70px;
+                HorizontalLayout {
+                    padding: 12px;
+                    spacing: 16px;
+                    alignment: space-between;
+
+                    // Dismiss button
+                    Text {
+                        text: "❌";
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        TouchArea {
+                            clicked => {
+                                show-whatsapp-notif = false;
+                                notification-count = notification-count - 1;
+                            }
+                        }
+                    }
+
+                    // Notification info
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+                                Text { text: "قبل 5 دقائق"; color: text-muted; font-size: 9px; vertical-alignment: center; }
+                                Text { text: "واتساب • أحمد"; color: text-primary; font-size: 13px; font-weight: 700; }
+                            }
+                            Text { text: "أحمد: هل ستحضر اجتماع الفريق البرمجي اليوم؟"; color: text-secondary; font-size: 11px; horizontal-alignment: right; }
+                        }
+
+                        // Icon
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 20px;
+                            background: #10b981;
+                            Text { text: "💬"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Gmail Notif
+            if show-gmail-notif : GlassCard {
+                height: 70px;
+                HorizontalLayout {
+                    padding: 12px;
+                    spacing: 16px;
+                    alignment: space-between;
+
+                    // Dismiss button
+                    Text {
+                        text: "❌";
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        TouchArea {
+                            clicked => {
+                                show-gmail-notif = false;
+                                notification-count = notification-count - 1;
+                            }
+                        }
+                    }
+
+                    // Notification info
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+                                Text { text: "قبل ساعة"; color: text-muted; font-size: 9px; vertical-alignment: center; }
+                                Text { text: "بريد جوجل • الشركة"; color: text-primary; font-size: 13px; font-weight: 700; }
+                            }
+                            Text { text: "تحديث: التقرير المالي لشهر مايو تم إصداره رسمياً."; color: text-secondary; font-size: 11px; horizontal-alignment: right; }
+                        }
+
+                        // Icon
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 20px;
+                            background: #ef4444;
+                            Text { text: "✉️"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Missed Call Notif
+            if show-call-notif : GlassCard {
+                height: 70px;
+                HorizontalLayout {
+                    padding: 12px;
+                    spacing: 16px;
+                    alignment: space-between;
+
+                    // Dismiss button
+                    Text {
+                        text: "❌";
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        TouchArea {
+                            clicked => {
+                                show-call-notif = false;
+                                notification-count = notification-count - 1;
+                            }
+                        }
+                    }
+
+                    // Notification info
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: end;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+                                Text { text: "قبل ساعتين"; color: text-muted; font-size: 9px; vertical-alignment: center; }
+                                Text { text: "مكالمة فائتة • سارة"; color: text-primary; font-size: 13px; font-weight: 700; }
+                            }
+                            Text { text: "مكالمة فائتة من الرقم 0770281920 (سارة)"; color: red-color; font-size: 11px; horizontal-alignment: right; }
+                        }
+
+                        // Icon
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 20px;
+                            background: #f59e0b;
+                            Text { text: "📞"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Empty State
+            if notification-count == 0 : VerticalLayout {
+                spacing: 12px;
+                padding-top: 40px;
+                alignment: center;
+
+                Text { text: "✨"; font-size: 48px; horizontal-alignment: center; }
+                Text { text: "لوحة الإشعارات فارغة تماماً"; color: text-secondary; font-size: 14px; font-weight: 700; horizontal-alignment: center; }
+                Text { text: "عند تلقي إشعارات جديدة على هاتفك، ستظهر هنا فوراً."; color: text-muted; font-size: 11px; horizontal-alignment: center; }
+            }
+        }
+
+        // Spacer
+        Rectangle {
+            vertical-stretch: 1;
+        }
+    }
+}

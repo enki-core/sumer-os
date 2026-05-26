@@ -1,0 +1,39 @@
+export component SidebarButton inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <bool> active;
+    callback clicked;
+
+    height: 42px;
+    border-radius: 10px;
+    background: active ? @linear-gradient(135deg, #3b82f620 0%, #8b5cf615 100%) : (ta.has-hover ? #ffffff06 : transparent);
+    border-width: active ? 1px : 0px;
+    border-color: #3b82f660;
+
+    animate background { duration: 150ms; }
+
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        spacing: 12px;
+        alignment: end; // RTL: Align contents to the right
+
+        Text {
+            text: text;
+            font-size: 14px;
+            font-weight: active ? 700 : 500;
+            color: active ? #60a5fa : #cbd5e1;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: icon;
+            font-size: 18px;
+            vertical-alignment: center;
+        }
+    }
+}

@@ -1,0 +1,64 @@
+export component NavButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <string> icon;
+    in-out property <bool> active;
+    in-out property <int> badge-count: 0;
+    callback clicked;
+
+    height: 40px;
+    border-radius: 8px;
+    background: active ? rgba(99, 102, 241, 0.2) : (touch-area.has-hover ? rgba(255, 255, 255, 0.04) : transparent);
+    border-width: 1px;
+    border-color: active ? rgba(99, 102, 241, 0.4) : transparent;
+
+    animate background { duration: 150ms; }
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        alignment: end; // RTL layout alignment
+
+        // Badge at the far left (right-to-left flow)
+        if badge-count > 0 : Rectangle {
+            width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            background: #ef4444;
+            
+            Text {
+                text: badge-count;
+                color: #ffffff;
+                font-size: 10px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        // Spacer to push the badge to the left
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        Text {
+            text: text;
+            color: active ? #ffffff : #94a3b8;
+            font-size: 13px;
+            font-weight: active ? 700 : 500;
+            vertical-alignment: center;
+            horizontal-alignment: right;
+        }
+
+        Text {
+            text: icon;
+            font-size: 15px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}

@@ -1,0 +1,37 @@
+export component DialButton inherits Rectangle {
+    in-out property <string> text;
+    in-out property <string> subtext: "";
+    callback clicked;
+
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background: touch-area.has-hover ? rgba(255, 255, 255, 0.12) : rgba(255, 255, 255, 0.05);
+    border-width: 1px;
+    border-color: touch-area.has-hover ? rgba(255, 255, 255, 0.2) : rgba(255, 255, 255, 0.08);
+
+    animate background { duration: 100ms; }
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 2px;
+
+        Text {
+            text: text;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            horizontal-alignment: center;
+        }
+        if subtext != "" : Text {
+            text: subtext;
+            color: #64748b;
+            font-size: 9px;
+            horizontal-alignment: center;
+        }
+    }
+
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}

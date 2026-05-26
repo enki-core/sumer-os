@@ -1,0 +1,674 @@
+// واجهة تطبيق لينكا (Linka) - ربط الهاتف بالكمبيوتر لنظام سومر
+// الملف الرئيسي المنظّم والمقسّم إلى ملفات ومجلدات فرعية لتسهيل الصيانة والتطوير
+
+import { GlassCard } from "components/glass_card.slint";
+import { NavButton } from "components/nav_button.slint";
+import { ActionButton } from "components/action_button.slint";
+import { DialButton } from "components/dial_button.slint";
+import { PhoneMockup } from "components/phone_mockup.slint";
+
+import { DashboardView } from "views/dashboard.slint";
+import { MessagesView } from "views/messages.slint";
+import { NotificationsView } from "views/notifications.slint";
+import { CallsView } from "views/calls.slint";
+import { PhotosView } from "views/photos.slint";
+import { FilesView } from "views/files.slint";
+import { AppsView } from "views/apps.slint";
+import { SecurityControlView } from "views/security_control.slint";
+import { SecretVaultView } from "views/secret_vault.slint";
+import { DnsNetworkView } from "views/dns_network.slint";
+
+export component AppWindow inherits Window {
+    title: "لينكا • Linka - ربط الهاتف بالكمبيوتر لنظام سومر";
+    width: 980px;
+    height: 680px;
+    background: #090d16;
+
+    // Theme configuration
+    property <color> bg-dark: #070a13;
+    property <color> bg-card: rgba(15, 23, 42, 0.45);
+    property <color> border-color: rgba(30, 41, 59, 0.6);
+    property <color> accent-color: #6366f1;
+    property <color> accent-hover: #4f46e5;
+    property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    property <color> text-primary: #f1f5f9;
+    property <color> text-secondary: #94a3b8;
+    property <color> text-muted: #64748b;
+    property <color> green-color: #10b981;
+    property <color> red-color: #ef4444;
+
+    // Navigation and status
+    property <int> active-tab: 0; // 0: Home, 1: Messages, 2: Notifications, 3: Calls, 4: Apps, 5: Security, 6: Vault, 7: Photos, 8: Files, 9: DNS
+    property <bool> show-sidebar: true;
+    property <bool> connected: true;
+    property <string> device-name: "Sumer Phone S24 Ultra";
+    property <int> battery-level: 87;
+    property <string> connection-type: "Wi-Fi: Sumer_5G";
+    property <int> notification-count: 3;
+
+    // 1. WhatsApp Notification state
+    property <bool> show-whatsapp-notif: true;
+    // 2. Gmail Notification state
+    property <bool> show-gmail-notif: true;
+    // 3. Missed Call Notification state
+    property <bool> show-call-notif: true;
+
+    // Ringer state
+    property <bool> is-ringing: false;
+
+    // Screen mirroring state
+    property <bool> is-mirroring: false;
+
+    // Shared Clipboard state
+    property <string> pc-clipboard: "https://sumer.os/linka";
+    property <string> phone-clipboard: "رمز التفعيل: 8931";
+    property <string> clipboard-sync-message: "الحافظة متزامنة بالكامل تلقائياً";
+
+    // Chat Message simulation slots
+    property <string> active-chat-name: "أحمد مطور سومر";
+    property <string> typed-message: "";
+    property <bool> sent-msg-1-active: false;
+    property <string> sent-msg-1-text: "";
+    property <bool> sent-msg-2-active: false;
+    property <string> sent-msg-2-text: "";
+    property <bool> sent-msg-3-active: false;
+    property <string> sent-msg-3-text: "";
+
+    // Dialer state
+    in-out property <string> dialed-number: "";
+    in-out property <bool> is-calling: false;
+    in-out property <string> call-timer: "00:00";
+    callback backspace-pressed();
+
+    // Photos state
+    property <bool> show-lightbox: false;
+    property <string> lightbox-title: "";
+    property <color> lightbox-c1: #3b82f6;
+    property <color> lightbox-c2: #8b5cf6;
+
+    // Files state
+    property <bool> is-uploading: false;
+    property <float> upload-progress: 0.0;
+    property <string> uploaded-file-name: "";
+    property <string> upload-status: "اسحب ملفاً هنا أو اضغط للاختيار";
+
+    // New Technical States
+    property <bool> flashlight-on: false;
+    property <int> active-phone-app: 0;
+    property <bool> is-mirroring-fullscreen: false;
+    property <bool> media-playing: false;
+    property <float> media-volume: 0.7;
+
+    animate upload-progress { duration: 1500ms; easing: ease-in-out; }
+
+    HorizontalLayout {
+        // Main Workspace Area (Left Side)
+        main-area := Rectangle {
+            horizontal-stretch: 1;
+            background: bg-dark;
+
+            // Content views
+            // 0. Dashboard View
+            if active-tab == 0 : DashboardView {
+                active-tab <=> active-tab;
+                connected <=> connected;
+                device-name <=> device-name;
+                battery-level <=> battery-level;
+                connection-type <=> connection-type;
+                is-ringing <=> is-ringing;
+                is-mirroring <=> is-mirroring;
+                pc-clipboard <=> pc-clipboard;
+                phone-clipboard <=> phone-clipboard;
+                clipboard-sync-message <=> clipboard-sync-message;
+
+                flashlight-on <=> flashlight-on;
+                active-phone-app <=> active-phone-app;
+                is-mirroring-fullscreen <=> is-mirroring-fullscreen;
+                media-playing <=> media-playing;
+                media-volume <=> media-volume;
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 1. Messages View
+            if active-tab == 1 : MessagesView {
+                active-tab <=> active-tab;
+                dialed-number <=> dialed-number;
+                is-calling <=> is-calling;
+                active-chat-name <=> active-chat-name;
+                typed-message <=> typed-message;
+                sent-msg-1-active <=> sent-msg-1-active;
+                sent-msg-1-text <=> sent-msg-1-text;
+                sent-msg-2-active <=> sent-msg-2-active;
+                sent-msg-2-text <=> sent-msg-2-text;
+                sent-msg-3-active <=> sent-msg-3-active;
+                sent-msg-3-text <=> sent-msg-3-text;
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 2. Notifications View
+            if active-tab == 2 : NotificationsView {
+                notification-count <=> notification-count;
+                show-whatsapp-notif <=> show-whatsapp-notif;
+                show-gmail-notif <=> show-gmail-notif;
+                show-call-notif <=> show-call-notif;
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 3. Calls View
+            if active-tab == 3 : CallsView {
+                dialed-number <=> dialed-number;
+                is-calling <=> is-calling;
+                backspace-pressed => {
+                    backspace-pressed();
+                }
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 4. Apps Manager View
+            if active-tab == 4 : AppsView {
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 5. Security & Control View
+            if active-tab == 5 : SecurityControlView {
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 6. Secret Vault View
+            if active-tab == 6 : SecretVaultView {
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 7. Photos View
+            if active-tab == 7 : PhotosView {
+                show-lightbox <=> show-lightbox;
+                lightbox-title <=> lightbox-title;
+                lightbox-c1 <=> lightbox-c1;
+                lightbox-c2 <=> lightbox-c2;
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 8. Files and Share View
+            if active-tab == 8 : FilesView {
+                clipboard-sync-message <=> clipboard-sync-message;
+                is-uploading <=> is-uploading;
+                upload-progress <=> upload-progress;
+                upload-status <=> upload-status;
+
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // 9. DNS Network View
+            if active-tab == 9 : DnsNetworkView {
+                bg-dark: bg-dark;
+                bg-card: bg-card;
+                theme-border-color: border-color;
+                accent-color: accent-color;
+                accent-hover: accent-hover;
+                accent-glow: accent-glow;
+                text-primary: text-primary;
+                text-secondary: text-secondary;
+                text-muted: text-muted;
+                green-color: green-color;
+                red-color: red-color;
+            }
+
+            // Floating Show Sidebar Button (only visible when sidebar is hidden)
+            if !show-sidebar : Rectangle {
+                x: parent.width - 48px;
+                y: 16px;
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                background: show-sidebar-touch.has-hover ? @linear-gradient(135deg, accent-hover 0%, #10b981 100%) : @linear-gradient(135deg, accent-color 0%, #10b981 100%);
+                border-width: 1px;
+                border-color: border-color;
+                
+                Text {
+                    text: "🔗";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+                
+                show-sidebar-touch := TouchArea {
+                    clicked => {
+                        show-sidebar = true;
+                    }
+                }
+            }
+        }
+
+        // Vertical Divider
+        if show-sidebar : Rectangle {
+            width: 1px;
+            background: border-color;
+        }
+
+        // Navigation Sidebar (Right Side)
+        if show-sidebar : sidebar-area := Rectangle {
+            width: 220px;
+            background: rgba(15, 23, 42, 0.35);
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                // Application Brand logo
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 10px;
+                    
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: "لينكا • Linka";
+                            color: #ffffff;
+                            font-size: 16px;
+                            font-weight: 800;
+                            horizontal-alignment: right;
+                        }
+                        Text {
+                            text: "توصيل الهاتف الذكي";
+                            color: text-muted;
+                            font-size: 9px;
+                            horizontal-alignment: right;
+                        }
+                    }
+
+                    // Logo Emblem
+                    Rectangle {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 8px;
+                        background: hide-sidebar-touch.has-hover ? @linear-gradient(135deg, accent-hover 0%, #10b981 100%) : @linear-gradient(135deg, accent-color 0%, #10b981 100%);
+                        
+                        Text {
+                            text: "🔗";
+                            font-size: 18px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        hide-sidebar-touch := TouchArea {
+                            clicked => {
+                                show-sidebar = false;
+                            }
+                        }
+                    }
+                }
+
+                // Device connection status widget card
+                GlassCard {
+                    height: 100px;
+                    
+                    VerticalLayout {
+                        padding: 10px;
+                        spacing: 4px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            // Small green dot for active status
+                            Rectangle {
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 4px;
+                                background: connected ? green-color : red-color;
+                                y: 3px;
+                            }
+                            Text {
+                                text: connected ? "متصل بالشبكة" : "غير متصل";
+                                color: connected ? green-color : red-color;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                        }
+
+                        Text {
+                            text: device-name;
+                            color: text-primary;
+                            font-size: 11px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "🔋 " + battery-level + "%"; color: text-secondary; font-size: 9px; }
+                            Text { text: "📶 ممتاز"; color: text-secondary; font-size: 9px; }
+                        }
+                    }
+                }
+
+                // Spacer
+                Rectangle { height: 10px; }
+
+                // Tabs Navigation Menu (RTL)
+                VerticalLayout {
+                    spacing: 5px;
+                    NavButton { text: "الرئيسية"; icon: "🏠"; active: active-tab == 0; clicked => { active-tab = 0; } }
+                    NavButton { text: "الرسائل"; icon: "💬"; active: active-tab == 1; clicked => { active-tab = 1; } }
+                    NavButton { text: "الإشعارات"; icon: "🔔"; active: active-tab == 2; badge-count: notification-count; clicked => { active-tab = 2; } }
+                    NavButton { text: "المكالمات"; icon: "📞"; active: active-tab == 3; clicked => { active-tab = 3; } }
+                    NavButton { text: "مدير التطبيقات"; icon: "📱"; active: active-tab == 4; clicked => { active-tab = 4; } }
+                    NavButton { text: "التحكم والأمان"; icon: "🔒"; active: active-tab == 5; clicked => { active-tab = 5; } }
+                    NavButton { text: "الخزنة السرية"; icon: "🔑"; active: active-tab == 6; clicked => { active-tab = 6; } }
+                    NavButton { text: "الصور والمعرض"; icon: "📷"; active: active-tab == 7; clicked => { active-tab = 7; } }
+                    NavButton { text: "مشاركة الملفات"; icon: "📁"; active: active-tab == 8; clicked => { active-tab = 8; } }
+                    NavButton { text: "إعدادات الـ DNS"; icon: "🌐"; active: active-tab == 9; clicked => { active-tab = 9; } }
+                }
+
+                // Filler
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+
+                // Footer
+                VerticalLayout {
+                    spacing: 4px;
+                    alignment: center;
+                    
+                    Text {
+                        text: "أداة ربط الهاتف • نظام سومر";
+                        color: text-muted;
+                        font-size: 9px;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "نسخة التطوير 2026";
+                        color: text-muted;
+                        font-size: 8px;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+
+    // Active call screen overlay (overrides everything if active)
+    if is-calling : GlassCard {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        card-bg: rgba(7, 10, 19, 0.95);
+        card-border: transparent;
+        border-radius: 0px;
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 28px;
+
+            // Pulse animation card (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 90px;
+                    height: 90px;
+                    border-radius: 45px;
+                    background: rgba(99, 102, 241, 0.15);
+                    
+                    Rectangle {
+                        x: (parent.width - 64px) / 2;
+                        y: (parent.height - 64px) / 2;
+                        width: 64px;
+                        height: 64px;
+                        border-radius: 32px;
+                        background: accent-color;
+
+                        Text {
+                            text: "📞";
+                            font-size: 28px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            VerticalLayout {
+                spacing: 8px;
+                Text {
+                    text: dialed-number != "" ? dialed-number : "جهة اتصال غير معروفة";
+                    color: #ffffff;
+                    font-size: 24px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "جاري الاتصال عبر الهاتف الذكي المربوط...";
+                    color: text-secondary;
+                    font-size: 12px;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: call-timer;
+                    color: green-color;
+                    font-size: 15px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Call actions
+            HorizontalLayout {
+                spacing: 24px;
+                alignment: center;
+
+                // Mute
+                VerticalLayout {
+                    spacing: 4px;
+                    Rectangle {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 24px;
+                        background: rgba(255, 255, 255, 0.08);
+                        
+                        Text { text: "🔇"; font-size: 16px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                    Text { text: "كتم الصوت"; color: text-secondary; font-size: 10px; horizontal-alignment: center; }
+                }
+
+                // Hangup
+                VerticalLayout {
+                    spacing: 4px;
+                    Rectangle {
+                        width: 58px;
+                        height: 58px;
+                        border-radius: 29px;
+                        background: red-color;
+                        
+                        Text { text: "❌"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                        TouchArea {
+                            clicked => {
+                                is-calling = false;
+                            }
+                        }
+                    }
+                    Text { text: "إنهاء"; color: red-color; font-size: 11px; font-weight: 700; horizontal-alignment: center; }
+                }
+
+                // Speaker
+                VerticalLayout {
+                    spacing: 4px;
+                    Rectangle {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 24px;
+                        background: rgba(255, 255, 255, 0.08);
+                        
+                        Text { text: "🔊"; font-size: 16px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                    Text { text: "مكبر الصوت"; color: text-secondary; font-size: 10px; horizontal-alignment: center; }
+                }
+            }
+        }
+    }
+
+    // Photo Lightbox modal (activated when clicking a photo)
+    if show-lightbox : GlassCard {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        card-bg: rgba(7, 10, 19, 0.93);
+        card-border: transparent;
+        border-radius: 0px;
+
+        VerticalLayout {
+            padding: 24px;
+            alignment: space-between;
+
+            // Close row
+            HorizontalLayout {
+                alignment: space-between;
+                ActionButton {
+                    text: "تنزيل للحاسوب";
+                    icon: "💾";
+                    base-bg: green-color;
+                    hover-bg: green-color.darker(10%);
+                    clicked => {
+                        show-lightbox = false;
+                        clipboard-sync-message = "تم تنزيل ملف الصورة للحاسوب بنجاح!";
+                    }
+                }
+                
+                // Close button
+                Rectangle {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 16px;
+                    background: rgba(255, 255, 255, 0.1);
+                    
+                    Text { text: "❌"; color: white; font-size: 14px; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { show-lightbox = false; } }
+                }
+            }
+
+            // Big Photo Mockup (Centered via HorizontalLayout)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 340px;
+                    height: 340px;
+                    border-radius: 16px;
+                    background: @linear-gradient(135deg, lightbox-c1 0%, lightbox-c2 100%);
+                    border-width: 1px;
+                    border-color: border-color;
+
+                    Text {
+                        text: "📷";
+                        font-size: 72px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Title
+            Text {
+                text: lightbox-title;
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}

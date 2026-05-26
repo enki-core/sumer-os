@@ -1,0 +1,146 @@
+import { ScrollView } from "std-widgets.slint";
+import { FileRow } from "../components/file_row.slint";
+import { CompactRow } from "../components/compact_row.slint";
+import { FileItem } from "../types.slint";
+
+export component FileListPanel inherits Rectangle {
+    in property <[FileItem]> files;
+    in property <bool> is-loading;
+    in property <string> view-mode;
+    in property <length> grid-icon-size;
+    in property <bool> has-selected;
+    in property <FileItem> selected-item;
+
+    callback select-item(FileItem);
+    callback open-item(FileItem);
+
+    VerticalLayout {
+        width: 100%;
+        height: 100%;
+        padding: 8px;
+        spacing: 8px;
+
+        // Table headers
+        HorizontalLayout {
+            height: 24px;
+            padding-left: 16px;
+            padding-right: 16px;
+
+            HorizontalLayout {
+                horizontal-stretch: 1;
+                alignment: start;
+                Text { text: "الحجم والتعديل"; font-size: 12px; font-weight: 700; color: #475569; }
+            }
+            HorizontalLayout {
+                alignment: end;
+                Text { text: "الاسم"; font-size: 12px; font-weight: 700; color: #475569; }
+            }
+        }
+
+        if root.is-loading : Rectangle {
+            vertical-stretch: 1;
+            Text { text: "جاري تحميل الملفات... ⏳"; font-size: 14px; color: #60a5fa; horizontal-alignment: center; vertical-alignment: center; }
+        }
+
+        if (!root.is-loading && root.files.length == 0) : Rectangle {
+            vertical-stretch: 1;
+            Text { text: "المجلد فارغ 🍃"; font-size: 14px; color: #64748b; horizontal-alignment: center; vertical-alignment: center; }
+        }
+
+        if (!root.is-loading && root.files.length > 0 && root.view-mode == "list") : ScrollView {
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                spacing: 4px;
+                padding-right: 4px;
+
+                for file-item[index] in root.files : FileRow {
+                    name: file-item.name;
+                    icon: file-item.icon;
+                    size: file-item.size-formatted;
+                    modified: file-item.modified-formatted;
+                    is-dir: file-item.is-dir;
+                    selected: root.has-selected && root.selected-item.path == file-item.path;
+
+                    clicked => {
+                        root.select-item(file-item);
+                    }
+                    double-clicked => {
+                        root.open-item(file-item);
+                    }
+                }
+            }
+        }
+
+        if (!root.is-loading && root.files.length > 0 && root.view-mode == "compact") : ScrollView {
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                spacing: 4px;
+                padding-right: 4px;
+
+                for file-item[index] in root.files : CompactRow {
+                    name: file-item.name;
+                    icon: file-item.icon;
+                    selected: root.has-selected && root.selected-item.path == file-item.path;
+
+                    clicked => {
+                        root.select-item(file-item);
+                    }
+                    double-clicked => {
+                        root.open-item(file-item);
+                    }
+                }
+            }
+        }
+
+        if (!root.is-loading && root.files.length > 0 && root.view-mode == "grid") : ScrollView {
+            vertical-stretch: 1;
+
+            Rectangle {
+                // Automatically calculate height based on the number of rows (5 items per row)
+                height: Math.max(200px, Math.floor((root.files.length + 4) / 5) * (root.grid-icon-size + 80px));
+                
+                for file-item[index] in root.files : Rectangle {
+                    width: root.grid-icon-size + 50px;
+                    height: root.grid-icon-size + 65px;
+                    border-radius: 8px;
+                    background: (root.has-selected && root.selected-item.path == file-item.path) ? #3b82f618 : (ta-grid.has-hover ? #ffffff04 : transparent);
+                    border-width: 1px;
+                    border-color: (root.has-selected && root.selected-item.path == file-item.path) ? #3b82f638 : (ta-grid.has-hover ? #ffffff08 : transparent);
+
+                    // Absolute layout coordinates calculation for 5 columns wrap
+                    x: Math.mod(index, 5) * (root.grid-icon-size + 60px);
+                    y: Math.floor(index / 5) * (root.grid-icon-size + 75px);
+
+                    ta-grid := TouchArea {
+                        clicked => { root.select-item(file-item); }
+                        double-clicked => { root.open-item(file-item); }
+                    }
+
+                    VerticalLayout {
+                        padding: 8px;
+                        spacing: 6px;
+                        alignment: center;
+
+                        Text {
+                            text: file-item.icon;
+                            font-size: root.grid-icon-size;
+                            font-family: "sans-serif";
+                            horizontal-alignment: center;
+                        }
+
+                        Text {
+                            text: file-item.name;
+                            font-size: 11px;
+                            color: (root.has-selected && root.selected-item.path == file-item.path) ? #ffffff : #cbd5e1;
+                            horizontal-alignment: center;
+                            overflow: elide;
+                            max-width: root.grid-icon-size + 40px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,29 @@
+export component IconButton inherits Rectangle {
+    in property <string> icon;
+    in property <string> tooltip;
+    in property <bool> enabled: true;
+    callback clicked;
+
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: !enabled ? #ffffff02 : (ta.has-hover ? #ffffff0c : #ffffff04);
+    border-width: 1px;
+    border-color: ta.has-hover ? #ffffff1c : #ffffff0a;
+    opacity: enabled ? 1.0 : 0.4;
+
+    animate background, border-color { duration: 120ms; }
+
+    ta := TouchArea {
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: icon;
+        font-size: 16px;
+        font-family: "sans-serif";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}

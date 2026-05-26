@@ -1,0 +1,622 @@
+import { Button, LineEdit, ScrollView } from "std-widgets.slint";
+
+export struct TabInfo {
+    title: string,
+    url: string,
+    active: bool,
+}
+
+export component AppWindow inherits Window {
+    title: "متصفح أوروك — Orok Browser";
+    min-width: 900px;
+    min-height: 650px;
+    background: #0f172a; // Deep slate dark background
+
+    callback navigate(string);
+    callback back();
+    callback forward();
+    callback reload();
+    callback add_tab();
+    callback close_tab(int);
+    callback select_tab(int);
+    callback quick_link_clicked(string);
+    callback open_external(string);
+    callback handle_mouse_click(float, float);
+
+    in-out property <image> web_view_image;
+    in-out property <bool> show_web_view: true;
+
+    in-out property <[TabInfo]> tabs: [
+        { title: "بوابة سومر", url: "https://sumer.os", active: true }
+    ];
+    in-out property <int> active_tab_index: 0;
+    in-out property <string> current_url: "https://sumer.os";
+    in-out property <bool> is_loading: false;
+    in-out property <string> page_title: "بوابة سومر الوطنية";
+    in-out property <string> page_content: "";
+    
+    // Global state to disable all buttons and show "Coming Soon"
+    in-out property <bool> is_disabled: true;
+
+    VerticalLayout {
+        spacing: 0;
+        
+        // --- Top Titlebar / Header / Main Control Toolbar ---
+        Rectangle {
+            height: 60px;
+            background: #1e293b;
+
+            // Bottom border workaround
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: #334155;
+                width: parent.width;
+            }
+
+            HorizontalLayout {
+                padding: 10px;
+                spacing: 12px;
+                alignment: center;
+
+                // Brand Emblem
+                Text {
+                    text: "⛵ أوروك";
+                    font-size: 18px;
+                    font-weight: 800;
+                    color: #f59e0b; // Gold
+                    vertical-alignment: center;
+                }
+
+                // Separator
+                Rectangle {
+                    width: 1px;
+                    height: 25px;
+                    background: #334155;
+                }
+
+                // Navigation Buttons (Back / Forward / Reload)
+                HorizontalLayout {
+                    spacing: 6px;
+                    
+                    // Back
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        background: (back_touch.has-hover && !root.is_disabled) ? #334155 : #1e293b;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #475569;
+                        opacity: root.is_disabled ? 0.4 : 1.0;
+                        back_touch := TouchArea {
+                            clicked => { if (!root.is_disabled) { root.back() } }
+                        }
+                        Text {
+                            text: "⬅";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Forward
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        background: (fwd_touch.has-hover && !root.is_disabled) ? #334155 : #1e293b;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #475569;
+                        opacity: root.is_disabled ? 0.4 : 1.0;
+                        fwd_touch := TouchArea {
+                            clicked => { if (!root.is_disabled) { root.forward() } }
+                        }
+                        Text {
+                            text: "➡";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Reload
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        background: (reload_touch.has-hover && !root.is_disabled) ? #334155 : #1e293b;
+                        border-radius: 4px;
+                        border-width: 1px;
+                        border-color: #475569;
+                        opacity: root.is_disabled ? 0.4 : 1.0;
+                        reload_touch := TouchArea {
+                            clicked => { if (!root.is_disabled) { root.reload() } }
+                        }
+                        Text {
+                            text: "↻";
+                            color: #f1f5f9;
+                            font-size: 13px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Address Bar
+                url_input := LineEdit {
+                    text: root.current_url;
+                    placeholder-text: "أدخل رابط موقع أو ابحث في الويب...";
+                    font-size: 14px;
+                    horizontal-stretch: 1;
+                    enabled: !root.is_disabled;
+                    opacity: root.is_disabled ? 0.5 : 1.0;
+                    accepted => {
+                        if (!root.is_disabled) {
+                            root.navigate(self.text);
+                        }
+                    }
+                }
+
+                // Go Button (انتقال)
+                Rectangle {
+                    width: 75px;
+                    height: 35px;
+                    background: (go_touch.has-hover && !root.is_disabled) ? #d97706 : #f59e0b;
+                    border-radius: 4px;
+                    opacity: root.is_disabled ? 0.4 : 1.0;
+                    go_touch := TouchArea {
+                        clicked => { if (!root.is_disabled) { root.navigate(url_input.text) } }
+                    }
+                    Text {
+                        text: "انتقال";
+                        color: #0f172a;
+                        font-weight: 700;
+                        font-size: 13px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Open in Full Browser Button (متصفح كامل)
+                Rectangle {
+                    width: 95px;
+                    height: 35px;
+                    background: (full_touch.has-hover && !root.is_disabled) ? #0284c7 : #0369a1;
+                    border-radius: 4px;
+                    opacity: root.is_disabled ? 0.4 : 1.0;
+                    full_touch := TouchArea {
+                        clicked => { if (!root.is_disabled) { root.open_external(url_input.text) } }
+                    }
+                    Text {
+                        text: "🌐 متصفح كامل";
+                        color: #ffffff;
+                        font-weight: 700;
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // New Tab Button (+)
+                Rectangle {
+                    width: 35px;
+                    height: 35px;
+                    background: (add_tab_touch.has-hover && !root.is_disabled) ? #334155 : #1e293b;
+                    border-radius: 4px;
+                    border-width: 1px;
+                    border-color: #475569;
+                    opacity: root.is_disabled ? 0.4 : 1.0;
+                    add_tab_touch := TouchArea {
+                        clicked => { if (!root.is_disabled) { root.add_tab() } }
+                    }
+                    Text {
+                        text: "+";
+                        color: #f59e0b;
+                        font-weight: 700;
+                        font-size: 18px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // --- Premium Tab Bar ---
+        Rectangle {
+            height: 38px;
+            background: #0f172a;
+            
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 4px;
+                alignment: start;
+                
+                for tab[idx] in root.tabs : Rectangle {
+                    width: 170px;
+                    height: 34px;
+                    background: tab.active ? #1e293b : #111827;
+                    border-top-left-radius: 6px;
+                    border-top-right-radius: 6px;
+                    opacity: root.is_disabled ? 0.6 : 1.0;
+                    
+                    // Golden top border for active tab
+                    Rectangle {
+                        y: 0;
+                        height: 2px;
+                        background: tab.active ? #f59e0b : #00000000;
+                        width: parent.width;
+                    }
+
+                    tab_touch := TouchArea {
+                        clicked => { if (!root.is_disabled) { root.select_tab(idx) } }
+                    }
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 8px;
+                        spacing: 8px;
+                        alignment: center;
+                        
+                        Text {
+                            text: tab.title;
+                            horizontal-stretch: 1;
+                            vertical-alignment: center;
+                            color: tab.active ? #f1f5f9 : #94a3b8;
+                            font-size: 12px;
+                            overflow: elide;
+                        }
+
+                        // Close Tab Button (×)
+                        if (root.tabs.length > 1) : Rectangle {
+                            width: 18px;
+                            height: 18px;
+                            background: (close_touch.has-hover && !root.is_disabled) ? #ef4444 : #00000000;
+                            border-radius: 9px;
+                            
+                            close_touch := TouchArea {
+                                clicked => { if (!root.is_disabled) { root.close_tab(idx) } }
+                            }
+                            Text {
+                                text: "×";
+                                color: (close_touch.has-hover && !root.is_disabled) ? #ffffff : #64748b;
+                                font-size: 11px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Main Web Content Area ---
+        Rectangle {
+            background: #111827; // Content background
+            
+            // 1. "Coming Soon" (قريباً) Premium Centered Overlay
+            if (root.is_disabled) : Rectangle {
+                z: 20;
+                background: @linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                
+                // Outer glowing circle
+                Rectangle {
+                    width: 450px;
+                    height: 450px;
+                    background: #f59e0b;
+                    opacity: 0.05;
+                    border-radius: 225px;
+                    x: parent.width / 2 - 225px;
+                    y: parent.height / 2 - 225px;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 35px;
+                    
+                    // Golden Ship Logo with Pulsing Ring
+                    Rectangle {
+                        width: 110px;
+                        height: 110px;
+                        background: #1e293b;
+                        border-radius: 55px;
+                        border-width: 2px;
+                        border-color: #f59e0b;
+                        
+                        Text {
+                            text: "⛵";
+                            font-size: 50px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 12px;
+                        alignment: center;
+                        
+                        Text {
+                            text: "متصفح أوروك الوطني";
+                            font-size: 34px;
+                            font-weight: 900;
+                            color: #ffffff;
+                            horizontal-alignment: center;
+                        }
+
+                        Text {
+                            text: "قريباً في نظام سومر التشغيلي";
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #f59e0b; // Gold glow
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    // Glassmorphic Description Card
+                    Rectangle {
+                        width: 580px;
+                        background: #1e293b88;
+                        border-radius: 12px;
+                        border-width: 1px;
+                        border-color: #334155;
+                        padding: 24px;
+                        
+                        Text {
+                            text: "نعمل حالياً على تطوير وتكامل محرك ويب سيادي فائق السرعة والأمان خصيصاً لنظام سومر. انتظرونا في التحديثات القادمة لتجربة تصفح وطنية متكاملة.";
+                            font-size: 14px;
+                            font-weight: 500;
+                            color: #94a3b8;
+                            horizontal-alignment: center;
+                            wrap: word-wrap;
+                        }
+                    }
+
+                    // Premium futuristic loading indicator line
+                    Rectangle {
+                        width: 250px;
+                        height: 6px;
+                        background: #1e293b;
+                        border-radius: 3px;
+                        
+                        Rectangle {
+                            x: 50px;
+                            width: 150px;
+                            height: 6px;
+                            background: @linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+                            border-radius: 3px;
+                        }
+                    }
+                }
+            }
+
+            // 2. Loading Layer (kept for compilation integrity)
+            if (root.is_loading) : Rectangle {
+                background: #0f172aaa;
+                z: 10;
+                
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 15px;
+                    
+                    Text {
+                        text: "⛵";
+                        font-size: 55px;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "جاري تحميل الصفحة... يرجى الانتظار";
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #f59e0b;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: root.current_url;
+                        font-size: 12px;
+                        color: #64748b;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            // 3. Sumer Home Page / Search Portal (kept for compilation integrity)
+            if (root.current_url == "https://sumer.os" || root.current_url == "" || root.current_url == "https://www.google.com" || root.current_url == "google.com") : ScrollView {
+                VerticalLayout {
+                    padding: 40px;
+                    spacing: 30px;
+                    alignment: center;
+                    
+                    // Brand / Logo
+                    VerticalLayout {
+                        spacing: 8px;
+                        alignment: center;
+                        Text {
+                            text: "⛵ بوابة أوروك للويب";
+                            font-size: 34px;
+                            font-weight: 800;
+                            color: #f59e0b; // Gold
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text: "مرحباً بك في متصفح الويب الرسمي لنظام سومر الموثوق";
+                            font-size: 14px;
+                            color: #94a3b8;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    // Sumer Search Bar Simulation
+                    Rectangle {
+                        width: 500px;
+                        height: 48px;
+                        background: #1e293b;
+                        border-radius: 24px;
+                        border-width: 1px;
+                        border-color: #475569;
+
+                        HorizontalLayout {
+                            padding-left: 20px;
+                            padding-right: 20px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "🔍";
+                                font-size: 18px;
+                                vertical-alignment: center;
+                            }
+
+                            search_input := LineEdit {
+                                placeholder-text: "ابحث في محرك البحث سومر...";
+                                font-size: 14px;
+                                horizontal-stretch: 1;
+                                accepted => {
+                                    root.navigate(self.text);
+                                }
+                            }
+                        }
+                    }
+
+                    // Popular/Quick Link Cards
+                    VerticalLayout {
+                        spacing: 12px;
+                        alignment: center;
+                        
+                        Text {
+                            text: "الروابط السريعة الموصى بها:";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #64748b;
+                            horizontal-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 15px;
+                            alignment: center;
+
+                            // Sumer Card
+                            Rectangle {
+                                width: 140px;
+                                height: 95px;
+                                background: #1e293b;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: #334155;
+                                VerticalLayout {
+                                    padding: 12px;
+                                    alignment: center;
+                                    spacing: 6px;
+                                    Text { text: "🦁"; font-size: 24px; horizontal-alignment: center; }
+                                    Text { text: "بوابة سومر"; font-weight: 700; font-size: 12px; color: #ffffff; horizontal-alignment: center; }
+                                }
+                            }
+
+                            // Google Card
+                            Rectangle {
+                                width: 140px;
+                                height: 95px;
+                                background: #1e293b;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: #334155;
+                                VerticalLayout {
+                                    padding: 12px;
+                                    alignment: center;
+                                    spacing: 6px;
+                                    Text { text: "🔍"; font-size: 24px; horizontal-alignment: center; }
+                                    Text { text: "بحث جوجل"; font-weight: 700; font-size: 12px; color: #ffffff; horizontal-alignment: center; }
+                                }
+                            }
+
+                            // Wikipedia Card
+                            Rectangle {
+                                width: 140px;
+                                height: 95px;
+                                background: #1e293b;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: #334155;
+                                VerticalLayout {
+                                    padding: 12px;
+                                    alignment: center;
+                                    spacing: 6px;
+                                    Text { text: "📖"; font-size: 24px; horizontal-alignment: center; }
+                                    Text { text: "ويكيبيديا"; font-weight: 700; font-size: 12px; color: #ffffff; horizontal-alignment: center; }
+                                }
+                            }
+
+                            // GitHub Card
+                            Rectangle {
+                                width: 140px;
+                                height: 95px;
+                                background: #1e293b;
+                                border-radius: 8px;
+                                border-width: 1px;
+                                border-color: #334155;
+                                VerticalLayout {
+                                    padding: 12px;
+                                    alignment: center;
+                                    spacing: 6px;
+                                    Text { text: "🐙"; font-size: 24px; horizontal-alignment: center; }
+                                    Text { text: "جيت هاب"; font-weight: 700; font-size: 12px; color: #ffffff; horizontal-alignment: center; }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Real Web Render / Reader View (kept for compilation integrity)
+            if (root.current_url != "https://sumer.os" && root.current_url != "" && root.current_url != "https://www.google.com" && root.current_url != "google.com") : Rectangle {
+                padding: 0px;
+                
+                VerticalLayout {
+                    spacing: 0px;
+
+                    // Address Info Header
+                    Rectangle {
+                        height: 32px;
+                        background: #1e293b;
+                        
+                        HorizontalLayout {
+                            padding-left: 15px;
+                            padding-right: 15px;
+                            spacing: 10px;
+                            
+                            Text {
+                                text: "🔒 اتصال آمن";
+                                color: #10b981;
+                                font-weight: 700;
+                                font-size: 11px;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: "|";
+                                color: #334155;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: root.current_url;
+                                color: #94a3b8;
+                                font-size: 11px;
+                                vertical-alignment: center;
+                                horizontal-stretch: 1;
+                                overflow: elide;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        background: #ffffff;
+                        
+                        img_area := Image {
+                            source: root.web_view_image;
+                            width: parent.width;
+                            height: parent.height;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,1100 @@
+import { ScrollView } from "std-widgets.slint";
+
+// Data structures
+export struct SearchResult {
+    page: int,
+    snippet: string,
+}
+
+export struct RecentFile {
+    path: string,
+    name: string,
+    date: string,
+}
+
+export struct PdfMetadata {
+    title: string,
+    author: string,
+    pages: int,
+    file_size: string,
+    creation_date: string,
+    file_path: string,
+}
+
+// Custom Glassmorphic Button
+export component GlassButton inherits Rectangle {
+    in-out property <string> text: "";
+    in-out property <color> text-color: #ffffff;
+    in-out property <color> bg-color: #3b82f61a;
+    in-out property <color> hover-bg-color: #3b82f630;
+    in-out property <color> active-bg-color: #3b82f64a;
+    in-out property <color> border-color-default: #3b82f633;
+    in-out property <length> font-size: 13px;
+    in-out property <bool> is-danger: false;
+    in-out property <bool> active: false;
+    
+    callback clicked();
+
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: root.active ? #3b82f6aa : (root.is-danger ? #ef444466 : root.border-color-default);
+    background: ta.pressed ? (root.is-danger ? #ef444460 : root.active-bg-color) : 
+                ta.has-hover ? (root.is-danger ? #ef444430 : root.hover-bg-color) : 
+                (root.active ? #3b82f625 : (root.is-danger ? #ef444415 : root.bg-color));
+
+    height: 36px;
+    
+    animate background { duration: 120ms; }
+    animate border-color { duration: 120ms; }
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 8px;
+        padding-left: 14px;
+        padding-right: 14px;
+        
+        Text {
+            text: root.text;
+            color: root.is-danger ? #fca5a5 : root.text-color;
+            font-size: root.font-size;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+    }
+
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+// Tab Selector Button
+export component TabButton inherits Rectangle {
+    in-out property <string> text: "";
+    in-out property <string> icon: "📁";
+    in-out property <bool> active: false;
+    
+    callback clicked();
+
+    border-radius: 8px;
+    background: root.active ? #06b6d420 : (ta.has-hover ? #ffffff05 : transparent);
+    border-width: 1px;
+    border-color: root.active ? #06b6d450 : (ta.has-hover ? #ffffff0a : transparent);
+    height: 40px;
+
+    animate background { duration: 120ms; }
+
+    HorizontalLayout {
+        spacing: 10px;
+        padding-left: 12px;
+        padding-right: 12px;
+        alignment: space-between;
+
+        Text {
+            text: root.text;
+            color: root.active ? #ffffff : #94a3b8;
+            font-size: 12px;
+            font-weight: root.active ? 700 : 500;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.icon;
+            font-size: 15px;
+            vertical-alignment: center;
+        }
+    }
+
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+// Glassmorphic Input Field
+export component GlassLineEdit inherits Rectangle {
+    in-out property <string> text <=> input.text;
+    in-out property <string> placeholder-text: "";
+    callback accepted(string);
+    callback edited(string);
+
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: input.has-focus ? #06b6d4aa : #ffffff15;
+    background: #ffffff03;
+    height: 38px;
+
+    animate border-color { duration: 150ms; }
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        
+        input := TextInput {
+            text: "";
+            color: #ffffff;
+            font-size: 13px;
+            vertical-alignment: center;
+            accepted => { root.accepted(self.text); }
+            edited => { root.edited(self.text); }
+        }
+    }
+
+    if input.text == "" : Text {
+        x: 12px;
+        text: root.placeholder-text;
+        color: #475569;
+        font-size: 13px;
+        vertical-alignment: center;
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "مِش قارئ ملفات بي دي اف — Mesh PDF Reader";
+    width: 1000px;
+    height: 700px;
+    background: @linear-gradient(135deg, #060913 0%, #0d1527 50%, #040710 100%);
+    default-font-family: "Outfit";
+
+    // --- State Properties ---
+    in-out property <bool> has-file-loaded: false;
+    in-out property <string> current-file-path: "";
+    in-out property <int> current-page: 1;
+    in-out property <int> total-pages: 0;
+    in-out property <float> zoom-level: 1.0;
+    in-out property <bool> is-dark-mode: false;
+    in-out property <image> current-page-image: @image-url("");
+    
+    in-out property <[SearchResult]> search-results: [];
+    in-out property <[RecentFile]> recent-files: [];
+    in-out property <PdfMetadata> current-metadata: {
+        title: "لا يوجد ملف مفتوح",
+        author: "غير معروف",
+        pages: 0,
+        file-size: "0 KB",
+        creation-date: "-",
+        file-path: "-"
+    };
+
+    in-out property <string> active-sidebar-tab: "pages"; // "pages", "search", "details", "history"
+    in-out property <string> search-query: "";
+    in-out property <bool> is-searching: false;
+    in-out property <bool> is-loading-page: false;
+
+    // --- Callbacks for Rust Backend ---
+    callback open-file-dialog();
+    callback open-file(string);
+    callback change-page(int); // page number (1-indexed)
+    callback search-text(string);
+    callback toggle-dark-mode();
+    callback clear-history();
+    callback jump-to-page(string);
+
+    // Layout
+    Rectangle {
+        width: 100%;
+        height: 100%;
+
+        // 🌌 Cyber Glow Spheres
+        Rectangle {
+            x: -150px; y: -150px; width: 400px; height: 400px;
+            background: #06b6d40f;
+            border-radius: 200px;
+        }
+        Rectangle {
+            x: parent.width - 250px; y: parent.height - 250px; width: 500px; height: 500px;
+            background: #8b5cf60a;
+            border-radius: 250px;
+        }
+
+        // ==========================================
+        // 1. WELCOME SCREEN (When no file is loaded)
+        // ==========================================
+        if !root.has-file-loaded : VerticalLayout {
+            alignment: center;
+            spacing: 24px;
+            padding: 32px;
+
+            // Header Section
+            VerticalLayout {
+                spacing: 8px;
+                alignment: center;
+                
+                Text {
+                    text: "📕";
+                    font-size: 80px;
+                    horizontal-alignment: center;
+                    animate font-size { duration: 200ms; }
+                }
+                Text {
+                    text: "مِش قارئ ملفات بي دي إف";
+                    font-size: 28px;
+                    font-weight: 800;
+                    color: #ffffff;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "MESH INTEGRATED PDF READER";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #06b6d4;
+                    horizontal-alignment: center;
+                    letter-spacing: 2px;
+                }
+                Text {
+                    text: "قارئ ملفات PDF متكامل فائق السرعة ذو واجهة زجاجية جذابة";
+                    font-size: 13px;
+                    color: #64748b;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Quick Actions Card
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 500px;
+                    height: 160px;
+                    background: #ffffff02;
+                    border-radius: 16px;
+                    border-width: 1px;
+                    border-color: #ffffff0a;
+                    padding: 24px;
+
+                    VerticalLayout {
+                        spacing: 16px;
+                        alignment: center;
+
+                        Text {
+                            text: "اختر ملف PDF للبدء في القراءة فوراً";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: #cbd5e1;
+                            horizontal-alignment: center;
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 12px;
+                            
+                            GlassButton {
+                                text: "فتح ملف بي دي إف 📂";
+                                bg-color: #06b6d420;
+                                border-color-default: #06b6d444;
+                                text-color: #22d3ee;
+                                font-size: 14px;
+                                height: 42px;
+                                clicked => { root.open-file-dialog(); }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Recent Files Section
+            if root.recent-files.length > 0 : HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    width: 600px;
+                    spacing: 10px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        
+                        GlassButton {
+                            text: "مسح السجل 🗑️";
+                            is-danger: true;
+                            font-size: 11px;
+                            height: 26px;
+                            clicked => { root.clear-history(); }
+                        }
+
+                        Text {
+                            text: "الملفات المفتوحة مؤخراً";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #94a3b8;
+                        }
+                    }
+
+                    Rectangle {
+                        background: #ffffff01;
+                        border-radius: 12px;
+                        border-width: 1px;
+                        border-color: #ffffff05;
+                        padding: 8px;
+
+                        VerticalLayout {
+                            spacing: 6px;
+                            
+                            for file in root.recent-files : Rectangle {
+                                height: 42px;
+                                background: rec-ta.has-hover ? #ffffff05 : transparent;
+                                border-radius: 8px;
+                                padding-left: 12px;
+                                padding-right: 12px;
+
+                                animate background { duration: 100ms; }
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    spacing: 16px;
+
+                                    Text {
+                                        text: file.date;
+                                        font-size: 11px;
+                                        color: #475569;
+                                        vertical-alignment: center;
+                                    }
+
+                                    HorizontalLayout {
+                                        spacing: 8px;
+                                        alignment: end;
+                                        
+                                        Text {
+                                            text: file.path;
+                                            font-size: 11px;
+                                            color: #64748b;
+                                            vertical-alignment: center;
+                                            overflow: elide;
+                                            max-width: 300px;
+                                        }
+
+                                        Text {
+                                            text: "📕 " + file.name;
+                                            font-size: 12px;
+                                            font-weight: 700;
+                                            color: #e2e8f0;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                rec-ta := TouchArea {
+                                    clicked => { root.open-file(file.path); }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Quick Info Footer
+            Text {
+                text: "برنامج مِش بي دي إف جزء من بيئة نظام سومر — Sumer OS";
+                font-size: 11px;
+                color: #475569;
+                horizontal-alignment: center;
+            }
+        }
+
+        // ==========================================
+        // 2. MAIN READER INTERFACE (When file loaded)
+        // ==========================================
+        if root.has-file-loaded : VerticalLayout {
+            // Main Top Bar
+            Rectangle {
+                height: 56px;
+                background: #ffffff02;
+                border-width: 0px;
+                padding-left: 16px;
+                padding-right: 16px;
+
+                Rectangle {
+                    y: parent.height - 1px;
+                    height: 1px;
+                    background: #ffffff08;
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    spacing: 16px;
+
+                    // Left Side: File path indicator & dialog button
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: start;
+
+                        GlassButton {
+                            text: "فتح ملف آخر 📂";
+                            bg-color: #ffffff05;
+                            border-color-default: #ffffff15;
+                            height: 36px;
+                            clicked => { root.open-file-dialog(); }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 2px;
+                            
+                            Text {
+                                text: root.current-metadata.title;
+                                font-size: 13px;
+                                font-weight: 700;
+                                color: #ffffff;
+                                overflow: elide;
+                                max-width: 250px;
+                            }
+                            Text {
+                                text: root.current-file-path;
+                                font-size: 10px;
+                                color: #64748b;
+                                overflow: elide;
+                                max-width: 250px;
+                            }
+                        }
+                    }
+
+                    // Center Side: Zoom & View Options
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: center;
+
+                        // Zoom Out
+                        GlassButton {
+                            text: "➖";
+                            bg-color: transparent;
+                            border-color-default: #ffffff0a;
+                            height: 32px;
+                            clicked => {
+                                if (root.zoom-level > 0.4) {
+                                    root.zoom-level -= 0.2;
+                                }
+                            }
+                        }
+
+                        // Zoom Label
+                        Rectangle {
+                            background: #ffffff03;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #ffffff08;
+                            width: 65px;
+                            height: 32px;
+                            
+                            Text {
+                                text: Math.round(root.zoom-level * 100) + "%";
+                                color: #cbd5e1;
+                                font-size: 11px;
+                                font-weight: 700;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Zoom In
+                        GlassButton {
+                            text: "➕";
+                            bg-color: transparent;
+                            border-color-default: #ffffff0a;
+                            height: 32px;
+                            clicked => {
+                                if (root.zoom-level < 4.0) {
+                                    root.zoom-level += 0.2;
+                                }
+                            }
+                        }
+
+                        // Separator
+                        Rectangle {
+                            width: 1px;
+                            height: 20px;
+                            background: #ffffff10;
+                        }
+
+                        // Fit Width Quick-preset
+                        GlassButton {
+                            text: "عرض الملائمة 🖥️";
+                            active: root.zoom-level == 1.2;
+                            bg-color: root.zoom-level == 1.2 ? #06b6d41a : transparent;
+                            border-color-default: #ffffff0a;
+                            height: 32px;
+                            clicked => { root.zoom-level = 1.2; }
+                        }
+
+                        // Fit 100% Quick-preset
+                        GlassButton {
+                            text: "100%";
+                            active: root.zoom-level == 1.0;
+                            bg-color: root.zoom-level == 1.0 ? #06b6d41a : transparent;
+                            border-color-default: #ffffff0a;
+                            height: 32px;
+                            clicked => { root.zoom-level = 1.0; }
+                        }
+                    }
+
+                    // Right Side: Dark Mode toggle & Close / Back
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: end;
+
+                        // Dark Mode Page Color Filter Toggle
+                        GlassButton {
+                            text: root.is-dark-mode ? "الوضع المضيء ☀️" : "وضع القراءة الليلي 🌙";
+                            bg-color: root.is-dark-mode ? #eab30815 : #8b5cf61a;
+                            border-color-default: root.is-dark-mode ? #eab30833 : #8b5cf633;
+                            text-color: root.is-dark-mode ? #fef08a : #c084fc;
+                            height: 36px;
+                            clicked => { root.toggle-dark-mode(); }
+                        }
+                    }
+                }
+            }
+
+            // Main Content Body: Sidebar + PDF Page Viewer
+            HorizontalLayout {
+                spacing: 0px;
+                vertical-stretch: 1;
+
+                // ==========================================
+                // 2.A LEFT SIDEBAR (Tabs for navigation/details)
+                // ==========================================
+                Rectangle {
+                    width: 260px;
+                    background: #ffffff01;
+                    padding: 12px;
+
+                    Rectangle {
+                        x: parent.width - 1px;
+                        width: 1px;
+                        background: #ffffff08;
+                    }
+
+                    VerticalLayout {
+                        spacing: 12px;
+
+                        // Sidebar Tabs Row
+                        HorizontalLayout {
+                            spacing: 4px;
+                            height: 36px;
+
+                            TabButton {
+                                text: "بحث";
+                                icon: "🔍";
+                                active: root.active-sidebar-tab == "search";
+                                clicked => { root.active-sidebar-tab = "search"; }
+                            }
+                            TabButton {
+                                text: "الصفحات";
+                                icon: "📄";
+                                active: root.active-sidebar-tab == "pages";
+                                clicked => { root.active-sidebar-tab = "pages"; }
+                            }
+                            TabButton {
+                                text: "بيانات";
+                                icon: "ℹ️";
+                                active: root.active-sidebar-tab == "details";
+                                clicked => { root.active-sidebar-tab = "details"; }
+                            }
+                            TabButton {
+                                text: "سجل";
+                                icon: "🕰️";
+                                active: root.active-sidebar-tab == "history";
+                                clicked => { root.active-sidebar-tab = "history"; }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle {
+                            height: 1px;
+                            background: #ffffff0a;
+                        }
+
+                        // TAB CONTENT AREA
+                        VerticalLayout {
+                            vertical-stretch: 1;
+
+                            // Tab 1: Pages List navigation
+                            if root.active-sidebar-tab == "pages" : VerticalLayout {
+                                spacing: 8px;
+                                
+                                Text {
+                                    text: "فهرس صفحات المستند";
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    color: #94a3b8;
+                                    horizontal-alignment: right;
+                                    padding-bottom: 4px;
+                                }
+
+                                ScrollView {
+                                    vertical-stretch: 1;
+                                    
+                                    VerticalLayout {
+                                        spacing: 6px;
+                                        padding-right: 6px;
+
+                                        for page-num in root.total-pages : Rectangle {
+                                            height: 38px;
+                                            background: (root.current-page == page-num + 1) ? #06b6d41a : (page-ta.has-hover ? #ffffff03 : transparent);
+                                            border-radius: 6px;
+                                            border-width: 1px;
+                                            border-color: (root.current-page == page-num + 1) ? #06b6d450 : transparent;
+                                            padding-left: 12px;
+                                            padding-right: 12px;
+
+                                            animate background { duration: 100ms; }
+
+                                            HorizontalLayout {
+                                                alignment: space-between;
+
+                                                Text {
+                                                    text: (root.current-page == page-num + 1) ? "قيد العرض 👁️" : "";
+                                                    font-size: 10px;
+                                                    color: #06b6d4;
+                                                    vertical-alignment: center;
+                                                }
+
+                                                Text {
+                                                    text: "صفحة " + (page-num + 1);
+                                                    font-size: 12px;
+                                                    font-weight: (root.current-page == page-num + 1) ? 700 : 500;
+                                                    color: (root.current-page == page-num + 1) ? #ffffff : #cbd5e1;
+                                                    vertical-alignment: center;
+                                                }
+                                            }
+
+                                            page-ta := TouchArea {
+                                                clicked => { root.change-page(page-num + 1); }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Tab 2: Live PDF Text Search
+                            if root.active-sidebar-tab == "search" : VerticalLayout {
+                                spacing: 10px;
+                                
+                                Text {
+                                    text: "البحث النصي داخل الملف";
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    color: #94a3b8;
+                                    horizontal-alignment: right;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    
+                                    GlassButton {
+                                        text: "بحث 🔍";
+                                        font-size: 11px;
+                                        bg-color: #06b6d41a;
+                                        border-color-default: #06b6d433;
+                                        text-color: #22d3ee;
+                                        height: 38px;
+                                        clicked => {
+                                            if (root.search-query != "") {
+                                                root.is-searching = true;
+                                                root.search-text(root.search-query);
+                                            }
+                                        }
+                                    }
+
+                                    GlassLineEdit {
+                                        placeholder-text: "اكتب كلمة للبحث عنها...";
+                                        horizontal-stretch: 1;
+                                        text <=> root.search-query;
+                                        accepted(q) => {
+                                            if (q != "") {
+                                                root.is-searching = true;
+                                                root.search-text(q);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if root.is-searching : Rectangle {
+                                    height: 50px;
+                                    Text {
+                                        text: "جاري البحث واستخراج النصوص... ⏳";
+                                        font-size: 11px;
+                                        color: #eab308;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                if !root.is-searching && root.search-results.length == 0 : Rectangle {
+                                    vertical-stretch: 1;
+                                    Text {
+                                        text: root.search-query == "" ? "أدخل كلمة واضغط بحث" : "لم يتم العثور على نتائج";
+                                        font-size: 11px;
+                                        color: #475569;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                if !root.is-searching && root.search-results.length > 0 : VerticalLayout {
+                                    vertical-stretch: 1;
+                                    spacing: 6px;
+
+                                    Text {
+                                        text: "تم العثور على (" + root.search-results.length + ") مطابقة:";
+                                        font-size: 11px;
+                                        color: #06b6d4;
+                                        horizontal-alignment: right;
+                                        padding-bottom: 4px;
+                                    }
+
+                                    ScrollView {
+                                        vertical-stretch: 1;
+                                        
+                                        VerticalLayout {
+                                            spacing: 8px;
+                                            padding-right: 6px;
+
+                                            for res in root.search-results : Rectangle {
+                                                background: #ffffff02;
+                                                border-radius: 8px;
+                                                border-width: 1px;
+                                                border-color: #ffffff08;
+                                                padding: 8px;
+
+                                                animate background { duration: 100ms; }
+
+                                                VerticalLayout {
+                                                    spacing: 4px;
+
+                                                    HorizontalLayout {
+                                                        alignment: space-between;
+                                                        
+                                                        Text {
+                                                            text: "انقر للذهاب 🔗";
+                                                            font-size: 9px;
+                                                            color: #06b6d4;
+                                                        }
+
+                                                        Text {
+                                                            text: "صفحة " + res.page;
+                                                            font-size: 11px;
+                                                            font-weight: 700;
+                                                            color: #f8fafc;
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        text: res.snippet;
+                                                        font-size: 11px;
+                                                        color: #94a3b8;
+                                                        wrap: word-wrap;
+                                                        horizontal-alignment: right;
+                                                    }
+                                                }
+
+                                                TouchArea {
+                                                    clicked => { root.change-page(res.page); }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Tab 3: Detailed PDF metadata
+                            if root.active-sidebar-tab == "details" : ScrollView {
+                                VerticalLayout {
+                                    spacing: 12px;
+                                    padding-right: 6px;
+
+                                    Text {
+                                        text: "بيانات ومعلومات المستند";
+                                        font-size: 12px;
+                                        font-weight: 700;
+                                        color: #94a3b8;
+                                        horizontal-alignment: right;
+                                    }
+
+                                    // Detail fields
+                                    Rectangle {
+                                        background: #ffffff02;
+                                        border-radius: 10px;
+                                        border-width: 1px;
+                                        border-color: #ffffff08;
+                                        padding: 12px;
+
+                                        VerticalLayout {
+                                            spacing: 10px;
+
+                                            // Title
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "عنوان المستند:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.title; font-size: 12px; color: #f8fafc; font-weight: 700; horizontal-alignment: right; wrap: word-wrap; }
+                                            }
+
+                                            // Author
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "المؤلف / الناشر:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.author; font-size: 12px; color: #f8fafc; font-weight: 700; horizontal-alignment: right; wrap: word-wrap; }
+                                            }
+
+                                            // Page Count
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "إجمالي الصفحات:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.pages + " صفحات"; font-size: 12px; color: #cbd5e1; font-weight: 700; horizontal-alignment: right; }
+                                            }
+
+                                            // Size
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "حجم الملف:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.file-size; font-size: 12px; color: #cbd5e1; font-weight: 700; horizontal-alignment: right; }
+                                            }
+
+                                            // Date
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "تاريخ الإنشاء:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.creation-date; font-size: 12px; color: #94a3b8; horizontal-alignment: right; wrap: word-wrap; }
+                                            }
+
+                                            // Full path
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                Text { text: "المسار الكامل للملف:"; font-size: 10px; color: #64748b; horizontal-alignment: right; }
+                                                Text { text: root.current-metadata.file-path; font-size: 10px; color: #94a3b8; horizontal-alignment: right; wrap: word-wrap; }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Tab 4: History list in sidebar
+                            if root.active-sidebar-tab == "history" : VerticalLayout {
+                                spacing: 8px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    
+                                    GlassButton {
+                                        text: "مسح 🗑️";
+                                        is-danger: true;
+                                        font-size: 10px;
+                                        height: 24px;
+                                        clicked => { root.clear-history(); }
+                                    }
+
+                                    Text {
+                                        text: "الملفات السابقة";
+                                        font-size: 12px;
+                                        font-weight: 700;
+                                        color: #94a3b8;
+                                    }
+                                }
+
+                                ScrollView {
+                                    vertical-stretch: 1;
+                                    
+                                    VerticalLayout {
+                                        spacing: 6px;
+                                        padding-right: 6px;
+
+                                        for file in root.recent-files : Rectangle {
+                                            height: 46px;
+                                            background: hist-ta.has-hover ? #ffffff04 : transparent;
+                                            border-radius: 6px;
+                                            padding: 6px;
+
+                                            animate background { duration: 100ms; }
+
+                                            VerticalLayout {
+                                                spacing: 2px;
+                                                alignment: center;
+                                                
+                                                Text {
+                                                    text: file.name;
+                                                    font-size: 11px;
+                                                    font-weight: 700;
+                                                    color: #f8fafc;
+                                                    horizontal-alignment: right;
+                                                    overflow: elide;
+                                                }
+                                                Text {
+                                                    text: file.path;
+                                                    font-size: 9px;
+                                                    color: #64748b;
+                                                    horizontal-alignment: right;
+                                                    overflow: elide;
+                                                }
+                                            }
+
+                                            hist-ta := TouchArea {
+                                                clicked => { root.open-file(file.path); }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ==========================================
+                // 2.B MAIN WORKSPACE (The PDF Page Viewer Image)
+                // ==========================================
+                Rectangle {
+                    horizontal-stretch: 1;
+                    background: #03050a;
+                    clip: true;
+
+                    // Centered ScrollView for the rendering page
+                    ScrollView {
+                        width: 100%;
+                        height: 100%;
+
+                        // Outer alignment container
+                        Rectangle {
+                            // Automatically size based on zoom level & image aspect
+                            width: Math.max(parent.width, (650px * root.zoom-level) + 40px);
+                            height: Math.max(parent.height, (840px * root.zoom-level) + 40px);
+
+                            // The actual page canvas
+                            Rectangle {
+                                width: 650px * root.zoom-level;
+                                height: 840px * root.zoom-level;
+                                background: root.is-dark-mode ? #121212 : #ffffff;
+                                border-radius: 4px;
+                                border-width: 1px;
+                                border-color: root.is-dark-mode ? #ffffff10 : #00000020;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+
+                                // Cyber Shadow glow for the page
+                                Rectangle {
+                                    width: 100%;
+                                    height: 100%;
+                                    border-radius: 4px;
+                                    border-width: 1px;
+                                    border-color: #06b6d420;
+                                    opacity: 0.15;
+                                }
+
+                                // The dynamic page image
+                                img-view := Image {
+                                    width: 100%;
+                                    height: 100%;
+                                    source: root.current-page-image;
+                                    image-fit: contain;
+                                }
+                                
+                                // Overlay Loading indicator when page is rendering
+                                if root.is-loading-page : Rectangle {
+                                    width: 100%;
+                                    height: 100%;
+                                    background: #000000b0;
+                                    border-radius: 4px;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        spacing: 12px;
+                                        
+                                        Text {
+                                            text: "⏳";
+                                            font-size: 40px;
+                                            horizontal-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "جاري رندرة وتجهيز الصفحة... يرجى الانتظار";
+                                            font-size: 13px;
+                                            color: #cbd5e1;
+                                            font-weight: 700;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // 2.C BOTTOM PAGINATION FLOATING CONTROLS
+                    // ==========================================
+                    Rectangle {
+                        y: parent.height - self.height - 20px;
+                        x: (parent.width - self.width) / 2;
+                        height: 48px;
+                        background: #0f172ae0;
+                        border-radius: 24px;
+                        border-width: 1px;
+                        border-color: #06b6d433;
+                        padding-left: 16px;
+                        padding-right: 16px;
+
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: center;
+
+                            // Previous Page Button
+                            GlassButton {
+                                text: "الصفحة السابقة ◀️";
+                                bg-color: transparent;
+                                border-color-default: transparent;
+                                font-size: 12px;
+                                height: 32px;
+                                clicked => {
+                                    if (root.current-page > 1) {
+                                        root.change-page(root.current-page - 1);
+                                    }
+                                }
+                            }
+
+                            // Page input / indicator
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: center;
+                                
+                                Text {
+                                    text: "/ " + root.total-pages;
+                                    color: #94a3b8;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+
+                                Rectangle {
+                                    background: #ffffff0a;
+                                    border-radius: 6px;
+                                    width: 48px;
+                                    height: 28px;
+                                    border-width: 1px;
+                                    border-color: #ffffff1a;
+                                    
+                                    page-input := TextInput {
+                                        text: root.current-page;
+                                        color: #ffffff;
+                                        font-size: 13px;
+                                        font-weight: 700;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                        
+                                        accepted => {
+                                            root.jump-to-page(self.text);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Next Page Button
+                            GlassButton {
+                                text: "▶️ الصفحة التالية";
+                                bg-color: transparent;
+                                border-color-default: transparent;
+                                font-size: 12px;
+                                height: 32px;
+                                clicked => {
+                                    if (root.current-page < root.total-pages) {
+                                        root.change-page(root.current-page + 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

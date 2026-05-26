@@ -1,0 +1,10 @@
+[package]
+name = "kish-scriptrun"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+slint = { version = "=1.5.0", features = ["renderer-femtovg"] }
+
+[build-dependencies]
+slint-build = "=1.5.0"

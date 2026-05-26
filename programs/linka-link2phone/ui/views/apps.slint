@@ -1,0 +1,606 @@
+import { GlassCard } from "../components/glass_card.slint";
+import { ActionButton } from "../components/action_button.slint";
+
+export component AppsView inherits Rectangle {
+    // Theme Colors
+    in property <color> bg-dark: #070a13;
+    in property <color> bg-card: rgba(15, 23, 42, 0.45);
+    in property <color> theme-border-color: rgba(30, 41, 59, 0.6);
+    in property <color> accent-color: #6366f1;
+    in property <color> accent-hover: #4f46e5;
+    in property <color> accent-glow: rgba(99, 102, 241, 0.15);
+    in property <color> text-primary: #f1f5f9;
+    in property <color> text-secondary: #94a3b8;
+    in property <color> text-muted: #64748b;
+    in property <color> green-color: #10b981;
+    in property <color> red-color: #ef4444;
+
+    // App Management States
+    property <bool> chrome-running: true;
+    property <bool> chrome-installed: true;
+
+    property <bool> whatsapp-running: false;
+    property <bool> whatsapp-installed: true;
+
+    property <bool> youtube-running: true;
+    property <bool> youtube-installed: true;
+
+    property <bool> spotify-running: false;
+    property <bool> spotify-installed: true;
+
+    property <bool> settings-running: false;
+    property <bool> settings-installed: true;
+
+    property <bool> keyboard-layout-ar: true; // Toggle between Arabic and English keyboard layout
+    property <string> remote-text: "";
+    property <string> sync-status: "جاهز للكتابة والإرسال...";
+
+    HorizontalLayout {
+        spacing: 16px;
+        padding: 24px;
+
+        // Remote Keyboard Panel (Left Side)
+        VerticalLayout {
+            width: 320px;
+            spacing: 14px;
+
+            Text {
+                text: "لوحة مفاتيح الكتابة عن بعد";
+                color: text-primary;
+                font-size: 14px;
+                font-weight: 700;
+                horizontal-alignment: right;
+            }
+
+            GlassCard {
+                vertical-stretch: 1;
+                
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 12px;
+
+                    // Text Field for PC Input
+                    VerticalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: "اكتب النص المراد إرساله للهاتف:";
+                            color: text-secondary;
+                            font-size: 10px;
+                            horizontal-alignment: right;
+                        }
+
+                        // Simulated text editor
+                        Rectangle {
+                            height: 60px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: theme-border-color;
+                            
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                Text {
+                                    text: remote-text == "" ? "اكتب هنا أو استخدم لوحة المفاتيح أدناه..." : remote-text;
+                                    color: remote-text == "" ? text-muted : text-primary;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: right;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+                    }
+
+                    // Keypad Row 1
+                    HorizontalLayout {
+                        alignment: space-between;
+                        ActionButton {
+                            text: "مسح الكل";
+                            icon: "🗑️";
+                            base-bg: red-color;
+                            hover-bg: red-color.darker(10%);
+                            clicked => {
+                                remote-text = "";
+                                sync-status = "تم مسح النص";
+                            }
+                        }
+
+                        ActionButton {
+                            text: "إرسال للهاتف";
+                            icon: "📲";
+                            base-bg: green-color;
+                            hover-bg: green-color.darker(10%);
+                            clicked => {
+                                if (remote-text != "") {
+                                    sync-status = "تم إرسال: \"" + remote-text + "\" للهاتف بنجاح!";
+                                    remote-text = "";
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: theme-border-color;
+                    }
+
+                    // On-screen Virtual Keyboard Layout
+                    VerticalLayout {
+                        spacing: 8px;
+                        
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: keyboard-layout-ar ? "التحويل للإنجليزية" : "التحويل للعربية";
+                                color: accent-color;
+                                font-size: 10px;
+                                font-weight: 700;
+                                TouchArea {
+                                    clicked => {
+                                        keyboard-layout-ar = !keyboard-layout-ar;
+                                    }
+                                }
+                            }
+                            Text {
+                                text: "لوحة مفاتيح تفاعلية";
+                                color: text-secondary;
+                                font-size: 10px;
+                                font-weight: 700;
+                            }
+                        }
+
+                        // Arabic Layout
+                        if keyboard-layout-ar : VerticalLayout {
+                            spacing: 6px;
+                            
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["ج", "د", "ش", "س", "ي", "ب", "ل", "ا", "ت", "ن"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["م", "ك", "ط", "ئ", "ء", "ؤ", "ر", "لا", "ى", "ة"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["و", "ز", "د", "ذ", "إ", "أ", "آ"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            // Space and Backspace
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: center;
+                                
+                                // Backspace
+                                Rectangle {
+                                    width: 70px; height: 28px; border-radius: 4px; background: rgba(239, 68, 68, 0.15);
+                                    Text { text: "⌫ تراجع"; color: red-color; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea {
+                                        clicked => {
+                                            // Handle backspace directly in slint using helper or let it clear the last char
+                                            // A simple way is to clear last character (simulated or resetting)
+                                            // We can do it by communicating with rust or just custom popup
+                                            // Let's reset the status or clear one character if we can (Slint substring is tricky, let's just make it clear the text or delete)
+                                            remote-text = "";
+                                            sync-status = "تم مسح حقل الكتابة";
+                                        }
+                                    }
+                                }
+
+                                // Space
+                                Rectangle {
+                                    width: 140px; height: 28px; border-radius: 4px; background: rgba(99, 102, 241, 0.2);
+                                    Text { text: "مسافة [ Space ]"; color: text-primary; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + " "; } }
+                                }
+                            }
+                        }
+
+                        // English Layout
+                        if !keyboard-layout-ar : VerticalLayout {
+                            spacing: 6px;
+                            
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for char in ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"] : Rectangle {
+                                    width: 24px; height: 26px; border-radius: 4px; background: rgba(255, 255, 255, 0.06);
+                                    Text { text: char; color: text-primary; font-size: 11px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + char; } }
+                                }
+                            }
+                            // Space and Clear
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: center;
+                                
+                                Rectangle {
+                                    width: 70px; height: 28px; border-radius: 4px; background: rgba(239, 68, 68, 0.15);
+                                    Text { text: "Clear"; color: red-color; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea {
+                                        clicked => {
+                                            remote-text = "";
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 140px; height: 28px; border-radius: 4px; background: rgba(99, 102, 241, 0.2);
+                                    Text { text: "Space"; color: text-primary; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                                    TouchArea { clicked => { remote-text = remote-text + " "; } }
+                                }
+                            }
+                        }
+                    }
+
+                    // Sync Log status
+                    Text {
+                        text: sync-status;
+                        color: green-color;
+                        font-size: 9px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // Vertical Divider
+        Rectangle {
+            width: 1px;
+            background: theme-border-color;
+        }
+
+        // App Manager List (Right Side)
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 14px;
+
+            // Title Row
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "التطبيقات المثبتة: 5 تطبيقات نشطة";
+                    color: text-secondary;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: "مدير تطبيقات الهاتف الذكي";
+                    color: text-primary;
+                    font-size: 14px;
+                    font-weight: 700;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Apps List
+            VerticalLayout {
+                spacing: 10px;
+
+                // 1. Chrome
+                if chrome-installed : GlassCard {
+                    height: 64px;
+                    HorizontalLayout {
+                        padding: 12px;
+                        alignment: space-between;
+
+                        // Actions Row (Left)
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            
+                            // Open/Close
+                            if chrome-running : ActionButton {
+                                text: "إيقاف إجباري";
+                                icon: "⏹";
+                                base-bg: rgba(239, 68, 68, 0.15);
+                                hover-bg: rgba(239, 68, 68, 0.25);
+                                clicked => { chrome-running = false; sync-status = "تم إغلاق متصفح كروم عن بعد"; }
+                            }
+                            if !chrome-running : ActionButton {
+                                text: "تشغيل التطبيق";
+                                icon: "▶️";
+                                base-bg: green-color;
+                                hover-bg: green-color.darker(10%);
+                                clicked => { chrome-running = true; sync-status = "تم تشغيل متصفح كروم على الهاتف"; }
+                            }
+
+                            // Uninstall
+                            ActionButton {
+                                text: "إلغاء التثبيت";
+                                icon: "🗑️";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(10%);
+                                clicked => { chrome-installed = false; sync-status = "تم إلغاء تثبيت متصفح كروم من الهاتف"; }
+                            }
+                        }
+
+                        // App Metadata (Right)
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: end;
+                            
+                            VerticalLayout {
+                                alignment: center;
+                                Text { text: "جوجل كروم • Google Chrome"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                                HorizontalLayout {
+                                    alignment: end;
+                                    spacing: 6px;
+                                    Text { text: chrome-running ? "نشط حالياً (142MB RAM)" : "مغلق (0MB RAM)"; color: chrome-running ? green-color : text-muted; font-size: 9px; }
+                                    Rectangle { width: 6px; height: 6px; border-radius: 3px; background: chrome-running ? green-color : text-muted; y: 3px; }
+                                }
+                            }
+                            
+                            // App Icon
+                            Rectangle {
+                                width: 38px; height: 38px; border-radius: 8px; background: rgba(219, 68, 85, 0.15);
+                                Text { text: "🌐"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                }
+
+                // 2. WhatsApp
+                if whatsapp-installed : GlassCard {
+                    height: 64px;
+                    HorizontalLayout {
+                        padding: 12px;
+                        alignment: space-between;
+
+                        // Actions Row (Left)
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            
+                            // Open/Close
+                            if whatsapp-running : ActionButton {
+                                text: "إيقاف إجباري";
+                                icon: "⏹";
+                                base-bg: rgba(239, 68, 68, 0.15);
+                                hover-bg: rgba(239, 68, 68, 0.25);
+                                clicked => { whatsapp-running = false; sync-status = "تم إغلاق واتساب عن بعد"; }
+                            }
+                            if !whatsapp-running : ActionButton {
+                                text: "تشغيل التطبيق";
+                                icon: "▶️";
+                                base-bg: green-color;
+                                hover-bg: green-color.darker(10%);
+                                clicked => { whatsapp-running = true; sync-status = "تم تشغيل واتساب على الهاتف"; }
+                            }
+
+                            // Uninstall
+                            ActionButton {
+                                text: "إلغاء التثبيت";
+                                icon: "🗑️";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(10%);
+                                clicked => { whatsapp-installed = false; sync-status = "تم إلغاء تثبيت واتساب من الهاتف"; }
+                            }
+                        }
+
+                        // App Metadata (Right)
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: end;
+                            
+                            VerticalLayout {
+                                alignment: center;
+                                Text { text: "واتساب • WhatsApp"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                                HorizontalLayout {
+                                    alignment: end;
+                                    spacing: 6px;
+                                    Text { text: whatsapp-running ? "نشط حالياً (210MB RAM)" : "مغلق (0MB RAM)"; color: whatsapp-running ? green-color : text-muted; font-size: 9px; }
+                                    Rectangle { width: 6px; height: 6px; border-radius: 3px; background: whatsapp-running ? green-color : text-muted; y: 3px; }
+                                }
+                            }
+                            
+                            // App Icon
+                            Rectangle {
+                                width: 38px; height: 38px; border-radius: 8px; background: rgba(16, 185, 129, 0.15);
+                                Text { text: "💬"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                }
+
+                // 3. YouTube
+                if youtube-installed : GlassCard {
+                    height: 64px;
+                    HorizontalLayout {
+                        padding: 12px;
+                        alignment: space-between;
+
+                        // Actions Row (Left)
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            
+                            // Open/Close
+                            if youtube-running : ActionButton {
+                                text: "إيقاف إجباري";
+                                icon: "⏹";
+                                base-bg: rgba(239, 68, 68, 0.15);
+                                hover-bg: rgba(239, 68, 68, 0.25);
+                                clicked => { youtube-running = false; sync-status = "تم إغلاق يوتيوب عن بعد"; }
+                            }
+                            if !youtube-running : ActionButton {
+                                text: "تشغيل التطبيق";
+                                icon: "▶️";
+                                base-bg: green-color;
+                                hover-bg: green-color.darker(10%);
+                                clicked => { youtube-running = true; sync-status = "تم تشغيل يوتيوب على الهاتف"; }
+                            }
+
+                            // Uninstall
+                            ActionButton {
+                                text: "إلغاء التثبيت";
+                                icon: "🗑️";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(10%);
+                                clicked => { youtube-installed = false; sync-status = "تم إلغاء تثبيت يوتيوب من الهاتف"; }
+                            }
+                        }
+
+                        // App Metadata (Right)
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: end;
+                            
+                            VerticalLayout {
+                                alignment: center;
+                                Text { text: "يوتيوب • YouTube"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                                HorizontalLayout {
+                                    alignment: end;
+                                    spacing: 6px;
+                                    Text { text: youtube-running ? "نشط في الخلفية (380MB RAM)" : "مغلق (0MB RAM)"; color: youtube-running ? green-color : text-muted; font-size: 9px; }
+                                    Rectangle { width: 6px; height: 6px; border-radius: 3px; background: youtube-running ? green-color : text-muted; y: 3px; }
+                                }
+                            }
+                            
+                            // App Icon
+                            Rectangle {
+                                width: 38px; height: 38px; border-radius: 8px; background: rgba(239, 68, 68, 0.15);
+                                Text { text: "📺"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                }
+
+                // 4. Spotify
+                if spotify-installed : GlassCard {
+                    height: 64px;
+                    HorizontalLayout {
+                        padding: 12px;
+                        alignment: space-between;
+
+                        // Actions Row (Left)
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            
+                            // Open/Close
+                            if spotify-running : ActionButton {
+                                text: "إيقاف إجباري";
+                                icon: "⏹";
+                                base-bg: rgba(239, 68, 68, 0.15);
+                                hover-bg: rgba(239, 68, 68, 0.25);
+                                clicked => { spotify-running = false; sync-status = "تم إغلاق سبوتيفاي عن بعد"; }
+                            }
+                            if !spotify-running : ActionButton {
+                                text: "تشغيل التطبيق";
+                                icon: "▶️";
+                                base-bg: green-color;
+                                hover-bg: green-color.darker(10%);
+                                clicked => { spotify-running = true; sync-status = "تم تشغيل سبوتيفاي على الهاتف"; }
+                            }
+
+                            // Uninstall
+                            ActionButton {
+                                text: "إلغاء التثبيت";
+                                icon: "🗑️";
+                                base-bg: red-color;
+                                hover-bg: red-color.darker(10%);
+                                clicked => { spotify-installed = false; sync-status = "تم إلغاء تثبيت سبوتيفاي من الهاتف"; }
+                            }
+                        }
+
+                        // App Metadata (Right)
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: end;
+                            
+                            VerticalLayout {
+                                alignment: center;
+                                Text { text: "سبوتيفاي • Spotify"; color: text-primary; font-size: 12px; font-weight: 700; horizontal-alignment: right; }
+                                HorizontalLayout {
+                                    alignment: end;
+                                    spacing: 6px;
+                                    Text { text: spotify-running ? "نشط حالياً (85MB RAM)" : "مغلق (0MB RAM)"; color: spotify-running ? green-color : text-muted; font-size: 9px; }
+                                    Rectangle { width: 6px; height: 6px; border-radius: 3px; background: spotify-running ? green-color : text-muted; y: 3px; }
+                                }
+                            }
+                            
+                            // App Icon
+                            Rectangle {
+                                width: 38px; height: 38px; border-radius: 8px; background: rgba(30, 215, 96, 0.15);
+                                Text { text: "🎵"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Uninstalled/System Restore Section
+            if !chrome-installed || !whatsapp-installed || !youtube-installed || !spotify-installed : VerticalLayout {
+                spacing: 8px;
+                Text { text: "التطبيقات الملغاة مؤخراً (سلة المحذوفات)"; color: text-muted; font-size: 10px; horizontal-alignment: right; }
+                
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: end;
+                    
+                    if !chrome-installed : ActionButton {
+                        text: "استعادة كروم"; icon: "🔄"; clicked => { chrome-installed = true; sync-status = "تمت استعادة متصفح كروم"; }
+                    }
+                    if !whatsapp-installed : ActionButton {
+                        text: "استعادة واتساب"; icon: "🔄"; clicked => { whatsapp-installed = true; sync-status = "تمت استعادة واتساب"; }
+                    }
+                    if !youtube-installed : ActionButton {
+                        text: "استعادة يوتيوب"; icon: "🔄"; clicked => { youtube-installed = true; sync-status = "تمت استعادة يوتيوب"; }
+                    }
+                    if !spotify-installed : ActionButton {
+                        text: "استعادة سبوتيفاي"; icon: "🔄"; clicked => { spotify-installed = true; sync-status = "تمت استعادة سبوتيفاي"; }
+                    }
+                }
+            }
+
+            Rectangle {
+                vertical-stretch: 1;
+            }
+        }
+    }
+}
