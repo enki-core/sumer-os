@@ -1,7 +1,0 @@
-cargo:rerun-if-changed=/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/ui/app.slint
-cargo:rerun-if-env-changed=SLINT_STYLE
-cargo:rerun-if-env-changed=SLINT_FONT_SIZES
-cargo:rerun-if-env-changed=SLINT_SCALE_FACTOR
-cargo:rerun-if-env-changed=SLINT_ASSET_SECTION
-cargo:rerun-if-env-changed=SLINT_EMBED_RESOURCES
-cargo:rustc-env=SLINT_INCLUDE_GENERATED=/home/debian/Desktop/Sumer-OS-Portable/programs/orok-browser/target-user/debug/build/orok-browser-e23b553016482152/out/app.rs
