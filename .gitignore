@@ -38,3 +38,13 @@ __pycache__/
 **/incremental/
 **/*.o
 **/*.d
+# ملفات قفل حزم اللغات والمكتبات (الاختيارية)
+**/Cargo.lock
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+**/poetry.lock
+**/Pipfile.lock
+# ملفات قفل النظام والمحررات 
+*.lock
+*.lck
